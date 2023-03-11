@@ -1,0 +1,29 @@
+.auth {
+    max-width: 20rem;
+    width: 90%;
+    margin: 2rem auto;
+}
+
+.auth ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth__description {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: black;
+}
+
+.auth__description p {
+    margin-block-start: 0;
+}
+
+.auth__description h3 {
+    font-size: 1.5rem;
+}

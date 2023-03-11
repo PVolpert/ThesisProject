@@ -1,0 +1,32 @@
+.item {
+    color: black;
+    display: flex;
+    margin-block-end: 1rem;
+}
+
+.item button {
+    display: flex;
+    position: relative;
+    padding: 0 8px 0 52px;
+    background-color: white;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #c2c2c2;
+    border-radius: 3px;
+    color: black;
+    cursor: pointer;
+    outline: 0;
+}
+
+.item__logo {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: 50%;
+}
+
+.item__text {
+    text-align: left;
+}
