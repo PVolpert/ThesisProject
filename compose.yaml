@@ -1,0 +1,100 @@
+services:
+  proxy:
+    build:
+      context:  images/proxy
+    restart: always
+    networks:
+      - client-side
+    ports:
+      - 2000:80
+    depends_on:
+      - api
+      - backend
+      - client
+  
+  client:
+    build: 
+      context: images/client
+    restart: always
+    networks:
+      - client-side
+    volumes:
+      - ./images/client:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - REACT_APP_PROXY_URL=http://localhost:2000
+    expose:
+      - 80  
+
+  api:
+    build: 
+      context: images/api
+    restart: always
+    networks:
+      - client-side
+      - server-side
+    secrets:
+      - db-api
+    environment:
+      - STAGE=Production
+    env_file: ./configs/api/config.env
+    depends_on: 
+       db:
+         condition: service_healthy
+
+  backend:
+    build: 
+      context: images/backend
+      target: builder
+    restart: always
+    networks:
+      - client-side
+      - server-side
+    volumes:
+      - ./images/backend:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=80
+    expose:
+      - 80
+
+  db:
+    image: postgres
+    restart: always
+    networks:
+      - server-side
+    volumes:
+      - ./configs/db:/docker-entrypoint-initdb.d
+      - db-data:/var/lib/postgresql/data
+    user: postgres
+    secrets:
+      - db-password
+      - db-env
+      - db-api
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 0s
+
+networks:
+  client-side: {}
+  server-side: {}
+
+volumes:
+  db-data: {}
+
+secrets:
+  db-password:
+    file: .secrets/db/password.txt
+  db-env:
+    file: .secrets/db/env.sh
+  db-api:
+    file: .secrets/db/api.txt
+  
+
