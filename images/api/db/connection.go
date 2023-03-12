@@ -17,7 +17,7 @@ type dBConfig struct {
 
 func loadConfig() (config dBConfig, err error) {
 
-	configPath := env.Get("CONFIG-PATH", "/run/secrets/db-api")
+	configPath := env.Get("CONFIG_PATH", "/run/secrets/db-api")
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
@@ -34,7 +34,7 @@ func connectToDB() (db *sql.DB, err error) {
 
 	var (
 		host = env.Get("HOST", "db")
-		port = env.Get("DB-PORT", "5432")
+		port = env.Get("DB_PORT", "5432")
 	)
 
 	config, err := loadConfig()
