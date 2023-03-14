@@ -1,22 +1,19 @@
-import {
-    LoaderFunctionArgs,
-    redirect,
-    useLoaderData,
-    useNavigate,
-} from 'react-router-dom';
+import { LoaderFunctionArgs, redirect, useLoaderData } from 'react-router-dom';
 
 import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 
 import AuthInfoProvider from '../wrappers/Auth/AuthInfoProvider';
-import AuthCodeConsumer from '../wrappers/Auth/AuthCodeConsumer';
+import { fetchTokenEndPointResponse } from '../wrappers/Auth/AuthCodeConsumer';
 import { useTokenStore } from '../stores/TokenZustand';
 import { loader as authInfoLoader } from './Auth';
 import { useNeedsToken } from '../hooks/useNeedsToken';
 
 export default function RedirectPage() {
     const tokenResponse = useLoaderData() as OpenIDTokenEndpointResponse;
-    useTokenStore((state) => state.parse(tokenResponse));
+    // Redirect when token is stored
     useNeedsToken(false);
+
+    useTokenStore((state) => state.parse(tokenResponse));
 
     return (
         <div>
@@ -68,32 +65,4 @@ function findAuthInfoProvider(
         return null;
     }
     return authInfoProviders[redirectPosition];
-}
-
-// ? Maybe include into AuthCodeConsumer
-async function fetchTokenEndPointResponse(
-    authInfoProvider: AuthInfoProvider,
-    searchParams: URLSearchParams
-) {
-    // Load Verifier
-    authInfoProvider.verifier.load();
-    // Create Auth Server
-    await authInfoProvider.createAuthServer();
-
-    const authCodeConsumer = new AuthCodeConsumer(
-        authInfoProvider,
-        searchParams
-    );
-    await authCodeConsumer.fetchTokenEndPointResponse();
-    if (!authCodeConsumer.tokenResponse) {
-        throw new Response(
-            JSON.stringify({
-                message: 'backchannel response does not contain a token',
-            }),
-            { status: 500 }
-        );
-    }
-    // Delete verifier after successful
-    authInfoProvider.verifier.reset();
-    return authCodeConsumer.tokenResponse;
 }

@@ -38,6 +38,10 @@ const router = createBrowserRouter([
                         path: 'p2p',
                         element: <h1>Here will be the video Element</h1>,
                     },
+                    {
+                        path: 'conference/:conferenceId',
+                        element: <h2> Here will be conference</h2>,
+                    },
                 ],
             },
         ],
