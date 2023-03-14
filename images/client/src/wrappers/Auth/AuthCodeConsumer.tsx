@@ -151,7 +151,7 @@ class ConsumptionVerification extends ConsumptionSteps {
     }
 }
 
-export default class AuthCodeConsumer extends ConsumptionVerification {
+class AuthCodeConsumer extends ConsumptionVerification {
     tokenResponse: OpenIDTokenEndpointResponse | null;
     async fetchTokenEndPointResponse() {
         const callBackParams = await this.validateAuthCode();
@@ -168,4 +168,31 @@ export default class AuthCodeConsumer extends ConsumptionVerification {
         super(authProvider, params);
         this.tokenResponse = null;
     }
+}
+
+export async function fetchTokenEndPointResponse(
+    authInfoProvider: AuthInfoProvider,
+    searchParams: URLSearchParams
+) {
+    // Load Verifier
+    authInfoProvider.verifier.load();
+    // Create Auth Server
+    await authInfoProvider.createAuthServer();
+
+    const authCodeConsumer = new AuthCodeConsumer(
+        authInfoProvider,
+        searchParams
+    );
+    await authCodeConsumer.fetchTokenEndPointResponse();
+    if (!authCodeConsumer.tokenResponse) {
+        throw new Response(
+            JSON.stringify({
+                message: 'backchannel response does not contain a token',
+            }),
+            { status: 500 }
+        );
+    }
+    // Delete verifier after successful
+    authInfoProvider.verifier.reset();
+    return authCodeConsumer.tokenResponse;
 }
