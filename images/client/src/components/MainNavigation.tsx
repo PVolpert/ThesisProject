@@ -54,6 +54,8 @@ function MainNavigation() {
                     {idToken?.name?.toString() && (
                         <li>Hello {idToken.name.toString()} </li>
                     )}
+                    {/*TODO Include Button for Call Option Button*/}
+                    {/* TODO Include Modal for Call Options*/}
                 </ul>
             </nav>
         </header>
