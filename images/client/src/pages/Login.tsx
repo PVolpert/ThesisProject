@@ -1,7 +1,7 @@
 import AuthWidget from '../components/Auth/AuthWidget';
-import { useNeedsToken } from '../hooks/useNeedsToken';
+import { useToken } from '../hooks/useToken';
 
 export default function LoginPage() {
-    useNeedsToken(false);
+    useToken({ needsToken: false });
     return <AuthWidget />;
 }

@@ -6,12 +6,12 @@ import AuthInfoProvider from '../wrappers/Auth/AuthInfoProvider';
 import { fetchTokenEndPointResponse } from '../wrappers/Auth/AuthCodeConsumer';
 import { useTokenStore } from '../stores/TokenZustand';
 import { loader as authInfoLoader } from './Auth';
-import { useNeedsToken } from '../hooks/useNeedsToken';
+import { useToken } from '../hooks/useToken';
 
 export default function RedirectPage() {
     const tokenResponse = useLoaderData() as OpenIDTokenEndpointResponse;
     // Redirect when token is stored
-    useNeedsToken(false);
+    useToken({ needsToken: false });
 
     useTokenStore((state) => state.parse(tokenResponse));
 
@@ -31,10 +31,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     }
 
     // Match redirectId to a redirect Url
-    const authInfoProvider = findAuthInfoProvider(
-        authInfoProviders,
-        redirectId
-    );
+    const authInfoProvider = matchRedirectId(authInfoProviders, redirectId);
     if (!authInfoProvider) {
         console.log('redirect link does not match');
         return redirect('/auth/login');
@@ -49,11 +46,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     return tokenResponse;
 }
 
-function findAuthInfoProvider(
+function matchRedirectId(
     authInfoProviders: AuthInfoProvider[],
     redirectId: string
 ) {
-    const redirectPosition = authInfoProviders.findIndex((authProvider) => {
+    const authInfoProvider = authInfoProviders.find((authProvider) => {
         if (redirectId) {
             return authProvider.info.redirect.pathname.endsWith(
                 `/${redirectId}`
@@ -61,8 +58,5 @@ function findAuthInfoProvider(
         }
         return false;
     });
-    if (redirectPosition === -1) {
-        return null;
-    }
-    return authInfoProviders[redirectPosition];
+    return authInfoProvider;
 }
