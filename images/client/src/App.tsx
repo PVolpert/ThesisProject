@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import Call from './pages/Call';
+import Call, { loader as callLoader } from './pages/Call';
 import { loader as authInfoLoader } from './pages/Auth';
 import LoginPage from './pages/Login';
 import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
@@ -29,6 +29,8 @@ const router = createBrowserRouter([
             },
             {
                 path: 'call',
+                loader: callLoader,
+                id: 'call',
                 children: [
                     {
                         index: true,
