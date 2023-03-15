@@ -5,4 +5,8 @@
  * Tabs are switchable
  */
 
-export default function AddAFriendDisplay() {}
+import Button from '../../../UI/Button';
+
+export default function AddAFriendDisplay() {
+    return <></>;
+}

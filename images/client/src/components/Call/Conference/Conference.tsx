@@ -1,5 +1,7 @@
 // TODO implement Conference
 
+import ConferenceDisplay from './ConferenceDisplay';
+
 /**
  * Form with
  * TextInput ConferenceName
@@ -7,4 +9,6 @@
  * Button : Submit Join Conference
  */
 
-export default function Conference() {}
+export default function Conference() {
+    return <ConferenceDisplay />;
+}

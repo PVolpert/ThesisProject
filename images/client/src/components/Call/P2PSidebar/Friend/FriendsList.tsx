@@ -4,4 +4,6 @@
  *
  */
 
-export default function FriendsList() {}
+export default function FriendsList() {
+    return <p>You have no friends :/</p>;
+}
