@@ -1,33 +1,37 @@
-import {createPortal} from 'react-dom'
+import { createPortal } from 'react-dom';
 
-import classes from './Modal.module.css'
-import Card from './Card'
+import classes from './Modal.module.css';
+import Card from './Card';
 
 interface BackdropProps {
-    onConfirm: () => void
+    onDismiss: () => void;
 }
 
 interface ModalOverlayProps {
-    children : React.ReactNode
+    children: React.ReactNode;
 }
 
-interface ModalProps extends BackdropProps,ModalOverlayProps{
-    
+interface ModalProps extends BackdropProps, ModalOverlayProps {}
+
+function Backdrop({ onDismiss }: BackdropProps) {
+    return <div className={classes.backdrop} onClick={onDismiss}></div>;
 }
 
-function Backdrop ({onConfirm}:BackdropProps) {
-    return <div className={classes.backdrop} onClick={onConfirm}></div>
+function ModalOverlay({ children }: ModalOverlayProps) {
+    return <Card className={classes.modal}>{children}</Card>;
 }
 
-function ModalOverlay({children}:ModalOverlayProps) {
-    return <Card className={classes.modal}>{children}</Card>
+export default function Modal({ onDismiss, children }: ModalProps) {
+    return (
+        <>
+            {createPortal(
+                <ModalOverlay>{children}</ModalOverlay>,
+                document.getElementById('root-modal') as Element
+            )}
+            {createPortal(
+                <Backdrop onDismiss={onDismiss} />,
+                document.getElementById('root-backdrop') as Element
+            )}
+        </>
+    );
 }
-
-export default function Modal ({onConfirm,children}:ModalProps) {
-    return <>
-        {createPortal(<ModalOverlay>{children}</ModalOverlay>,document.getElementById('root-modal') as Element)}
-        {createPortal(<Backdrop onConfirm={onConfirm}/>,document.getElementById('root-backdrop') as Element)}
-
-    </>
-}
-
