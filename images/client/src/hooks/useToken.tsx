@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTokenStore } from '../stores/TokenZustand';
+import { useStore } from '../stores/ZustandStore';
 
 interface useTokenProps {
     needsToken: boolean;
@@ -8,9 +8,9 @@ interface useTokenProps {
 
 export function useToken({ needsToken }: useTokenProps) {
     const navigate = useNavigate();
-    const accessToken = useTokenStore((state) => state.accessToken);
-    const idToken = useTokenStore((state) => state.idToken);
-    const reset = useTokenStore((state) => {
+    const accessToken = useStore((state) => state.accessToken);
+    const idToken = useStore((state) => state.idToken);
+    const reset = useStore((state) => {
         return state.reset;
     });
 

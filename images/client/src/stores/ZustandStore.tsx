@@ -1,47 +1,23 @@
-import {
-    getValidatedIdTokenClaims,
-    IDToken,
-    OpenIDTokenEndpointResponse,
-} from 'oauth4webapi';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { createTokenSlice, TokenSlice } from './TokeSlice';
+import { CallOptionsSlice, createCallOptionsSlice } from './CallOptionsSlice';
 
-interface State {
-    accessToken: string;
-    idToken: IDToken | null;
-}
-
-interface Actions {
-    parse: (tokenResponse: OpenIDTokenEndpointResponse) => void;
-    reset: () => void;
-}
-
-const initialState: State = {
-    accessToken: '',
-    idToken: null,
-};
-
-export const useTokenStore = create<State & Actions>()(
+export const useStore = create<CallOptionsSlice & TokenSlice>()(
     persist(
-        (set) => ({
-            ...initialState,
-            parse: (tokenResponse) => set({ ...parseTokens(tokenResponse) }),
-            reset: () => set(initialState),
+        (...a) => ({
+            ...createTokenSlice(...a),
+            ...createCallOptionsSlice(...a),
         }),
         {
             name: 'token-storage',
+            partialize: (state) => ({
+                accessToken: state.accessToken,
+                idToken: state.idToken,
+            }),
         }
     )
 );
-
-function parseTokens(response: OpenIDTokenEndpointResponse) {
-    const { access_token: accessToken } = response;
-    const idToken = getValidatedIdTokenClaims(response);
-    return {
-        accessToken,
-        idToken,
-    };
-}
 
 // ! From here legacy code starts
 // ! Works but does not reflect React State Changes
