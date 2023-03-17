@@ -12,6 +12,21 @@ const DUMMY_AUTHSERVERS: authServerInfo[] = [
     },
 ];
 
+export async function loader() {
+    // Fetch AuthServers if not already existing
+    let authServerInfo;
+    if (!authServerInfo) {
+        authServerInfo = await fetchAuthServers();
+    }
+
+    // Transform into wrapper
+    const authProviders = authServerInfo.map((authServer) => {
+        const verifierStorageName = authServer.name + 'verifier';
+        return new AuthInfoProvider(verifierStorageName, authServer);
+    });
+    return authProviders;
+}
+
 async function fetchAuthServers() {
     try {
         const respJSON = await fetch(
@@ -36,19 +51,4 @@ async function fetchAuthServers() {
         console.log(error);
         return DUMMY_AUTHSERVERS;
     }
-}
-
-export async function loader() {
-    // Fetch AuthServers if not already existing
-    let authServerInfo;
-    if (!authServerInfo) {
-        authServerInfo = await fetchAuthServers();
-    }
-
-    // Transform into wrapper
-    const authProviders = authServerInfo.map((authServer) => {
-        const verifierStorageName = authServer.name + 'verifier';
-        return new AuthInfoProvider(verifierStorageName, authServer);
-    });
-    return authProviders;
 }
