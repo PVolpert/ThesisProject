@@ -11,7 +11,7 @@ import classes from './Button.module.css';
 interface ButtonProps {
     children?: ReactNode;
     isSubmit?: true;
-    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    onClick?: (() => void) | ((event: React.FormEvent<any>) => void);
     style: 'primary' | 'secondary' | 'ternary';
 }
 
@@ -26,7 +26,7 @@ export default function Button({
         type = 'submit';
     }
 
-    let clickHandler: React.MouseEventHandler<HTMLButtonElement> = () =>
+    let clickHandler: (() => void) | ((event: React.FormEvent) => void) = () =>
         console.log('I was clicked');
     if (onClick) {
         clickHandler = onClick;
