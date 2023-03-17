@@ -8,4 +8,6 @@
  *  - remove entry from list
  */
 
-export default function FriendRequest() {}
+export default function FriendRequestItem() {
+    return <></>;
+}

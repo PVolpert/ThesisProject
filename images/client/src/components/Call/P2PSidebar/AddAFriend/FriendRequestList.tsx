@@ -5,4 +5,6 @@
  * Contains FriendRequests
  */
 
-export default function FriendRequestList() {}
+export default function FriendRequestList() {
+    return <></>;
+}

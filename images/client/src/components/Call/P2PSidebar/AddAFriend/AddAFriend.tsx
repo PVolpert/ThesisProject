@@ -9,6 +9,10 @@ import AddAFriendDisplay from './AddAFriendDisplay';
  * - Tab for open friend request
  */
 
-export default function AddAFriend() {
-    return <AddAFriendDisplay />;
+interface AddAFriendProps {
+    hideAddAFriend: () => void;
+}
+
+export default function AddAFriend({ hideAddAFriend }: AddAFriendProps) {
+    return <AddAFriendDisplay hideAddAFriend={hideAddAFriend} />;
 }

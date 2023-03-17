@@ -7,4 +7,6 @@
  *  - Send Request to api
  *  - Show "Request send" Toast
  */
-export default function AddAFriendForm() {}
+export default function AddAFriendForm() {
+    return <></>;
+}

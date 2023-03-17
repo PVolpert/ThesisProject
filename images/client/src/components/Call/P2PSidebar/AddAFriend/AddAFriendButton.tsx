@@ -1,5 +1,15 @@
 import Button from '../../../UI/Button';
 
-export default function AddAFriendDisplay() {
-    return <Button style="primary">Add a friend</Button>;
+interface AddAFriendButtonProps {
+    showAddAFriend: () => void;
+}
+
+export default function AddAFriendButton({
+    showAddAFriend,
+}: AddAFriendButtonProps) {
+    return (
+        <Button style="primary" onClick={showAddAFriend}>
+            Add a friend
+        </Button>
+    );
 }
