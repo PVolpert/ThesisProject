@@ -18,31 +18,50 @@ import classes from './CallOptionsDisplay.module.css';
  *  - Receive Setting for checkboxes and handle them
  */
 interface CallOptionsDisplayProps {
-    options: CallOptions;
-    onSetCallOptions: () => void;
+    checkBoxState: {
+        audioCheckBox: boolean;
+        videoCheckBox: boolean;
+        changeAudioCheckBoxHandler: (
+            e: React.ChangeEvent<HTMLInputElement>
+        ) => void;
+        changeVideoCheckBoxHandler: (
+            e: React.ChangeEvent<HTMLInputElement>
+        ) => void;
+    };
+    submitHandler: (event: React.FormEvent<CallOptions>) => void;
     hideCallOptions: () => void;
 }
 
 export default function CallOptionsDisplay({
-    options,
-    onSetCallOptions,
+    checkBoxState,
+    submitHandler,
     hideCallOptions,
 }: CallOptionsDisplayProps) {
-    function submitHandler() {
-        onSetCallOptions();
-        hideCallOptions();
-    }
+    const {
+        audioCheckBox,
+        videoCheckBox,
+        changeAudioCheckBoxHandler,
+        changeVideoCheckBoxHandler,
+    } = checkBoxState;
 
     return (
         <Modal onDismiss={hideCallOptions}>
             <form className={classes['form']} method="dialog">
                 <div className={classes['checkbox']}>
-                    <label>Video</label>
-                    <input type={'checkbox'} defaultChecked={options.video} />
+                    <label>Audio</label>
+                    <input
+                        type={'checkbox'}
+                        defaultChecked={audioCheckBox}
+                        onChange={changeAudioCheckBoxHandler}
+                    />
                 </div>
                 <div className={classes['checkbox']}>
-                    <label>Audio</label>
-                    <input type={'checkbox'} defaultChecked={options.audio} />
+                    <label>Video</label>
+                    <input
+                        type={'checkbox'}
+                        defaultChecked={videoCheckBox}
+                        onChange={changeVideoCheckBoxHandler}
+                    />
                 </div>
                 <div className={classes['controls']}>
                     <Button

@@ -1,5 +1,6 @@
 //TODO (optional) Create CallOptions
 
+import { useState } from 'react';
 import { useStore } from '../../../stores/ZustandStore';
 import CallOptionsDisplay from './CallOptionsDisplay';
 
@@ -25,13 +26,39 @@ export interface CallOptions {
 }
 
 export default function CallOptions({ hideCallOptions }: CallOptionsProps) {
-    // ? Acquire this via zustand in the future
     const callOptions = useStore((state) => state.callOptions);
-    const onSetCallOptions = useStore((state) => state.reset);
+    const updateCallOptions = useStore((state) => state.updateCallOptions);
+
+    const [audioCheckBox, setAudioCheckBox] = useState(callOptions.audio);
+
+    const [videoCheckBox, setVideoCheckBox] = useState(callOptions.video);
+
+    function submitHandler(event: React.FormEvent<CallOptions>) {
+        event.preventDefault();
+        updateCallOptions({ audio: audioCheckBox, video: videoCheckBox });
+        hideCallOptions();
+    }
+
+    function changeAudioCheckBoxHandler(
+        event: React.ChangeEvent<HTMLInputElement>
+    ) {
+        setAudioCheckBox(event.target.checked);
+    }
+    function changeVideoCheckBoxHandler(
+        event: React.ChangeEvent<HTMLInputElement>
+    ) {
+        setVideoCheckBox(event.target.checked);
+    }
+
     return (
         <CallOptionsDisplay
-            options={callOptions}
-            onSetCallOptions={onSetCallOptions}
+            checkBoxState={{
+                audioCheckBox,
+                videoCheckBox,
+                changeAudioCheckBoxHandler,
+                changeVideoCheckBoxHandler,
+            }}
+            submitHandler={submitHandler}
             hideCallOptions={hideCallOptions}
         />
     );
