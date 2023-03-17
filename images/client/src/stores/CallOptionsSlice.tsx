@@ -8,7 +8,7 @@ interface State {
 }
 
 interface Actions {
-    update: (newCallOptions: CallOptions) => void;
+    updateCallOptions: (newCallOptions: CallOptions) => void;
 }
 
 export interface CallOptionsSlice extends State, Actions {}
@@ -27,9 +27,8 @@ export const createCallOptionsSlice: StateCreator<
     CallOptionsSlice
 > = (set) => ({
     ...initialState,
-    // TODO Review update process of slices
-    update: (newCallOptions) =>
-        set((state) => ({
-            callOptions: newCallOptions,
-        })),
+    updateCallOptions: (newCallOptions) =>
+        set({
+            callOptions: { ...newCallOptions },
+        }),
 });
