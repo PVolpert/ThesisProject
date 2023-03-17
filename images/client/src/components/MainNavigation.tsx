@@ -1,12 +1,23 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useTokenStore } from '../stores/TokenZustand';
+import { useStore } from '../stores/ZustandStore';
+import CallOptions from './Call/CallOptions/CallOptions';
+import CallOptionsButton from './Call/CallOptions/CallOptionsButton';
 
 import classes from './MainNavigation.module.css';
 
 function MainNavigation() {
-    const accessToken = useTokenStore((state) => state.accessToken);
-    const idToken = useTokenStore((state) => state.idToken);
-    const reset = useTokenStore((state) => state.reset);
+    const accessToken = useStore((state) => state.accessToken);
+    const idToken = useStore((state) => state.idToken);
+    const reset = useStore((state) => state.reset);
+    // TODO Add State for CallOptions + Hide + Show Function
+    const [isShowCallOptions, setIsShowCallOptions] = useState(false);
+    function hideCallOptions() {
+        setIsShowCallOptions(false);
+    }
+    function showCallOptions() {
+        setIsShowCallOptions(true);
+    }
     return (
         <header className={classes.header}>
             <nav>
@@ -54,8 +65,12 @@ function MainNavigation() {
                     {idToken?.name?.toString() && (
                         <li>Hello {idToken.name.toString()} </li>
                     )}
-                    {/*TODO Include Button for Call Option Button*/}
-                    {/* TODO Include Modal for Call Options*/}
+                    {accessToken && (
+                        <CallOptionsButton showCallOptions={showCallOptions} />
+                    )}
+                    {accessToken && isShowCallOptions && (
+                        <CallOptions hideCallOptions={hideCallOptions} />
+                    )}
                 </ul>
             </nav>
         </header>

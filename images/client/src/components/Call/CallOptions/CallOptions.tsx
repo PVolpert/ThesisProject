@@ -1,5 +1,6 @@
 //TODO (optional) Create CallOptions
 
+import { useStore } from '../../../stores/ZustandStore';
 import CallOptionsDisplay from './CallOptionsDisplay';
 
 /**
@@ -25,12 +26,12 @@ export interface CallOptions {
 
 export default function CallOptions({ hideCallOptions }: CallOptionsProps) {
     // ? Acquire this via zustand in the future
-    const dummyValues: CallOptions = { video: false, audio: true };
-    const dummyFct = () => console.log('CallOptions was executed');
+    const callOptions = useStore((state) => state.callOptions);
+    const onSetCallOptions = useStore((state) => state.reset);
     return (
         <CallOptionsDisplay
-            options={dummyValues}
-            onSetCallOptions={dummyFct}
+            options={callOptions}
+            onSetCallOptions={onSetCallOptions}
             hideCallOptions={hideCallOptions}
         />
     );

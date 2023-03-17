@@ -35,14 +35,14 @@ export default function CallOptionsDisplay({
 
     return (
         <Modal onDismiss={hideCallOptions}>
-            <form className={classes['form']}>
+            <form className={classes['form']} method="dialog">
                 <div className={classes['checkbox']}>
                     <label>Video</label>
-                    <input type={'checkbox'} checked={options.video} />
+                    <input type={'checkbox'} defaultChecked={options.video} />
                 </div>
                 <div className={classes['checkbox']}>
                     <label>Audio</label>
-                    <input type={'checkbox'} checked={options.audio} />
+                    <input type={'checkbox'} defaultChecked={options.audio} />
                 </div>
                 <div className={classes['controls']}>
                     <Button
