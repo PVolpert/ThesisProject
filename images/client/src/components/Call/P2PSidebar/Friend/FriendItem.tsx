@@ -7,15 +7,19 @@
 // TODO Model idToken --> User --> Friend Relationship
 
 import Button from '../../../UI/Button';
-import classes from './Friend.module.css';
-interface FriendProps {
+import classes from './FriendItem.module.css';
+interface FriendItemProps {
     userName: string;
     userIcon: URL;
     // ? already bound to userId
     callFct: () => void;
 }
 
-export default function Friend({ userName, userIcon, callFct }: FriendProps) {
+export default function FriendItem({
+    userName,
+    userIcon,
+    callFct,
+}: FriendItemProps) {
     return (
         <div className={classes['outer']}>
             <div className={classes['info']}>
