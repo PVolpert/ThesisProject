@@ -11,5 +11,6 @@ export default function LoginList() {
         <LoginItem key={index} authInfoProvider={authInfoProvider} />
     ));
 
+    // TODO move to display
     return <ul>{items}</ul>;
 }

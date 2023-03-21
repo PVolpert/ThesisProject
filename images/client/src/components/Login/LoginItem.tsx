@@ -42,6 +42,7 @@ export default function LoginItem({ authInfoProvider }: LoginItemProps) {
         window.location.assign(authorizationUrl.href);
     }
 
+    // TODO Move to display
     return (
         <li key={authInfoProvider.info.name} className={classes.item}>
             <button onClick={redirectAuthHandler}>
