@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import useModal from '../hooks/useModal';
-import { useStore } from '../stores/ZustandStore';
+import { useZustandStore } from '../stores/zustand/ZustandStore';
 import CallOptions from './Call/CallOptions/CallOptions';
 import CallOptionsButton from './Call/CallOptions/CallOptionsButton';
 
 import classes from './MainNavigation.module.css';
 
 function MainNavigation() {
-    const accessToken = useStore((state) => state.accessToken);
-    const idToken = useStore((state) => state.idToken);
-    const reset = useStore((state) => state.reset);
+    const accessToken = useZustandStore((state) => state.accessToken);
+    const idToken = useZustandStore((state) => state.idToken);
+    const reset = useZustandStore((state) => state.reset);
     const {
         isModalShown: isShowCallOptions,
         hideModal: hideCallOptions,

@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 
-import { CallOptions } from '../components/Call/CallOptions/CallOptions';
+import { CallOptions } from '../../components/Call/CallOptions/CallOptions';
 import { TokenSlice } from './TokeSlice';
 
 interface State {

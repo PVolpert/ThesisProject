@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { createTokenSlice, TokenSlice } from './TokeSlice';
 import { CallOptionsSlice, createCallOptionsSlice } from './CallOptionsSlice';
 
-export const useStore = create<CallOptionsSlice & TokenSlice>()(
+export const useZustandStore = create<CallOptionsSlice & TokenSlice>()(
     persist(
         (...a) => ({
             ...createTokenSlice(...a),

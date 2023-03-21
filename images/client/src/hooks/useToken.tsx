@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../stores/ZustandStore';
+import { useZustandStore } from '../stores/zustand/ZustandStore';
 
 interface useTokenProps {
     needsToken: boolean;
@@ -8,12 +8,13 @@ interface useTokenProps {
 
 export function useToken({ needsToken }: useTokenProps) {
     const navigate = useNavigate();
-    const accessToken = useStore((state) => state.accessToken);
-    const idToken = useStore((state) => state.idToken);
-    const reset = useStore((state) => {
+    const accessToken = useZustandStore((state) => state.accessToken);
+    const idToken = useZustandStore((state) => state.idToken);
+    const reset = useZustandStore((state) => {
         return state.reset;
     });
 
+    // * Check if Tokens are needed
     useEffect(() => {
         if (needsToken && (!accessToken || !idToken)) {
             navigate('/auth/login');
@@ -23,6 +24,7 @@ export function useToken({ needsToken }: useTokenProps) {
         }
     }, [accessToken, idToken, needsToken, navigate]);
 
+    // * Check if Tokens are expired
     useEffect(() => {
         if (!idToken) {
             return;

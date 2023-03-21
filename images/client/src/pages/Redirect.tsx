@@ -4,7 +4,7 @@ import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 
 import AuthInfoProvider from '../wrappers/Auth/AuthInfoProvider';
 import { fetchTokenEndPointResponse } from '../wrappers/Auth/AuthCodeConsumer';
-import { useStore } from '../stores/ZustandStore';
+import { useZustandStore } from '../stores/zustand/ZustandStore';
 import { loader as authInfoLoader } from './Auth';
 import { useToken } from '../hooks/useToken';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ export default function RedirectPage() {
     // Redirect when token is stored
     useToken({ needsToken: false });
 
-    const parse = useStore((state) => state.parse);
+    const parse = useZustandStore((state) => state.parse);
 
     useEffect(() => {
         parse(tokenResponse);
