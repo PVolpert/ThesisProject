@@ -27,14 +27,14 @@ export default function P2PSidebar() {
     const authInfoProviders = useRouteLoaderData('call') as AuthInfoProvider[];
     const addAFriendModal = useModal({ shownInitial: false });
 
-    // TODO Complete IAT Request: Read about IAT Token Flow
-    async function onRequestIATHandler() {
+    // TODO Complete ICT Request: Read about ICT Token Flow
+    async function onRequestICTHandler() {
         const keyPair = await generateKeyPair('ES384', { extractable: true });
     }
 
     return (
         <P2PSidebarDisplay
-            onRequestIATHandler={onRequestIATHandler}
+            onRequestICTHandler={onRequestICTHandler}
             addAFriendModal={addAFriendModal}
         />
     );

@@ -6,12 +6,12 @@ import { AddAFriendModal } from './P2PSidebar';
 
 import classes from './P2PSidebarDisplay.module.css';
 interface P2PSidebarDisplayProps {
-    onRequestIATHandler: () => void;
+    onRequestICTHandler: () => void;
     addAFriendModal: AddAFriendModal;
 }
 
 export default function P2PSidebarDisplay({
-    onRequestIATHandler,
+    onRequestICTHandler,
     addAFriendModal,
 }: P2PSidebarDisplayProps) {
     const {
@@ -21,7 +21,7 @@ export default function P2PSidebarDisplay({
     } = addAFriendModal;
     return (
         <div className={classes['side-bar']}>
-            <DirectCall onRequestIATHandler={onRequestIATHandler} />
+            <DirectCall onRequestIATHandler={onRequestICTHandler} />
             <FriendsList />
             <AddAFriendButton showAddAFriend={showAddAFriend} />
             {isAddAFriendShown && (
