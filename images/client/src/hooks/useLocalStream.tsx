@@ -19,6 +19,7 @@ export default function useLocalStream() {
         const newStream = localStream.clone();
         newStream.getVideoTracks().forEach((track) => {
             track.stop();
+            newStream.removeTrack(track);
         });
         setLocalStream(newStream);
     }
@@ -26,6 +27,7 @@ export default function useLocalStream() {
         const newStream = localStream.clone();
         newStream.getAudioTracks().forEach((track) => {
             track.stop();
+            newStream.removeTrack(track);
         });
         setLocalStream(newStream);
     }
@@ -34,15 +36,21 @@ export default function useLocalStream() {
         if (!accessToken) {
             return;
         }
-        if (!constraints.audio && localStream.getAudioTracks()) {
+        if (!constraints.audio && localStream.getAudioTracks().length !== 0) {
             removeAudioTrack();
             return;
         }
-        if (!constraints.video && localStream.getVideoTracks()) {
+        if (!constraints.video && localStream.getVideoTracks().length !== 0) {
             removeVideoTrack();
             return;
         }
-        loadUsermedia();
+        if (
+            (constraints.video && localStream.getVideoTracks().length === 0) ||
+            (constraints.audio && localStream.getAudioTracks().length === 0)
+        ) {
+            loadUsermedia();
+            return;
+        }
     }, [constraints]);
 
     return localStream;
