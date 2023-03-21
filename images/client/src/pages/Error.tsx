@@ -1,10 +1,12 @@
+import { useEffect } from 'react';
 import { useRouteError } from 'react-router-dom';
 
 import PageContent from '../components/PageContent';
 
 export default function ErrorPage() {
     const error = useRouteError();
-    console.log(error);
+
+    useEffect(() => console.log(error), []);
 
     let title = 'An error occured';
     let message = <p>Something went wrong</p>;
