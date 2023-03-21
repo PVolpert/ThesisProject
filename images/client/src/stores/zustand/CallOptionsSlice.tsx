@@ -16,7 +16,6 @@ export interface CallOptionsSlice extends State, Actions {}
 const initialState: State = {
     callOptions: {
         video: true,
-        audio: true,
     },
 };
 
