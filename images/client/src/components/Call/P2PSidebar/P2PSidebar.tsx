@@ -1,5 +1,3 @@
-// TODO Implement the Sidebar
-
 import { generateKeyPair, IDToken } from 'oauth4webapi';
 import { useRouteLoaderData } from 'react-router-dom';
 import useModal from '../../../hooks/useModal';

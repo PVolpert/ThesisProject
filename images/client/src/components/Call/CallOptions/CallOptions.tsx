@@ -1,5 +1,3 @@
-//TODO (optional) Create CallOptions
-
 import { useState } from 'react';
 import { useZustandStore } from '../../../stores/zustand/ZustandStore';
 import CallOptionsDisplay from './CallOptionsDisplay';

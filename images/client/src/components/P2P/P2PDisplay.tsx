@@ -17,11 +17,6 @@ interface P2PDisplayProps {
 }
 
 export default function P2PDisplay({ localRef, remoteRef }: P2PDisplayProps) {
-    // TODO acquire local stream store state
-    // TODO acquire remote stream store state
-    // TODO useEffect that assigns streams when they are loaded
-    // TODO Controls for Tracks
-
     return (
         <>
             <div className={classes['local']}>
