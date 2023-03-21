@@ -6,6 +6,7 @@ import LoginPage from './pages/Login';
 import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
 import RootLayout from './pages/Root';
 import ErrorPage from './pages/Error';
+import P2PPage from './pages/P2P';
 
 const router = createBrowserRouter([
     {
@@ -38,7 +39,7 @@ const router = createBrowserRouter([
                     },
                     {
                         path: 'p2p',
-                        element: <h1>Here will be the video Element</h1>,
+                        element: <P2PPage />,
                     },
                     {
                         path: 'conference/:conferenceId',
