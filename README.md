@@ -1,7 +1,7 @@
 # Thesis Project
 
 This is the repository for my master thesis project.
-Goal of the thesis is to provide E2E Authentication/Encryption for WebRTC through the usage of [IAT Tokens](https://github.com/JonasPrimbs/draft-ietf-mla-oidc/blob/main/docs/draft.md)
+Goal of the thesis is to provide E2E Authentication/Encryption for WebRTC through the usage of [ICT Tokens](https://github.com/JonasPrimbs/draft-ietf-mla-oidc/blob/main/docs/draft.md)
 
 ## How does this project work
 
