@@ -5,7 +5,7 @@ import useLocalStream from '../hooks/useLocalStream';
 import { useToken } from '../hooks/useToken';
 
 // TODO Model Signaling from Peer A to Peer B: Direct Call, later Friends
-// TODO Model IAT Exchange and Verification
+// TODO Model ICT Exchange and Verification
 
 // TODO Model Steps required for building a video connection
 

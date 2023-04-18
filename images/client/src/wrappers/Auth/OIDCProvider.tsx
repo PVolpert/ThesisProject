@@ -6,17 +6,16 @@ import {
     processDiscoveryResponse,
 } from 'oauth4webapi';
 
-import AuthServerInfo from '../../model/authServerInfo';
+import { OIDCProviderInfo } from './OIDCProviderInfo';
 import { VerifierStorage } from './Verifier';
 
 /*
- * AuthInfoProvider wraps the values needed for oauth4webapis Auth Code flow
+ * OIDCProvider wraps the values needed for oauth4webapis Auth Code flow
  */
-
-export default class AuthInfoProvider {
+export default class OIDCProvider {
     client: Client;
     code_challenge_method = 'S256';
-    info: AuthServerInfo;
+    info: OIDCProviderInfo;
     authServer!: AuthorizationServer;
     verifier: VerifierStorage;
     // Load
@@ -74,8 +73,8 @@ export default class AuthInfoProvider {
         } as Client;
     }
 
-    constructor(storageName: string, info: AuthServerInfo) {
-        this.verifier = new VerifierStorage(storageName);
+    constructor(info: OIDCProviderInfo) {
+        this.verifier = new VerifierStorage(info.name + 'verifier');
         this.info = info;
         this.client = this.#createClient(this.info.clientID);
     }

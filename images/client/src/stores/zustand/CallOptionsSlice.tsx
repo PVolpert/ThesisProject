@@ -1,7 +1,8 @@
 import { StateCreator } from 'zustand';
 
 import { CallOptions } from '../../components/Call/CallOptions/CallOptions';
-import { TokenSlice } from './TokeSlice';
+import { AccessTokenSlice } from './AccessTokenSlice';
+import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 
 interface State {
     callOptions: CallOptions;
@@ -20,7 +21,7 @@ const initialState: State = {
 };
 
 export const createCallOptionsSlice: StateCreator<
-    CallOptionsSlice & TokenSlice,
+    CallOptionsSlice & AccessTokenSlice & ICTAccessTokenSlice,
     [],
     [],
     CallOptionsSlice

@@ -2,7 +2,7 @@ import { generateKeyPair, IDToken } from 'oauth4webapi';
 import { useRouteLoaderData } from 'react-router-dom';
 import useModal from '../../../hooks/useModal';
 import { useToken } from '../../../hooks/useToken';
-import AuthInfoProvider from '../../../wrappers/Auth/AuthInfoProvider';
+import OIDCProvider from '../../../wrappers/Auth/OIDCProvider';
 import P2PSidebarDisplay from './P2PSidebarDisplay';
 
 /**
@@ -21,8 +21,6 @@ export interface AddAFriendModal {
 }
 
 export default function P2PSidebar() {
-    const { idToken, accessToken } = useToken({ needsToken: true });
-    const authInfoProviders = useRouteLoaderData('call') as AuthInfoProvider[];
     const addAFriendModal = useModal({ shownInitial: false });
 
     // TODO Complete ICT Request: Read about ICT Token Flow

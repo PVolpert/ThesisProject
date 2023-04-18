@@ -2,7 +2,8 @@ import { CallDisplay } from '../components/Call/CallDisplay';
 import Conference from '../components/Call/Conference/Conference';
 import P2PSidebar from '../components/Call/P2PSidebar/P2PSidebar';
 import { useToken } from '../hooks/useToken';
-import { loader as authInfoLoader } from './Auth';
+import OIDCProvider from '../wrappers/Auth/OIDCProvider';
+import { fetchOIDCProviderInfo } from '../wrappers/Auth/OIDCProviderInfo';
 
 export default function CallPage() {
     useToken({ needsToken: true });
@@ -10,6 +11,14 @@ export default function CallPage() {
 }
 
 export async function loader() {
-    return authInfoLoader();
-    // ? Include fetch friends here
+    //? Caching via Service Worker would be a good idea
+    const ictProviderInfos = await fetchOIDCProviderInfo(
+        '/api/ictProviderInfo'
+    );
+
+    // Transform into wrapper
+    const ictProviders = ictProviderInfos.map(
+        (oidcProvider) => new OIDCProvider(oidcProvider)
+    );
+    return ictProviders;
 }

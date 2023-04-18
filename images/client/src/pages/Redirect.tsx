@@ -1,23 +1,38 @@
-import { LoaderFunctionArgs, redirect, useLoaderData } from 'react-router-dom';
+import {
+    LoaderFunctionArgs,
+    redirect,
+    useLoaderData,
+    useNavigate,
+} from 'react-router-dom';
 
 import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 
-import AuthInfoProvider from '../wrappers/Auth/AuthInfoProvider';
+import OIDCProvider from '../wrappers/Auth/OIDCProvider';
 import { fetchTokenEndPointResponse } from '../wrappers/Auth/AuthCodeConsumer';
 import { useZustandStore } from '../stores/zustand/ZustandStore';
-import { loader as authInfoLoader } from './Auth';
-import { useToken } from '../hooks/useToken';
+import { loader as authProvidersLoader } from './Auth';
+import { loader as ictProvidersLoader } from './Call';
 import { useEffect } from 'react';
 
 export default function RedirectPage() {
-    const tokenResponse = useLoaderData() as OpenIDTokenEndpointResponse;
-    // Redirect when token is stored
-    useToken({ needsToken: false });
+    const { tokenEndpointResponse, issuer } = useLoaderData() as {
+        issuer: string;
+        tokenEndpointResponse: OpenIDTokenEndpointResponse;
+    };
+    const navigate = useNavigate();
 
-    const parse = useZustandStore((state) => state.parse);
+    const parseAuth = useZustandStore((state) => state.parseAuth);
+    const parseICT = useZustandStore((state) => state.parseICT);
 
     useEffect(() => {
-        parse(tokenResponse);
+        //? Include a toast?
+        if (!issuer) {
+            parseAuth(tokenEndpointResponse);
+        } else {
+            parseICT(tokenEndpointResponse, issuer);
+        }
+        // Redirect when token is stored
+        navigate('/call');
     }, []);
 
     return (
@@ -28,40 +43,47 @@ export default function RedirectPage() {
 }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-    const authInfoProviders = await authInfoLoader();
+    const authProviders = await authProvidersLoader();
+    const ictProviders = await ictProvidersLoader();
+
     const { redirectId } = params;
     const searchParams = new URL(request.url).searchParams;
     if (!redirectId) {
         return redirect('/auth/login');
     }
 
-    // Match redirectId to a redirect Url
-    const authInfoProvider = matchRedirectId(authInfoProviders, redirectId);
-    if (!authInfoProvider) {
-        console.log('redirect link does not match');
-        return redirect('/auth/login');
+    // Test if redirectId in authProviders
+    let oidcProvider = matchRedirectId(authProviders, redirectId);
+    let ictIssuer: string = '';
+    // Test if redirectId in ictProviders
+    if (!oidcProvider) {
+        oidcProvider = matchRedirectId(ictProviders, redirectId);
+        // Neither in authProviders nor ictProviders --> invalid redirect
+        if (!oidcProvider) {
+            console.log('redirect link does not match');
+
+            return redirect('/auth/login');
+        }
+        ictIssuer = oidcProvider.info.issuer.href;
     }
 
     // Request Token from TokenEndPoint
-    const tokenResponse = await fetchTokenEndPointResponse(
-        authInfoProvider,
+    const tokenEndpointResponse = await fetchTokenEndPointResponse(
+        oidcProvider,
         searchParams
     );
 
-    return tokenResponse;
+    return { issuer: ictIssuer, tokenEndpointResponse };
 }
 
-function matchRedirectId(
-    authInfoProviders: AuthInfoProvider[],
-    redirectId: string
-) {
-    const authInfoProvider = authInfoProviders.find((authProvider) => {
+function matchRedirectId(oidcProviders: OIDCProvider[], redirectId: string) {
+    const oidcProvider = oidcProviders.find((oidcProvider) => {
         if (redirectId) {
-            return authProvider.info.redirect.pathname.endsWith(
+            return oidcProvider.info.redirect.pathname.endsWith(
                 `/${redirectId}`
             );
         }
         return false;
     });
-    return authInfoProvider;
+    return oidcProvider;
 }

@@ -10,8 +10,11 @@ export function useToken({ needsToken }: useTokenProps) {
     const navigate = useNavigate();
     const accessToken = useZustandStore((state) => state.accessToken);
     const idToken = useZustandStore((state) => state.idToken);
-    const reset = useZustandStore((state) => {
-        return state.reset;
+    const resetAuth = useZustandStore((state) => {
+        return state.resetAuth;
+    });
+    const resetICTs = useZustandStore((state) => {
+        return state.resetICTs;
     });
 
     // * Check if Tokens are needed
@@ -30,7 +33,8 @@ export function useToken({ needsToken }: useTokenProps) {
             return;
         }
         if (idToken.exp < Math.floor(Date.now()) / 1000) {
-            reset();
+            resetAuth();
+            resetICTs();
         }
     });
 

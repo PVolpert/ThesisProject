@@ -1,19 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createTokenSlice, TokenSlice } from './TokeSlice';
+import { createAccessTokenSlice, AccessTokenSlice } from './AccessTokenSlice';
 import { CallOptionsSlice, createCallOptionsSlice } from './CallOptionsSlice';
+import {
+    ICTAccessTokenSlice,
+    createICTAccessTokenSlice,
+} from './ICTAccessTokenSlice';
 
-export const useZustandStore = create<CallOptionsSlice & TokenSlice>()(
+export const useZustandStore = create<
+    CallOptionsSlice & AccessTokenSlice & ICTAccessTokenSlice
+>()(
     persist(
         (...a) => ({
-            ...createTokenSlice(...a),
+            ...createAccessTokenSlice(...a),
             ...createCallOptionsSlice(...a),
+            ...createICTAccessTokenSlice(...a),
         }),
         {
             name: 'token-storage',
             partialize: (state) => ({
                 accessToken: state.accessToken,
                 idToken: state.idToken,
+                // ictTokenMap: state.ictTokenMap,
             }),
         }
     )

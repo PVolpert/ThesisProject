@@ -9,11 +9,9 @@ import {
     OpenIDTokenEndpointResponse,
 } from 'oauth4webapi';
 
-import AuthInfoProvider from './AuthInfoProvider';
+import OIDCProvider from './OIDCProvider';
 
 /*
-! Key method : AuthCodeConsumers handleAuthCode()
-! Key property: AuthCodeConsumers tokenResponse
  * The AuthCodeConsumer class is a wrapper for the second part of an Authentication Code Flow using oauth4webapi
  * Specifically AuthCodeConsumer wraps:
  * - verifying the Auth Code Response
@@ -22,19 +20,20 @@ import AuthInfoProvider from './AuthInfoProvider';
  * - verifying the Token Response
  * - extracting the relevant information from the Token Response
  * To use a more SOLID approach I split the AuthCodeConsumer Class into 3 Subclasses
- * Consumption steps: Wraps oauth4webapis function params with the AuthInfoProvider Class
- * Consumption verification: Adds the verification to each wrapped step
- * AuthCodeConsumer: Arranges the verified functions so that only handleAuthCode has to be executed from the outside 
+ * Oauth4WebApiWrapper: Wraps oauth4webapis function params using variables from the Provider Class
+ * Consumption Steps: Combines the wrapped functions with verification to make actual steps
+ * AuthCodeConsumer: Arranges the consumption steps in correct order
+ *
  */
 
-class ConsumptionSteps {
-    #authProvider: AuthInfoProvider;
+class Oauth4WebApiWrapper {
+    #oidcProvider: OIDCProvider;
     #searchParams: URLSearchParams;
 
     async validateAuthResponse() {
         const params = validateAuthResponse(
-            this.#authProvider.authServer,
-            this.#authProvider.client,
+            this.#oidcProvider.authServer,
+            this.#oidcProvider.client,
             this.#searchParams,
             expectNoState
         );
@@ -43,7 +42,7 @@ class ConsumptionSteps {
 
     // ! Normal Import of oauth4webapi does not export CallbackParameters therefore we need any
     async authorizationCodeGrantRequest(params: any) {
-        if (!this.#authProvider.verifier.verifier) {
+        if (!this.#oidcProvider.verifier.verifier) {
             throw new Response(
                 JSON.stringify({
                     message: 'No verifier set',
@@ -53,34 +52,34 @@ class ConsumptionSteps {
         }
 
         const response = authorizationCodeGrantRequest(
-            this.#authProvider.authServer,
-            this.#authProvider.client,
+            this.#oidcProvider.authServer,
+            this.#oidcProvider.client,
             params,
-            this.#authProvider.info.redirect.href,
-            this.#authProvider.verifier.verifier
+            this.#oidcProvider.info.redirect.href,
+            this.#oidcProvider.verifier.verifier
         );
         return response;
     }
 
     async processAuthorizationCodeOpenIDResponse(response: Response) {
         const result = processAuthorizationCodeOpenIDResponse(
-            this.#authProvider.authServer,
-            this.#authProvider.client,
+            this.#oidcProvider.authServer,
+            this.#oidcProvider.client,
             response
         );
         return result;
     }
 
-    constructor(authProvider: AuthInfoProvider, params: URLSearchParams) {
-        if (!authProvider.authServer || !authProvider.client) {
+    constructor(oidcProvider: OIDCProvider, params: URLSearchParams) {
+        if (!oidcProvider.authServer || !oidcProvider.client) {
             throw new Response(
                 JSON.stringify({
-                    message: 'authProvider values not set',
+                    message: 'oidcProvider values not set',
                 }),
                 { status: 400 }
             );
         }
-        this.#authProvider = authProvider;
+        this.#oidcProvider = oidcProvider;
 
         if (!params) {
             throw new Response(
@@ -94,8 +93,8 @@ class ConsumptionSteps {
     }
 }
 
-class ConsumptionVerification extends ConsumptionSteps {
-    async validateAuthCode() {
+class ConsumptionSteps extends Oauth4WebApiWrapper {
+    async getAuthCode() {
         const callBackParams = await this.validateAuthResponse();
         if (isOAuth2Error(callBackParams)) {
             throw new Response(
@@ -110,7 +109,7 @@ class ConsumptionVerification extends ConsumptionSteps {
     }
 
     // ! Normal Import of oauth4webapi does not export CallbackParameters therefore we need any
-    async requestToken(callBackParams: any) {
+    async getAuthCodeGrantResponse(callBackParams: any) {
         const authCodeGrantResponse = await this.authorizationCodeGrantRequest(
             callBackParams
         );
@@ -132,7 +131,7 @@ class ConsumptionVerification extends ConsumptionSteps {
         return authCodeGrantResponse;
     }
 
-    async processTokenResponse(authCodeGrantResponse: Response) {
+    async getProcessedGrantResponse(authCodeGrantResponse: Response) {
         const processedTokenResponse =
             await this.processAuthorizationCodeOpenIDResponse(
                 authCodeGrantResponse
@@ -151,38 +150,38 @@ class ConsumptionVerification extends ConsumptionSteps {
     }
 }
 
-class AuthCodeConsumer extends ConsumptionVerification {
+class AuthCodeConsumer extends ConsumptionSteps {
     tokenResponse: OpenIDTokenEndpointResponse | null;
+
     async fetchTokenEndPointResponse() {
-        const callBackParams = await this.validateAuthCode();
+        const callBackParams = await this.getAuthCode();
 
-        const authCodeGrantResponse = await this.requestToken(callBackParams);
+        const authCodeGrantResponse = await this.getAuthCodeGrantResponse(
+            callBackParams
+        );
 
-        const processedTokenResponse = await this.processTokenResponse(
+        const processedTokenResponse = await this.getProcessedGrantResponse(
             authCodeGrantResponse
         );
         this.tokenResponse = processedTokenResponse;
     }
 
-    constructor(authProvider: AuthInfoProvider, params: URLSearchParams) {
+    constructor(authProvider: OIDCProvider, params: URLSearchParams) {
         super(authProvider, params);
         this.tokenResponse = null;
     }
 }
 
 export async function fetchTokenEndPointResponse(
-    authInfoProvider: AuthInfoProvider,
+    oidcProvider: OIDCProvider,
     searchParams: URLSearchParams
 ) {
     // Load Verifier
-    authInfoProvider.verifier.load();
+    oidcProvider.verifier.load();
     // Create Auth Server
-    await authInfoProvider.createAuthServer();
+    await oidcProvider.createAuthServer();
 
-    const authCodeConsumer = new AuthCodeConsumer(
-        authInfoProvider,
-        searchParams
-    );
+    const authCodeConsumer = new AuthCodeConsumer(oidcProvider, searchParams);
     await authCodeConsumer.fetchTokenEndPointResponse();
     if (!authCodeConsumer.tokenResponse) {
         throw new Response(
@@ -193,6 +192,6 @@ export async function fetchTokenEndPointResponse(
         );
     }
     // Delete verifier after successful
-    authInfoProvider.verifier.reset();
+    oidcProvider.verifier.reset();
     return authCodeConsumer.tokenResponse;
 }

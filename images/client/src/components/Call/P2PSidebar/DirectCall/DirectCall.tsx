@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import DirectCallDisplay from './DirectCallDisplay';
 
 interface DirectCallProps {
-    onRequestIATHandler: () => void;
+    onRequestICTHandler: () => void;
 }
-export default function DirectCall({ onRequestIATHandler }: DirectCallProps) {
+export default function DirectCall({ onRequestICTHandler }: DirectCallProps) {
     const navigate = useNavigate();
 
     function dummySubmitHandler(event: React.FormEvent<string>) {
@@ -14,7 +14,7 @@ export default function DirectCall({ onRequestIATHandler }: DirectCallProps) {
 
     return (
         <DirectCallDisplay
-            onRequestIATHandler={onRequestIATHandler}
+            onRequestICTHandler={onRequestICTHandler}
             submitHandler={dummySubmitHandler}
         />
     );

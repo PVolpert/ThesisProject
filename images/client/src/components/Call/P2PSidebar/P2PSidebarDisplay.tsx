@@ -21,7 +21,7 @@ export default function P2PSidebarDisplay({
     } = addAFriendModal;
     return (
         <div className={classes['side-bar']}>
-            <DirectCall onRequestIATHandler={onRequestICTHandler} />
+            <DirectCall onRequestICTHandler={onRequestICTHandler} />
             <FriendsList />
             <AddAFriendButton showAddAFriend={showAddAFriend} />
             {isAddAFriendShown && (

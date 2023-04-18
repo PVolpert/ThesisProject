@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import Call, { loader as callLoader } from './pages/Call';
-import { loader as authInfoLoader } from './pages/Auth';
+import { loader as oidcProviderLoader } from './pages/Auth';
 import LoginPage from './pages/Login';
 import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
 import RootLayout from './pages/Root';
@@ -18,7 +18,7 @@ const router = createBrowserRouter([
             {
                 path: 'auth',
                 id: 'auth',
-                loader: authInfoLoader,
+                loader: oidcProviderLoader,
                 children: [
                     { path: 'login', element: <LoginPage /> },
                     {

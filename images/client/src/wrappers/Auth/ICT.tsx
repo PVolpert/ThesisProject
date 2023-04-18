@@ -1,33 +1,14 @@
 import { JWTPayload, SignJWT } from 'jose';
 import { IDToken } from 'oauth4webapi';
-import AuthInfoProvider from './AuthInfoProvider';
+import OIDCProvider from './OIDCProvider';
 
-function findIssuer(
-    authInfoProviders: AuthInfoProvider[],
-    idToken: IDToken | null
-) {
-    const authInfoProvider = authInfoProviders.find((authInfoProvider) => {
-        return idToken?.iss === authInfoProvider.info.issuer.href;
-    });
-    if (!authInfoProvider) {
-        throw new Response(
-            JSON.stringify({
-                message: 'Issuers do not match',
-            }),
-            { status: 400 }
-        );
-    }
-    return authInfoProvider;
-}
 /**
- * Plan for IAT Token Acquisition:
+ * Plan for ICT Token Acquisition:
  * Acquisition invoked by Event (Click)
  * 1. Search for the correct issuer
  * 2. generateTokenRequest
  * 3. requestRemoteToken
- * --> Needs AuthInfoProvider list + valid OpenIDToken
- *
- *
+ * --> Needs iatProvider list + valid iat OpenIDToken
  */
 
 interface JWTBody {
