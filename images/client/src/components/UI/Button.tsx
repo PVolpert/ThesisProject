@@ -1,5 +1,3 @@
-//TODO add Button
-
 import { ReactNode } from 'react';
 
 import classes from './Button.module.css';

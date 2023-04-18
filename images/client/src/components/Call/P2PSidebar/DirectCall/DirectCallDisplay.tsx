@@ -2,12 +2,12 @@ import Button from '../../../UI/Button';
 import classes from './DirectCallDisplay.module.css';
 
 interface DirectCallDisplayProps {
-    onRequestIATHandler: () => void;
+    onRequestICTHandler: () => void;
     submitHandler: (event: React.FormEvent<string>) => void;
 }
 
 export default function DirectCallDisplay({
-    onRequestIATHandler,
+    onRequestICTHandler,
     submitHandler,
 }: DirectCallDisplayProps) {
     return (
@@ -17,8 +17,8 @@ export default function DirectCallDisplay({
                 <input name="userId" id="userId" type="text" />
             </div>
             <div className={classes['controls']}>
-                <Button style="ternary" onClick={onRequestIATHandler}>
-                    Test IAT
+                <Button style="ternary" onClick={onRequestICTHandler}>
+                    Test ICT
                 </Button>
                 <Button style="primary" isSubmit={true} onClick={submitHandler}>
                     Call

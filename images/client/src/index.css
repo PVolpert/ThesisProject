@@ -9,8 +9,8 @@
     font-weight: 400;
 
     color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    color: #f2f5f4;
+    background-color: #161618;
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -37,6 +37,10 @@
     --color-primary-700: #fbc14d;
     --color-primary-800: #fab833;
     --color-primary-900: #f6ad1b;
+
+    --color-button-primary: #008fff;
+    --color-button-secondary: #ff008f;
+    --color-button-ternary: #8fff00;
 }
 
 /* https://andy-bell.co.uk/a-modern-css-reset/ */
@@ -97,6 +101,7 @@ button,
 textarea,
 select {
     font: inherit;
+    color: inherit;
 }
 
 /* Remove all animations, transitions and smooth scroll for people that prefer not to see them */
