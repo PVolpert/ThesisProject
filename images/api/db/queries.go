@@ -28,4 +28,5 @@ func baseQuery(query string) func() (resp string, err error) {
 	}
 }
 
-var QueryAuthServerInfo = baseQuery(`SELECT authServerInfoAsJSON();`)
+var QueryAuthProviderInfo = baseQuery(`SELECT authProviderInfoAsJSON();`)
+var QueryICTProviderInfo = baseQuery(`SELECT ictProviderInfoAsJSON();`)
