@@ -1,23 +1,24 @@
 package db
 
 import (
-	"api/env"
 	"database/sql"
 	"fmt"
+
+	"api/env"
+
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 type dBConfig struct {
-	DBPassword string `mapstructure:"api_pw"`
-	DBName     string `mapstructure:"webapp_dbname"`
-	DBUser     string `mapstructure:"api_name"`
+	DBPassword string `mapstructure:"API_PW"`
+	DBName     string `mapstructure:"WEBAPP_DB"`
+	DBUser     string `mapstructure:"API_NAME"`
 }
 
 func loadConfig() (config dBConfig, err error) {
-
-	configPath := env.Get("CONFIG_PATH", "/run/secrets/db-api")
+	configPath := env.Get("DB_LOGIN", "/run/secrets/db-user-api")
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
@@ -31,9 +32,8 @@ func loadConfig() (config dBConfig, err error) {
 }
 
 func connectToDB() (db *sql.DB, err error) {
-
 	var (
-		host = env.Get("HOST", "db")
+		host = env.Get("DB_HOST", "db")
 		port = env.Get("DB_PORT", "5432")
 	)
 
