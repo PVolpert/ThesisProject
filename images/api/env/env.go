@@ -2,8 +2,9 @@ package env
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // return Env Variable or substitute

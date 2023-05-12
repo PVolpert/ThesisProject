@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	// "api/db"
-	"api/db"
-	// "encoding/json"
 	"fmt"
 	"net/http"
-	// log "github.com/sirupsen/logrus"
+
+	"api/db"
 )
 
 var GetAuthProviderInfoHandler = buildPureQueryHandler(db.QueryAuthProviderInfo)

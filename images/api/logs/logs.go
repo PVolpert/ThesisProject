@@ -2,11 +2,12 @@ package logs
 
 import (
 	"api/env"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func SetLogLevel() {
-	phase := env.Get("STAGE", "Production")
+	phase := env.Get("STAGE", "Development")
 	log.SetReportCaller(true)
 	switch phase {
 	case "Production":
