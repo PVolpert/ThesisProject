@@ -1,0 +1,275 @@
+openapi: '3.0.2'
+info:
+  title: ThesisProject Endpoints
+  version: '1.0'
+
+servers:
+  - url: http://client.localhost
+
+
+
+components:
+  schemas:
+    OIDCProviderInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        img:
+          type: string
+        clientId: 
+          type: string
+        issuer:
+          type: string
+        redirect:
+          type: string
+      example: 
+        name: sampleProvider
+        img: http://linkToImage.com/image.svg
+        clientId: sampleId 
+        issuer: http://linktoIssuer.com
+        redirect: http://homeURL/auth/redirect/id
+    OIDCProviderInfos:
+      type: object
+      properties:
+        OIDCProviderInfo: 
+          type: array
+          items:
+            $ref: '#/components/schemas/OIDCProviderInfo'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      example:
+        id: sampleProvider%sampleId
+        name: sampleUsername
+    Users:
+      type: object
+      properties:
+        users: 
+          type: array
+          items: 
+            $ref: '#/components/schemas/User'
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message: 
+          type: string
+      example:
+        error: TP401
+        message: Invalid authentication 
+
+    FriendRequest: 
+      type: object
+      properties:
+        id: 
+          type: string
+    FriendRequests:
+      type: object
+      properties:
+        friendRequests: 
+          type: array 
+          items: 
+            $ref: '#/components/schemas/FriendRequest'
+
+
+  parameters:
+    friendId:
+      name: friendId
+      description: UserId of friend
+      in: path
+      required: true
+      schema: 
+        type: string     
+
+  responses:
+    defaultError:
+          description: Return custom errors and messages
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  securitySchemes:
+    keycloak_auth:
+      type: openIdConnect
+      openIdConnectUrl: http//op.localhost/realms/auth/.well-known/openid-configuration
+# ! new authProviders here
+
+paths:
+  # Needs no token
+  /api/authProviderInfo:
+    get:
+      description: Returns information about all OIDC providers used for authentication
+      responses:
+        '200':
+          description: OK
+          content:
+            'application/json': 
+              schema:
+                  $ref : '#/components/schemas/OIDCProviderInfos'
+        default:
+          $ref : '#/components/responses/defaultError'
+
+  /api/ictProviderInfo:
+    get:
+      description: Returns information about all OIDC providers used for ICT
+      responses:
+        '200':
+          description: OK
+          content:
+            'application/json': 
+              schema:
+                  $ref : '#/components/schemas/OIDCProviderInfos'
+        default:
+          $ref : '#/components/responses/defaultError'
+  # Needs valid token
+  # /api/user:
+  #   get:
+  #     description: Returns user information of token owner
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           'application/json':
+  #             schema: 
+  #               $ref: '#/components/schemas/User'
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+  #   post:
+  #     description: Registers user information for unknown token owner
+  #     security:
+  #         - keycloak_auth:
+  #         # TODO add fitting Scope
+  #           - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+  #   delete:
+  #     description: Delete user information of token owner
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+
+  # /api/friend:
+  #   get:
+  #     description: Get list of friends of token owner
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           'application/json':
+  #             schema:
+  #               $ref: '#/components/schemas/Users'
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+   
+
+
+  # /api/friend/{friendId}:
+  #   get:
+  #     description: Get friend with given userId
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     parameters:
+  #       - $ref: '#/components/parameters/friendId'        
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           'application/json':
+  #             schema:
+  #               $ref: '#/components/schemas/User'
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+  #   delete:
+  #     description: Delete friend with given userId
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     parameters:
+  #       - $ref: '#/components/parameters/friendId'
+  #     responses:
+  #       '200':
+  #         description: OK
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+
+  # # TODO Get Open Friend Requests
+
+  # /api/friendRequest/:
+  #   get:
+  #     description: Return open friend requests
+  #     security:
+  #       - keycloak_auth:
+  #         - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           'application/json':
+  #             schema: 
+  #               $ref : '#/components/schemas/FriendRequests'
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
+    
+
+  # TODO Handle received FriendRequest
+  # TODO DELETE: Deny; POST: Accept 
+
+  # TODO Send FriendRequest
+
+  /signaling/:
+    #* Websocket
+    get: 
+      description: Connect to signaling server Websocket
+      security:
+        - keycloak_auth:
+        # TODO add fitting Scope
+          - dummy
+      responses:
+        '200':
+          description: OK
+        default:
+          $ref : '#/components/responses/defaultError'
+
+  # /signaling/activeFriends:
+  #   get: 
+  #     description: Return active friends 
+  #     security:
+  #       - keycloak_auth:
+  #       # TODO add fitting Scope
+  #         - dummy
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           'application/json':
+  #             schema: 
+  #               $ref: '#/components/schemas/Users'
+  #       default:
+  #         $ref : '#/components/responses/defaultError'
