@@ -12,9 +12,7 @@ export default function CallPage() {
 
 export async function loader() {
     //? Caching via Service Worker would be a good idea
-    const ictProviderInfos = await fetchOIDCProviderInfo(
-        '/api/ictProviderInfo'
-    );
+    const ictProviderInfos = await fetchOIDCProviderInfo('/ictProviderInfo');
 
     // Transform into wrapper
     const ictProviders = ictProviderInfos.map(

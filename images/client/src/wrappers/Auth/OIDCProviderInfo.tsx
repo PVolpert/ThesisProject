@@ -13,16 +13,19 @@ export interface RawOIDCProviderInfo {
     issuer: string;
     redirect: string;
 }
+
 export async function fetchOIDCProviderInfo(apiEndpoint: string) {
     try {
         const respJSON = await fetch(
-            new URL(`${process.env.REACT_APP_PROXY_URL}${apiEndpoint}`)
+            new URL(`${process.env.REACT_APP_API_URL}${apiEndpoint}`)
         );
         if (!respJSON.ok) {
             throw new Error(`${respJSON.status}: ${respJSON.statusText}`);
         }
 
-        const resp: RawOIDCProviderInfo[] = await respJSON.json();
+        const {
+            oidcproviderinfo: resp,
+        }: { oidcproviderinfo: RawOIDCProviderInfo[] } = await respJSON.json();
 
         const oidcProviderInfos: OIDCProviderInfo[] = resp.map(
             (rawProviderInfo) => {
