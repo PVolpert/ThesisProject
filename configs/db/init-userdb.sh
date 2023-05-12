@@ -3,12 +3,17 @@ set -e
 
 source /run/secrets/db-env
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-	CREATE DATABASE $webapp_dbname;
-  CREATE USER $api_name WITH PASSWORD '$api_pw';
+# * Create DBs and Users
+psql -v ON_ERROR_STOP=1 <<-EOSQL
+  CREATE DATABASE $WEBAPP_DB;
+  CREATE USER $API_NAME WITH PASSWORD '$API_PW';
+  CREATE USER $SIGNALING_NAME WITH PASSWORD '$SIGNALING_PW';
+	
+  CREATE DATABASE $KEYCLOAK_DB;
+  CREATE USER $KEYCLOAK_NAME WITH PASSWORD '$KEYCLOAK_PW';
 EOSQL
 
-psql -v ON_ERROR_STOP=1 --dbname "$webapp_dbname"<<-EOSQL
+psql -v ON_ERROR_STOP=1 --dbname "$WEBAPP_DB"<<-EOSQL
 CREATE TABLE authProviderInfo  (
     name text PRIMARY KEY ,
     img text,
@@ -24,15 +29,67 @@ CREATE TABLE  ictProviderInfo (
     redirect text
                                 );
 
+CREATE FUNCTION authProviderInfoAsJSON () returns jsonb AS
+\$\$
+    -- Turn each row into a json object
+    WITH authProviderInfoObjects AS
+    (SELECT asI.name,row_to_json(asI)  AS object
+    FROM authProviderInfo AS asI),
+    -- Merge all rows into a SQL array
+    authProviderInfoArray AS
+    (SELECT array_agg(object order by name) AS authProviderInfoArray
+    FROM authProviderInfoObjects),
+    -- Transform the SQL array to a JSON array
+    authProviderJSONArray AS
+    (SELECT array_to_json(authProviderInfoArray.authProviderInfoArray)::jsonb AS OIDCProviderInfo
+    FROM authProviderInfoArray)
+    -- Wrap JSON array with an object
+    SELECT row_to_json(authJSON)
+    FROM authProviderJSONArray AS authJSON
+\$\$ LANGUAGE sql IMMUTABLE;
+
+CREATE FUNCTION ictProviderInfoAsJSON () returns jsonb AS
+\$\$
+    -- Turn each row into a json object
+    WITH ictProviderInfoObjects AS
+    (SELECT asI.name,row_to_json(asI)  AS object
+    FROM ictProviderInfo AS asI),
+    -- Merge all rows into a SQL array
+    ictProviderInfoArray AS
+    (SELECT array_agg(object order by name) AS ictProviderInfoArray
+    FROM ictProviderInfoObjects),
+    -- Transform the SQL array to a JSON array
+    ictProviderJSONArray AS
+    (SELECT array_to_json(ictProviderInfoArray.ictProviderInfoArray)::jsonb AS OIDCProviderInfo
+    FROM ictProviderInfoArray)
+    -- Wrap JSON array with an object
+    SELECT row_to_json(ictJSON)::jsonb
+    FROM ictProviderJSONArray as ictJSON
+\$\$ LANGUAGE sql IMMUTABLE;
+EOSQL
+
+psql -v ON_ERROR_STOP=1 --dbname "$WEBAPP_DB"<<-EOSQL
+GRANT EXECUTE ON FUNCTION authProviderInfoAsJSON() TO $API_NAME;
+GRANT SELECT ON TABLE authProviderInfo TO $API_NAME;
+GRANT EXECUTE ON FUNCTION ictProviderInfoAsJSON() TO $API_NAME;
+GRANT SELECT ON TABLE ictProviderInfo TO $API_NAME;
+EOSQL
+
+psql -v ON_ERROR_STOP=1 --dbname "$KEYCLOAK_DB"<<-EOSQL
+GRANT ALL ON SCHEMA public TO $KEYCLOAK_NAME;
+EOSQL
+
+
+psql -v ON_ERROR_STOP=1 --dbname "$WEBAPP_DB"<<-EOSQL
 INSERT INTO ictProviderInfo
 WITH jsonICTProviderInfo AS
 (SELECT '[
   {
-    "name": "Keycloak ICT",
-    "img": "https://www.svgrepo.com/download/331455/keycloak.svg",
-    "clientId": "thesisProject-Client-ICT",
-    "issuer": "http://op.localhost/realms/ict",
-    "redirect": "http://localhost:2000/auth/redirect/destiny"
+    "name": "ICT",
+    "img": "https://raw.githubusercontent.com/keycloak/keycloak-misc/17ac44fcca6f7cc9b07d2ccbd46d702e691805fb/logo/keycloak_icon_32px.svg",
+    "clientId": "thesisProject-ICT",
+    "issuer": "http://$OP_HOST/realms/ict",
+    "redirect": "http://$CLIENT_HOST/auth/redirect/destiny"
   }
 ]'::jsonb AS start_values),
      jsonICTProviderInfoRows AS
@@ -50,11 +107,11 @@ INSERT INTO authProviderInfo
 WITH jsonAuthProviderInfo AS
 (SELECT '[
   {
-    "name": "Keycloak Auth",
-    "img": "https://www.svgrepo.com/download/331455/keycloak.svg",
+    "name": "Client",
+    "img": "https://raw.githubusercontent.com/keycloak/keycloak-misc/17ac44fcca6f7cc9b07d2ccbd46d702e691805fb/logo/keycloak_icon_32px.svg",
     "clientId": "thesisProject-Client",
-    "issuer": "http://op.localhost/realms/auth",
-    "redirect": "http://localhost:2000/auth/redirect/morpheus"
+    "issuer": "http://$OP_HOST/realms/auth",
+    "redirect": "http://$CLIENT_HOST/auth/redirect/morpheus"
   }
 ]'::jsonb AS start_values),
      jsonAuthProviderInfoRows AS
@@ -67,32 +124,4 @@ SELECT authProviderInfo ->> 'name'     AS name,
        authProviderInfo ->> 'issuer'   AS issuer,
        authProviderInfo ->> 'redirect' AS redirect
 FROM jsonAuthProviderInfoRows;
-
-CREATE FUNCTION authProviderInfoAsJSON () returns jsonb AS
-\$\$
-    WITH authProviderInfoObjects AS
-    (SELECT asI.name,row_to_json(asI)  AS object
-    FROM authProviderInfo AS asI),
-    authProviderInfoArray AS
-    (SELECT array_agg(object order by name) AS authProviderInfoArray
-    FROM authProviderInfoObjects)
-    SELECT array_to_json(authProviderInfoArray.authProviderInfoArray)::jsonb
-    FROM authProviderInfoArray
-\$\$ LANGUAGE sql IMMUTABLE;
-
-CREATE FUNCTION ictProviderInfoAsJSON () returns jsonb AS
-\$\$
-    WITH ictProviderInfoObjects AS
-    (SELECT asI.name,row_to_json(asI)  AS object
-    FROM ictProviderInfo AS asI),
-    ictProviderInfoArray AS
-    (SELECT array_agg(object order by name) AS ictProviderInfoArray
-    FROM ictProviderInfoObjects)
-    SELECT array_to_json(ictProviderInfoArray.ictProviderInfoArray)::jsonb
-    FROM ictProviderInfoArray
-\$\$ LANGUAGE sql IMMUTABLE;
-GRANT EXECUTE ON FUNCTION authProviderInfoAsJSON() TO $api_name;
-GRANT SELECT ON TABLE authProviderInfo TO $api_name;
-GRANT EXECUTE ON FUNCTION ictProviderInfoAsJSON() TO $api_name;
-GRANT SELECT ON TABLE ictProviderInfo TO $api_name;
 EOSQL
