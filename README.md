@@ -31,12 +31,14 @@ The following technologies are showcased in this project
     -   Frontend application
     -   routing via [react-router](https://reactrouter.com/en/main)
     -   state management via [zustand](https://github.com/pmndrs/zustand)
-    -   Open ID Connect Auth Code flow via [oauth4webapi](https://github.com/panva/oauth4webapi)
+    -   OIDC Auth Code flow via [oauth4webapi](https://github.com/panva/oauth4webapi)
     -   1to1 video calls via [vanilla WebRTC](https://webrtc.github.io/samples/src/content/peerconnection/channel/)
     -   Conference calls via [mediasoup](https://github.com/versatica/mediasouphttps://github.com/versatica/mediasoup)
 -   [Go](https://go.dev/)
     -   Backend API
     -   Routing via [go-chi](https://github.com/go-chi/chi)
+    -   Websockets via [nhooyr/ws]()
+    -   OIDC Token Handling
     -   Postgres Support
 -   [Postgres](https://www.postgresql.org/)
     -   Database
