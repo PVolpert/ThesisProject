@@ -3,6 +3,7 @@ package signalingServer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -40,6 +41,7 @@ func New() *signalingServer {
 }
 
 func (sig *signalingServer) SocketHandler(w http.ResponseWriter, r *http.Request) {
+	//* socket opening
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns: []string{"*"},
 	})
@@ -49,7 +51,13 @@ func (sig *signalingServer) SocketHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
-	err = sig.subscribe(r.Context(), c)
+	// TODO Replace with id from token
+	ctx := idToContext(r.Context(), userId(RandomString(10)))
+
+	//* socket logic
+	err = sig.subscribe(ctx, c)
+
+	//* socket closing
 	// Handle error for subscription
 	if errors.Is(err, context.Canceled) {
 		return
@@ -65,7 +73,11 @@ func (sig *signalingServer) SocketHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) error {
-	id := idFromContext(ctx)
+	id, err := idFromContext(ctx)
+
+	if err != nil {
+		return err
+	}
 
 	sub := &subscriber{
 		msgs: make(chan message, sig.subscriberMessageBuffer),
@@ -83,9 +95,8 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		incomingCh <- sig.incomingMsgHandler(ctx, c)
 	}()
 	for {
-		sig.logf("Starting new Cycle for %s", id)
 		select {
-		// * Case: Message from subscriber
+		// * Case: Incoming Message
 		case err := <-incomingCh:
 			// Handle possible error
 			if err != nil {
@@ -95,13 +106,13 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 			go func() {
 				incomingCh <- sig.incomingMsgHandler(ctx, c)
 			}()
-		// * Case: Message from outside
+		//* Case: Outgoing message
 		case msg := <-sub.msgs:
 			err := writeTimeoutJSON(ctx, time.Second*5, c, msg)
 			if err != nil {
 				return err
 			}
-		// * Case: Request is over for unknown reason
+		//* Case: Request is over for unknown reason
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -117,8 +128,9 @@ func (sig *signalingServer) incomingMsgHandler(ctx context.Context, c *websocket
 	if err != nil {
 		return err
 	}
+	ctx = msgToContext(ctx, msg)
 
-	return sig.evalIncomingMessage(ctx, c, msg)
+	return sig.evalIncomingMessage(ctx, c)
 }
 
 func writeTimeoutJSON(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg message) error {
@@ -126,4 +138,20 @@ func writeTimeoutJSON(ctx context.Context, timeout time.Duration, c *websocket.C
 	defer cancel()
 
 	return wsjson.Write(ctx, c, msg)
+}
+
+func (sig *signalingServer) evalIncomingMessage(ctx context.Context, c *websocket.Conn) error {
+	msg, err := msgFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	if msg.Type == "active" {
+		err := sig.handleActiveUsersMessage(ctx, c)
+		return err
+	}
+	if (msg.Type == "offer" || msg.Type == "icecandidate" || msg.Type == "answer") && len(msg.Target) != 0 {
+		err := sig.handleSDPMessage(ctx, c)
+		return err
+	}
+	return fmt.Errorf("no fitting message")
 }
