@@ -3,8 +3,8 @@ package signalingServer
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
+	// "signaling/env"
 	"sync"
 	"time"
 
@@ -26,6 +26,8 @@ type signalingServer struct {
 	// Defaults to log.Printf.
 	logf func(f string, v ...interface{})
 
+	rateLimiter *time.Ticker
+
 	subscribersMu sync.Mutex
 	subscribers   map[userId]*subscriber
 }
@@ -34,6 +36,7 @@ func New() *signalingServer {
 	sig := &signalingServer{
 		subscriberMessageBuffer: 16,
 		logf:                    log.Infof,
+		rateLimiter:             time.NewTicker(100 * time.Millisecond),
 		subscribers:             make(map[userId]*subscriber),
 	}
 
@@ -51,11 +54,8 @@ func (sig *signalingServer) SocketHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
-	// TODO Replace with id from token
-	ctx := idToContext(r.Context(), userId(RandomString(10)))
-
 	//* socket logic
-	err = sig.subscribe(ctx, c)
+	err = sig.subscribe(r.Context(), c)
 
 	//* socket closing
 	// Handle error for subscription
@@ -73,6 +73,7 @@ func (sig *signalingServer) SocketHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) error {
+	// Get id from Token
 	id, err := idFromContext(ctx)
 
 	if err != nil {
@@ -84,6 +85,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		closeSlow: func() {
 			c.Close(websocket.StatusPolicyViolation, "connection too slow to keep up with messages")
 		},
+		username: usernameFromContext(ctx),
 	}
 
 	sig.addSubscriber(id, sub)
@@ -92,7 +94,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 	incomingCh := make(chan error, 1)
 	// start inital incoming channel handling
 	go func() {
-		incomingCh <- sig.incomingMsgHandler(ctx, c)
+		incomingCh <- sig.evalIncomingMessage(ctx, c)
 	}()
 	for {
 		select {
@@ -104,7 +106,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 			}
 			// Handle next incoming msg
 			go func() {
-				incomingCh <- sig.incomingMsgHandler(ctx, c)
+				incomingCh <- sig.evalIncomingMessage(ctx, c)
 			}()
 		//* Case: Outgoing message
 		case msg := <-sub.msgs:
@@ -119,18 +121,19 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 	}
 }
 
-// incomingMsgHandler reads from the WebSocket connection and then writes
+// evalIncomingMessage reads from the WebSocket connection and then writes
 // the received message back to it.
-// The entire function has 10s to complete.
-func (sig *signalingServer) incomingMsgHandler(ctx context.Context, c *websocket.Conn) error {
+// ! First point of contact, sanitization required
+func (sig *signalingServer) evalIncomingMessage(ctx context.Context, c *websocket.Conn) error {
 	var msg message
 	err := wsjson.Read(ctx, c, &msg)
 	if err != nil {
 		return err
 	}
+	log.Info(msg)
 	ctx = msgToContext(ctx, msg)
 
-	return sig.evalIncomingMessage(ctx, c)
+	return sig.incomingMessageHandler(ctx, c)
 }
 
 func writeTimeoutJSON(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg message) error {
@@ -138,20 +141,4 @@ func writeTimeoutJSON(ctx context.Context, timeout time.Duration, c *websocket.C
 	defer cancel()
 
 	return wsjson.Write(ctx, c, msg)
-}
-
-func (sig *signalingServer) evalIncomingMessage(ctx context.Context, c *websocket.Conn) error {
-	msg, err := msgFromContext(ctx)
-	if err != nil {
-		return err
-	}
-	if msg.Type == "active" {
-		err := sig.handleActiveUsersMessage(ctx, c)
-		return err
-	}
-	if (msg.Type == "offer" || msg.Type == "icecandidate" || msg.Type == "answer") && len(msg.Target) != 0 {
-		err := sig.handleSDPMessage(ctx, c)
-		return err
-	}
-	return fmt.Errorf("no fitting message")
 }
