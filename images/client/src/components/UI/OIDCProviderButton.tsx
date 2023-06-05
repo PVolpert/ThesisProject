@@ -1,7 +1,6 @@
 import classes from './OIDCProviderButton.module.css';
 
 interface OIDCProviderButtonProps {
-    id: string;
     onClick: () => void;
     logo: URL;
     text: string;
@@ -9,15 +8,13 @@ interface OIDCProviderButtonProps {
 }
 
 export default function OIDCProviderButton({
-    id,
     onClick,
     logo,
     text,
     isTokenActive,
 }: OIDCProviderButtonProps) {
     return (
-        // TODO Move li outside + Redo css
-        <li key={id} className={classes.item}>
+        <div className={classes.item}>
             <button onClick={onClick} disabled={isTokenActive}>
                 <span
                     className={classes['item__logo']}
@@ -27,6 +24,6 @@ export default function OIDCProviderButton({
                 ></span>
                 <span className={classes['item__text']}>{text}</span>
             </button>
-        </li>
+        </div>
     );
 }

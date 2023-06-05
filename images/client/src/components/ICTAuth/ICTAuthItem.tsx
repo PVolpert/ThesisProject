@@ -16,24 +16,27 @@ export default function ICTAuthItem({
     const [authCodeProvider] = useState(new AuthCodeProvider(ictProvider));
     if (isTokenActive) {
         return (
-            <OIDCProviderButton
-                id={ictProvider.info.name}
-                onClick={() => {}}
-                logo={ictProvider.info.img}
-                text={`Added ${ictProvider.info.name}`}
-                isTokenActive={isTokenActive}
-            />
+            <li>
+                <OIDCProviderButton
+                    onClick={() => {}}
+                    logo={ictProvider.info.img}
+                    // TODO Add username
+                    text={`Connected as ${ictProvider.info.name}`}
+                    isTokenActive={isTokenActive}
+                />
+            </li>
         );
     }
     return (
-        <OIDCProviderButton
-            id={ictProvider.info.name}
-            onClick={authCodeProvider.redirectToProviderHandler.bind(
-                authCodeProvider
-            )}
-            logo={ictProvider.info.img}
-            text={`Add ${ictProvider.info.name}`}
-            isTokenActive={isTokenActive}
-        />
+        <li>
+            <OIDCProviderButton
+                onClick={authCodeProvider.redirectToProviderHandler.bind(
+                    authCodeProvider
+                )}
+                logo={ictProvider.info.img}
+                text={`Connect to ${ictProvider.info.name}`}
+                isTokenActive={isTokenActive}
+            />
+        </li>
     );
 }

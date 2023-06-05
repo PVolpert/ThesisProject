@@ -12,14 +12,15 @@ export default function LoginItem({ authProvider }: LoginItemProps) {
     const [authCodeProvider] = useState(new AuthCodeProvider(authProvider));
 
     return (
-        <OIDCProviderButton
-            id={authProvider.info.name}
-            onClick={authCodeProvider.redirectToProviderHandler.bind(
-                authCodeProvider
-            )}
-            logo={authProvider.info.img}
-            text={`Continue with ${authProvider.info.name}`}
-            isTokenActive={false}
-        />
+        <li>
+            <OIDCProviderButton
+                onClick={authCodeProvider.redirectToProviderHandler.bind(
+                    authCodeProvider
+                )}
+                logo={authProvider.info.img}
+                text={`Login in to ${authProvider.info.name}`}
+                isTokenActive={false}
+            />
+        </li>
     );
 }

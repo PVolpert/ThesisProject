@@ -8,8 +8,6 @@ import { useZustandStore } from '../../stores/zustand/ZustandStore';
 export default function ICTAuthList() {
     const ictProviders = useRouteLoaderData('call') as OIDCProvider[];
     const ictTokenMap = useZustandStore((state) => state.ictTokenMap);
-
-    console.log(ictTokenMap);
     const items = ictProviders.map((ictProvider, index) => {
         let token = ictTokenMap.get(ictProvider.info.issuer.href);
         if (!!token) {

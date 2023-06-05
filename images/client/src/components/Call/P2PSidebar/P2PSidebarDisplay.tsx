@@ -1,7 +1,7 @@
 import AddAFriend from './AddAFriend/AddAFriend';
 import AddAFriendButton from './AddAFriend/AddAFriendButton';
 import DirectCall from './DirectCall/DirectCall';
-import FriendsList from './Friend/FriendsList';
+import UserList from './Users/UserList';
 import { AddAFriendModal } from './P2PSidebar';
 
 import classes from './P2PSidebarDisplay.module.css';
@@ -21,12 +21,12 @@ export default function P2PSidebarDisplay({
     } = addAFriendModal;
     return (
         <div className={classes['side-bar']}>
-            <DirectCall onRequestICTHandler={onRequestICTHandler} />
-            <FriendsList />
-            <AddAFriendButton showAddAFriend={showAddAFriend} />
+            {/* <DirectCall onRequestICTHandler={onRequestICTHandler} /> */}
+            <UserList />
+            {/* <AddAFriendButton showAddAFriend={showAddAFriend} />
             {isAddAFriendShown && (
                 <AddAFriend hideAddAFriend={hideAddAFriend} />
-            )}
+            )} */}
         </div>
     );
 }
