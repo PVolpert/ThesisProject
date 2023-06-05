@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useZustandStore } from '../stores/zustand/ZustandStore';
 
 interface useTokenProps {
-    needsToken: boolean;
+    needsToken?: boolean;
 }
 
-export function useToken({ needsToken }: useTokenProps) {
+export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     const navigate = useNavigate();
     const accessToken = useZustandStore((state) => state.accessToken);
     const idToken = useZustandStore((state) => state.idToken);
@@ -17,8 +17,14 @@ export function useToken({ needsToken }: useTokenProps) {
         return state.resetICTs;
     });
 
+    const signalingUrl = new URL(`${process.env.REACT_APP_SOCKET_URL}`);
+    signalingUrl.searchParams.append('oidc', accessToken);
+
     // * Check if Tokens are needed
     useEffect(() => {
+        if (needsToken === undefined) {
+            return;
+        }
         if (needsToken && (!accessToken || !idToken)) {
             navigate('/auth/login');
         }
@@ -29,17 +35,21 @@ export function useToken({ needsToken }: useTokenProps) {
 
     // * Check if Tokens are expired
     useEffect(() => {
-        if (!idToken) {
-            return;
-        }
-        if (idToken.exp < Math.floor(Date.now()) / 1000) {
-            resetAuth();
-            resetICTs();
-        }
+        const timeout = setTimeout(() => {
+            if (!idToken) {
+                return;
+            }
+            if (idToken.exp < Math.floor(Date.now()) / 1000) {
+                resetAuth();
+                resetICTs();
+            }
+        }, 30000);
+        return () => clearTimeout(timeout);
     });
 
     return {
         accessToken,
         idToken,
+        signalingUrl,
     };
 }
