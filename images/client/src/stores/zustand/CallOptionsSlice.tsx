@@ -3,6 +3,7 @@ import { StateCreator } from 'zustand';
 import { CallOptions } from '../../components/Call/CallOptions/CallOptions';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
+import { RTCConnectionSlice } from './RTCConnectionSlice';
 
 interface State {
     callOptions: CallOptions;
@@ -21,7 +22,10 @@ const initialState: State = {
 };
 
 export const createCallOptionsSlice: StateCreator<
-    CallOptionsSlice & AccessTokenSlice & ICTAccessTokenSlice,
+    CallOptionsSlice &
+        AccessTokenSlice &
+        ICTAccessTokenSlice &
+        RTCConnectionSlice,
     [],
     [],
     CallOptionsSlice

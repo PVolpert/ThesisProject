@@ -11,6 +11,7 @@ import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 import { StateCreator } from 'zustand';
 import { CallOptionsSlice } from './CallOptionsSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
+import { RTCConnectionSlice } from './RTCConnectionSlice';
 
 interface State {
     ictTokenMap: Map<String, String>;
@@ -32,7 +33,10 @@ const initialState: State = {
 };
 
 export const createICTAccessTokenSlice: StateCreator<
-    CallOptionsSlice & AccessTokenSlice & ICTAccessTokenSlice,
+    CallOptionsSlice &
+        AccessTokenSlice &
+        ICTAccessTokenSlice &
+        RTCConnectionSlice,
     [],
     [],
     ICTAccessTokenSlice

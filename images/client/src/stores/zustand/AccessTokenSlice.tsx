@@ -6,6 +6,7 @@ import {
 import { StateCreator } from 'zustand';
 import { CallOptionsSlice } from './CallOptionsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
+import { RTCConnectionSlice } from './RTCConnectionSlice';
 
 interface State {
     accessToken: string;
@@ -13,7 +14,7 @@ interface State {
 }
 
 interface Actions {
-    parseAuth: (tokenResponse: OpenIDTokenEndpointResponse) => void;
+    parseAuth: (newTokenResponse: OpenIDTokenEndpointResponse) => void;
     resetAuth: () => void;
 }
 
@@ -25,13 +26,16 @@ const initialState: State = {
 };
 
 export const createAccessTokenSlice: StateCreator<
-    CallOptionsSlice & AccessTokenSlice & ICTAccessTokenSlice,
+    CallOptionsSlice &
+        AccessTokenSlice &
+        ICTAccessTokenSlice &
+        RTCConnectionSlice,
     [],
     [],
     AccessTokenSlice
 > = (set) => ({
     ...initialState,
-    parseAuth: (tokenResponse) => set({ ...parseToken(tokenResponse) }),
+    parseAuth: (newTokenResponse) => set({ ...parseToken(newTokenResponse) }),
     resetAuth: () => set(initialState),
 });
 
