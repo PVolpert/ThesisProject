@@ -7,10 +7,11 @@ import CallOptions from './Call/CallOptions/CallOptions';
 import CallOptionsButton from './Call/CallOptions/CallOptionsButton';
 
 import classes from './MainNavigation.module.css';
+import Signaling from './Signaling';
+import { useToken } from '../hooks/useToken';
 
 function MainNavigation() {
-    const accessToken = useZustandStore((state) => state.accessToken);
-    const idToken = useZustandStore((state) => state.idToken);
+    const { accessToken, idToken } = useToken();
     const resetAuth = useZustandStore((state) => state.resetAuth);
     const resetICTs = useZustandStore((state) => {
         return state.resetICTs;
@@ -65,21 +66,22 @@ function MainNavigation() {
                             </NavLink>
                         </li>
                     )}
-                    {accessToken && (
-                        <li>
-                            <Button onClick={logOutHandler} style="ternary">
-                                Log out
-                            </Button>
-                        </li>
-                    )}
                     {idToken?.name?.toString() && (
-                        <li>Hello {idToken.name.toString()} </li>
+                        <li>Hello {idToken.name.toString()} ! </li>
                     )}
+                    {accessToken && <Signaling />}
                     {accessToken && (
                         <CallOptionsButton showCallOptions={showCallOptions} />
                     )}
                     {accessToken && isShowCallOptions && (
                         <CallOptions hideCallOptions={hideCallOptions} />
+                    )}
+                    {accessToken && (
+                        <li>
+                            <Button onClick={logOutHandler} style={'ternary'}>
+                                Log out
+                            </Button>
+                        </li>
                     )}
                 </ul>
             </nav>
