@@ -1,9 +1,5 @@
 package signalingServer
 
-import (
-	"fmt"
-)
-
 // subscriber represents a subscriber.
 // Messages are sent on the msgs channel and if the client
 // cannot keep up with the messages, closeSlow is called.
@@ -43,6 +39,5 @@ func (sig *signalingServer) getSubscriberSlice() []userInfo {
 		userName := subscriber.username
 		userList = append(userList, userInfo{user, userName})
 	}
-	fmt.Println(userList)
 	return userList
 }
