@@ -8,16 +8,27 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
+	golang.org/x/time v0.1.0
 )
 
 require (
+	github.com/ElarOdas/slices v0.2.1 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
+	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/httprc v1.0.4 // indirect
+	github.com/lestrrat-go/iter v1.0.2 // indirect
+	github.com/lestrrat-go/jwx/v2 v2.0.9 // indirect
+	github.com/lestrrat-go/option v1.0.1 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
 	github.com/ElarOdas/ctxValueBuilder v0.1.0
+	github.com/ElarOdas/oidcauth v0.3.5
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
