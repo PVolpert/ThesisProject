@@ -6,11 +6,11 @@ entryPoints:
   web:
     address: :80
 
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
+    # http:
+    #   redirections:
+    #     entryPoint:
+    #       to: websecure
+    #       scheme: https
 
 log:
   level: DEBUG
@@ -21,5 +21,5 @@ api:
 providers:
   docker: 
     exposedByDefault: false
-    network: client-side
+    network: thesisproject_client-side
     
