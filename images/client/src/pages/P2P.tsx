@@ -1,47 +1,42 @@
 import { useEffect, useRef } from 'react';
 
 import P2PDisplay from '../components/P2P/P2PDisplay';
-import useLocalStream from '../hooks/useLocalStream';
 import { useToken } from '../hooks/useToken';
-
-// TODO Model Signaling from Peer A to Peer B: Direct Call, later Friends
-// TODO Model ICT Exchange and Verification
-
-// TODO Model Steps required for building a video connection
+import useRTCPeerConnection from '../hooks/useRTCPeer';
+import useSignaling from '../hooks/useSignaling';
 
 export default function P2PPage() {
-    const { accessToken } = useToken({ needsToken: true });
+    const { accessToken, signalingUrl } = useToken({ needsToken: true });
     const localRef = useRef<HTMLVideoElement>(null);
     const remoteRef = useRef<HTMLVideoElement>(null);
 
     // * Init WebRTC Call
-    const localStream = useLocalStream();
+    const {
+        socket: { sendJsonMessage, lastJsonMessage },
+    } = useSignaling({ socketUrl: signalingUrl });
+    const { localStream, remoteStreams, closeCall } = useRTCPeerConnection({
+        sendJsonMessage,
+        lastJsonMessage,
+    });
 
     // * Assign stream to video elements
     useEffect(() => {
-        if (!accessToken) {
+        if (!accessToken || !localStream || !localRef.current) {
             return;
         }
 
-        if (!localRef.current) {
-            //|| !remoteRef.current?.srcObject) {
-            return;
+        if (localRef.current && localStream) {
+            localRef.current.srcObject = localStream;
         }
-        if (!localStream.getTracks()) {
-            //  || !remoteStreams) {
-            return;
+
+        if (remoteRef.current && remoteStreams.at(0)) {
+            remoteRef.current.srcObject = remoteStreams[0];
         }
-        localRef.current.srcObject = localStream;
-        //remoteRef.current.srcObject = remoteStreams[0];
 
         return () => {
-            if (!localStream.getTracks()) {
-                //  || !remoteStreams) {
-                return;
-            }
-            localStream.getTracks().forEach((track) => track.stop());
+            closeCall();
         };
-    }, [localStream, localRef, remoteRef]);
+    }, [localStream, localRef, remoteStreams, remoteRef]);
 
     return <P2PDisplay localRef={localRef} remoteRef={remoteRef} />;
 }
