@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"signaling/env"
+	"signaling/logs"
 	"signaling/signalingServer"
 	"syscall"
+	"time"
 
 	"net/http"
 	"os"
 	"os/signal"
 
-	// "github.com/ElarOdas/oidcauth"
-	// "github.com/ElarOdas/oidcauth/offline"
+	"github.com/ElarOdas/oidcauth"
+	"github.com/ElarOdas/oidcauth/offline"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -19,6 +21,7 @@ import (
 )
 
 func main() {
+	logs.SetLogLevel()
 	err := run()
 	if err != nil {
 		log.Fatal(err)
@@ -33,8 +36,8 @@ func run() error {
 	)
 	router := NewRouter()
 
+	// Attach signalingServer
 	sig := signalingServer.New()
-
 	router.Get("/", sig.SocketHandler)
 
 	errCh := make(chan error, 1)
@@ -58,9 +61,10 @@ func run() error {
 
 func NewRouter() *chi.Mux {
 	var (
-		corsEnv string = env.Get("CORS", "http://client.localhost")
-		// authProviderEnv string = env.Get("PROVIDER", "http://op:8080/realms/auth")
-		// audienceEnv     string = env.Get("AUDIENCE", "thesisProject-Client")
+		corsEnv          string = env.Get("CORS", "http://client.localhost")
+		authProviderEnv  string = env.Get("PROVIDER", "http://op:8080/realms/auth")
+		audienceEnv      string = env.Get("AUDIENCE", "thesisProject-Client")
+		outsideIssuerEnv string = env.Get("OUTSIDEISSUER", "http://op.localhost/realms/auth")
 	)
 	router := chi.NewRouter()
 	// Logs the start and end of each request with the elapsed processing time
@@ -76,14 +80,15 @@ func NewRouter() *chi.Mux {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
-	// authProvider, err := offline.New(authProviderEnv, audienceEnv, time.Hour)
-	// // ? Could also be a recovery
-	// if err != nil {
-	// 	panic(err)
-	// }
+	authProvider, err := offline.New(authProviderEnv, audienceEnv, time.Hour)
+	// ? Could also be a recovery
+	if err != nil {
+		panic(err)
+	}
+	authProvider.SetOutsideIssuer(outsideIssuerEnv)
 
-	// router.Use(oidcauth.Verifier(authProvider))
-	// router.Use(oidcauth.Authenticator)
+	router.Use(oidcauth.Verifier(authProvider))
+	router.Use(oidcauth.Authenticator(log.Info))
 
 	return router
 }
