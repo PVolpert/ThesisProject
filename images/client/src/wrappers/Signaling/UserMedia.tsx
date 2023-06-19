@@ -15,7 +15,8 @@ export async function getUserMedia(constraints: CallOptions) {
     }
 }
 
-export function getUserMediaErrorHandler(e: any) {
+// From Signaling and video calling (MDN)
+export async function getUserMediaErrorHandler(e: any) {
     switch (e.name) {
         case 'NotFoundError':
             alert(
