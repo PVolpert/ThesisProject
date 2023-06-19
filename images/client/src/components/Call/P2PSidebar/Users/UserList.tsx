@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FriendItem from './UserItem';
+import UserItem from './UserItem';
 import useSignaling from '../../../../hooks/useSignaling';
 import { useZustandStore } from '../../../../stores/zustand/ZustandStore';
 import { UserId, UserInfo } from '../../../../wrappers/Signaling/User';
@@ -16,6 +16,7 @@ import {
 import { useToken } from '../../../../hooks/useToken';
 
 export default function UserList() {
+    //Constant definitions
     const { idToken, signalingUrl } = useToken();
     const {
         socket: { lastJsonMessage, sendJsonMessage },
@@ -30,6 +31,8 @@ export default function UserList() {
 
     const navigate = useNavigate();
 
+    // Socket side-effects
+
     // * Effect for Outgoing Socket Message
     useEffect(() => {
         const msg = createUserListMessage();
@@ -38,30 +41,41 @@ export default function UserList() {
 
     // * Effect for Incoming Socket Message
     useEffect(() => {
+        // Ignore empty lastJSONMessage & missing login
         if (!lastJsonMessage || !idToken) {
             return;
         }
-        const { type } = lastJsonMessage as Message;
-        if (!type) {
-            console.error('Missing socket message type');
-            return;
-        }
-        switch (type) {
-            case 'userList':
-                incomingUserListHandler(lastJsonMessage, setUserList, idToken);
-                break;
-            case 'userOnline':
-                incomingUserOnlineHandler(
-                    lastJsonMessage,
-                    setUserList,
-                    idToken
-                );
-                break;
-            case 'userOffline':
-                incomingUserOfflineHandler(lastJsonMessage, setUserList);
-                break;
-        }
+        const handleUserMessages = async () => {
+            // Parse the message type
+            const { type } = lastJsonMessage as Message;
+            if (!type) {
+                console.error('Missing socket message type');
+                return;
+            }
+            switch (type) {
+                case 'userList':
+                    incomingUserListHandler(
+                        lastJsonMessage,
+                        setUserList,
+                        idToken
+                    );
+                    break;
+                case 'userOnline':
+                    incomingUserOnlineHandler(
+                        lastJsonMessage,
+                        setUserList,
+                        idToken
+                    );
+                    break;
+                case 'userOffline':
+                    incomingUserOfflineHandler(lastJsonMessage, setUserList);
+                    break;
+            }
+        };
+        handleUserMessages();
     }, [lastJsonMessage]);
+
+    // Build the userlist
 
     const onCallHandlerBuilder = useCallback(
         (target: UserId) => {
@@ -75,7 +89,7 @@ export default function UserList() {
     );
     const items = userList.map((user) => {
         return (
-            <FriendItem
+            <UserItem
                 key={user.issuer + user.subject}
                 userName={user.username}
                 callFct={onCallHandlerBuilder(user)}

@@ -8,18 +8,17 @@
 
 import Button from '../../../UI/Button';
 import classes from './UserItem.module.css';
-interface FriendItemProps {
+interface UserItemProps {
     userName: String;
     // userIcon: URL;
-    // ? already bound to userId
     callFct: () => void;
 }
 
-export default function FriendItem({
+export default function UserItem({
     userName,
     // userIcon,
     callFct,
-}: FriendItemProps) {
+}: UserItemProps) {
     return (
         <li>
             <div className={classes['outer']}>
