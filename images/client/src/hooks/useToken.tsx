@@ -10,11 +10,17 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     const navigate = useNavigate();
     const accessToken = useZustandStore((state) => state.accessToken);
     const idToken = useZustandStore((state) => state.idToken);
-    const resetAuth = useZustandStore((state) => {
-        return state.resetAuth;
+    const resetAuthToken = useZustandStore((state) => {
+        return state.resetAuthToken;
     });
-    const resetICTs = useZustandStore((state) => {
-        return state.resetICTs;
+    const resetIctTokens = useZustandStore((state) => {
+        return state.resetIctTokens;
+    });
+    const resetIctToken = useZustandStore((state) => {
+        return state.resetIctToken;
+    });
+    const ictTokens = useZustandStore((state) => {
+        return state.ictTokens;
     });
 
     const signalingUrl = new URL(`${process.env.REACT_APP_SOCKET_URL}`);
@@ -33,19 +39,34 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         }
     }, [accessToken, idToken, needsToken, navigate]);
 
+    async function checkTokens() {
+        if (!idToken) {
+            return;
+        }
+        if (idToken.exp < Math.floor(Date.now()) / 1000) {
+            resetAuthToken();
+            resetIctTokens();
+        } else {
+            // find bad ICTs
+            const badICTTokens = ictTokens.filter((ictToken) => {
+                return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
+            });
+            // Remove all bad ICTs
+            badICTTokens.forEach((ictToken) => {
+                resetIctToken(ictToken.idToken.iss);
+            });
+        }
+    }
+
     // * Check if Tokens are expired
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (!idToken) {
-                return;
-            }
-            if (idToken.exp < Math.floor(Date.now()) / 1000) {
-                resetAuth();
-                resetICTs();
-            }
-        }, 30000);
+        const timeout = setTimeout(checkTokens, 30000);
+        checkTokens();
         return () => clearTimeout(timeout);
     });
+    useEffect(() => {
+        checkTokens();
+    }, []);
 
     return {
         accessToken,
