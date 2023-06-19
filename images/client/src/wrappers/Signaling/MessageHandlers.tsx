@@ -52,7 +52,7 @@ export async function incomingUserOfflineHandler(
 export async function incomingUserListHandler(
     msg: userListMessage,
     setUserList: (value: React.SetStateAction<UserInfo[]>) => void,
-    idToken: IDToken | null
+    idToken: IDToken
 ) {
     if (!idToken) {
         return;
@@ -108,6 +108,7 @@ export async function incomingAnswerHandler(
     msg: SdpMessage,
     RTCConnection: RTCPeerConnection | undefined
 ) {
+    // ! check if origin matches prior connection
     const { origin, body: { desc } = {} } = msg;
     if (!origin) {
         console.error('sdp Message is missing origin');
@@ -119,6 +120,7 @@ export async function incomingAnswerHandler(
     }
     try {
         //! We verify and prompt callee ict here
+        console.log(`Callee is from ${origin} with id ${origin.subject}`);
         // if (
         // window.confirm(
         // `Do you want to call ${origin.issuer} ${origin.subject}?`
