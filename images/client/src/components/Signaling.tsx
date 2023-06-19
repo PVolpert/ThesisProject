@@ -29,7 +29,7 @@ export default function Signaling() {
         const { origin: { issuer, subject } = {} } = msg;
 
         //TODO Here we can extract and verify the ICT Tokens before RTCPeerConnction is up
-
+        console.log(`Caller is from ${issuer} with id ${subject}`);
         // if (window.confirm(`Accept the call from ${issuer}:${subject}?`)) {
         setSdpOffer(msg);
         navigate('/call/p2p');

@@ -12,9 +12,9 @@ import { useToken } from '../hooks/useToken';
 
 function MainNavigation() {
     const { accessToken, idToken } = useToken();
-    const resetAuth = useZustandStore((state) => state.resetAuth);
+    const resetAuth = useZustandStore((state) => state.resetAuthToken);
     const resetICTs = useZustandStore((state) => {
-        return state.resetICTs;
+        return state.resetIctTokens;
     });
     const {
         isModalShown: isShowCallOptions,

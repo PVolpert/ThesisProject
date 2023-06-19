@@ -1,7 +1,7 @@
 import Conference from './Conference/Conference';
 import P2PSidebar from './P2PSidebar/P2PSidebar';
 import classes from './CallDisplay.module.css';
-import ICTAuthList from '../ICTAuth/ICTAuthList';
+import ICTAuthList from './ICTAuth/ICTAuthList';
 
 export function CallDisplay() {
     return (

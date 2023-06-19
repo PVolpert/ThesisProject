@@ -107,7 +107,6 @@ export default function useRTCPeerConnection({
             return;
         }
 
-        console.log('Entering passive call');
         try {
             await RTCConnection.setRemoteDescription(desc);
 
