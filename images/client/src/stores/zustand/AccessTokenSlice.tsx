@@ -15,7 +15,7 @@ interface State {
 
 interface Actions {
     parseAuth: (newTokenResponse: OpenIDTokenEndpointResponse) => void;
-    resetAuth: () => void;
+    resetAuthToken: () => void;
 }
 
 export interface AccessTokenSlice extends State, Actions {}
@@ -36,10 +36,10 @@ export const createAccessTokenSlice: StateCreator<
 > = (set) => ({
     ...initialState,
     parseAuth: (newTokenResponse) => set({ ...parseToken(newTokenResponse) }),
-    resetAuth: () => set(initialState),
+    resetAuthToken: () => set({ ...initialState }),
 });
 
-function parseToken(response: OpenIDTokenEndpointResponse) {
+export function parseToken(response: OpenIDTokenEndpointResponse) {
     const { access_token: newAccessToken } = response;
     const newIdToken = getValidatedIdTokenClaims(response);
     return {
