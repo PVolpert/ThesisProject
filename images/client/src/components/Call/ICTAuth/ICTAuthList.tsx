@@ -1,36 +1,37 @@
 import { useRouteLoaderData } from 'react-router-dom';
 
-import OIDCProvider from '../../wrappers/Auth/OIDCProvider';
+import OIDCProvider from '../../../wrappers/Auth/OIDCProvider';
 import ICTAuthItem from './ICTAuthItem';
 import classes from './LoginList.module.css';
-import { useZustandStore } from '../../stores/zustand/ZustandStore';
+import { useZustandStore } from '../../../stores/zustand/ZustandStore';
 
 export default function ICTAuthList() {
     const ictProviders = useRouteLoaderData('call') as OIDCProvider[];
-    const ictTokenMap = useZustandStore((state) => state.ictTokenMap);
+    const ictTokens = useZustandStore((state) => state.ictTokens);
     const items = ictProviders.map((ictProvider, index) => {
-        let token = ictTokenMap.get(ictProvider.info.issuer.href);
+        let token = ictTokens.find((ictToken) => {
+            return ictToken.idToken.iss == ictProvider.info.issuer.href;
+        });
         if (!!token) {
             return (
                 <ICTAuthItem
                     key={index}
                     ictProvider={ictProvider}
-                    isTokenActive={true}
+                    IdToken={token.idToken}
                 />
             );
         }
-        return (
-            <ICTAuthItem
-                key={index}
-                ictProvider={ictProvider}
-                isTokenActive={false}
-            />
-        );
+        return <ICTAuthItem key={index} ictProvider={ictProvider} />;
     });
 
     if (!items.length) {
         return <p>No valid Authentication Providers</p>;
     }
 
-    return <ul>{items}</ul>;
+    return (
+        <div className="flex flex-auto">
+            <p>ICT Provider List</p>
+            <ul>{items}</ul>
+        </div>
+    );
 }

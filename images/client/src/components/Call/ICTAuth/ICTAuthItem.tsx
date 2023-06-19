@@ -1,28 +1,26 @@
 import { useState } from 'react';
-import AuthCodeProvider from '../../wrappers/Auth/AuthCodeProvider';
-import OIDCProvider from '../../wrappers/Auth/OIDCProvider';
+import AuthCodeProvider from '../../../wrappers/Auth/AuthCodeProvider';
+import OIDCProvider from '../../../wrappers/Auth/OIDCProvider';
 import classes from './LoginItem.module.css';
-import OIDCProviderButton from '../UI/OIDCProviderButton';
+import OIDCProviderButton from '../../UI/OIDCProviderButton';
+import { IDToken } from 'oauth4webapi';
 
 interface LoginItemProps {
     ictProvider: OIDCProvider;
-    isTokenActive: boolean;
+    IdToken?: IDToken;
 }
 
-export default function ICTAuthItem({
-    ictProvider,
-    isTokenActive,
-}: LoginItemProps) {
+export default function ICTAuthItem({ ictProvider, IdToken }: LoginItemProps) {
     const [authCodeProvider] = useState(new AuthCodeProvider(ictProvider));
-    if (isTokenActive) {
+    if (IdToken) {
         return (
             <li>
                 <OIDCProviderButton
                     onClick={() => {}}
                     logo={ictProvider.info.img}
                     // TODO Add username
-                    text={`Connected as ${ictProvider.info.name}`}
-                    isTokenActive={isTokenActive}
+                    text={`Connected as ${IdToken.name?.toString()}`}
+                    isTokenActive={!!IdToken}
                 />
             </li>
         );
@@ -35,7 +33,7 @@ export default function ICTAuthItem({
                 )}
                 logo={ictProvider.info.img}
                 text={`Connect to ${ictProvider.info.name}`}
-                isTokenActive={isTokenActive}
+                isTokenActive={!!IdToken}
             />
         </li>
     );
