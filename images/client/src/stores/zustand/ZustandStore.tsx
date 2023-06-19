@@ -29,7 +29,7 @@ export const useZustandStore = create<
             partialize: (state) => ({
                 accessToken: state.accessToken,
                 idToken: state.idToken,
-                // ictToken: state.,
+                ictTokens: state.ictTokens,
             }),
         }
     )

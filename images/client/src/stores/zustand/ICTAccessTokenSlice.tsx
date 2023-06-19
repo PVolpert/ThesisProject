@@ -7,29 +7,31 @@
 // Add or update an indiviual Token
 
 // Map seems to be the most reasonable choice
-import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
+import { IDToken, OpenIDTokenEndpointResponse } from 'oauth4webapi';
 import { StateCreator } from 'zustand';
 import { CallOptionsSlice } from './CallOptionsSlice';
-import { AccessTokenSlice } from './AccessTokenSlice';
+import { AccessTokenSlice, parseToken } from './AccessTokenSlice';
 import { RTCConnectionSlice } from './RTCConnectionSlice';
 
+interface TokenSet {
+    accessToken: string;
+    idToken: IDToken;
+}
+
 interface State {
-    ictTokenMap: Map<String, String>;
+    ictTokens: TokenSet[];
 }
 
 interface Actions {
-    parseICT: (
-        tokenResponse: OpenIDTokenEndpointResponse,
-        issuer: string
-    ) => void;
-    resetICT: (issuer: string) => void;
-    resetICTs: () => void;
+    parseICT: (tokenResponse: OpenIDTokenEndpointResponse) => void;
+    resetIctToken: (issuer: string) => void;
+    resetIctTokens: () => void;
 }
 
 export interface ICTAccessTokenSlice extends State, Actions {}
 
 const initialState: State = {
-    ictTokenMap: new Map<String, String>(),
+    ictTokens: [],
 };
 
 export const createICTAccessTokenSlice: StateCreator<
@@ -42,21 +44,25 @@ export const createICTAccessTokenSlice: StateCreator<
     ICTAccessTokenSlice
 > = (set) => ({
     ...initialState,
-    parseICT: (tokenResponse, issuer) =>
+    parseICT: (tokenResponse) =>
+        set((state) => {
+            const newTokenSet = parseToken(tokenResponse);
+            if (
+                state.ictTokens.some((ictToken) => {
+                    return ictToken.idToken.iss == newTokenSet.idToken.iss;
+                })
+            ) {
+                return state;
+            }
+            return {
+                ictTokens: state.ictTokens.concat([newTokenSet]),
+            };
+        }),
+    resetIctToken: (issuer) =>
         set((state) => ({
-            ictTokenMap: new Map<String, String>(state.ictTokenMap).set(
-                issuer,
-                extractAccessToken(tokenResponse)
-            ),
+            ictTokens: state.ictTokens.filter((ictToken) => {
+                return issuer != ictToken.idToken.iss;
+            }),
         })),
-    resetICT: (issuer) =>
-        set((state) => ({
-            ictTokenMap: new Map(state.ictTokenMap).set(issuer, ''),
-        })),
-    resetICTs: () => set(() => ({ ...initialState })),
+    resetIctTokens: () => set(() => ({ ...initialState })),
 });
-
-function extractAccessToken(response: OpenIDTokenEndpointResponse) {
-    const { access_token: newAccessToken } = response;
-    return newAccessToken;
-}
