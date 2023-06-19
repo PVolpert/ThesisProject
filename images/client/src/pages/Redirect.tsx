@@ -29,7 +29,7 @@ export default function RedirectPage() {
         if (!issuer) {
             parseAuth(tokenEndpointResponse);
         } else {
-            parseICT(tokenEndpointResponse, issuer);
+            parseICT(tokenEndpointResponse);
         }
         // Redirect when token is stored
         navigate('/call');
