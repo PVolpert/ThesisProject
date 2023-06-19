@@ -12,8 +12,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ElarOdas/oidcauth"
-	"github.com/ElarOdas/oidcauth/offline"
+	"github.com/PVolpert/oidcauth"
+	"github.com/PVolpert/oidcauth/offline"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"

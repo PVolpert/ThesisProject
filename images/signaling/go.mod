@@ -8,11 +8,10 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
-	golang.org/x/time v0.1.0
 )
 
 require (
-	github.com/ElarOdas/slices v0.2.1 // indirect
+	github.com/PVolpert/slices v0.2.2 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
@@ -27,8 +26,8 @@ require (
 )
 
 require (
-	github.com/ElarOdas/ctxValueBuilder v0.1.0
-	github.com/ElarOdas/oidcauth v0.3.5
+	github.com/PVolpert/ctxValueBuilder v0.1.1
+	github.com/PVolpert/oidcauth v0.3.6
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

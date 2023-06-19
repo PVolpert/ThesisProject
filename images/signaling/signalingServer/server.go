@@ -79,7 +79,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 	if err != nil {
 		return err
 	}
-
+	// Create subscriber
 	sub := &subscriber{
 		msgs: make(chan message, sig.subscriberMessageBuffer),
 		closeSlow: func() {
@@ -87,7 +87,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		},
 		username: usernameFromContext(ctx),
 	}
-
+	// Add and remove from subscriber list
 	sig.addSubscriber(id, sub)
 	defer sig.deleteSubscriber(id)
 
@@ -100,7 +100,7 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		select {
 		// * Case: Incoming Message
 		case err := <-incomingCh:
-			// Handle possible error
+			// Close loop if error
 			if err != nil {
 				return err
 			}
@@ -111,11 +111,13 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		//* Case: Outgoing message
 		case msg := <-sub.msgs:
 			err := writeTimeoutJSON(ctx, time.Second*5, c, msg)
+			// Close loop if error
 			if err != nil {
 				return err
 			}
 		//* Case: Request is over for unknown reason
 		case <-ctx.Done():
+			// Close loop
 			return ctx.Err()
 		}
 	}
@@ -126,16 +128,18 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 // ! First point of contact, sanitization required
 func (sig *signalingServer) evalIncomingMessage(ctx context.Context, c *websocket.Conn) error {
 	var msg message
+	// Extract the next json message from socket connection
 	err := wsjson.Read(ctx, c, &msg)
 	if err != nil {
 		return err
 	}
-	log.Info(msg)
+	// Store the message
 	ctx = msgToContext(ctx, msg)
 
 	return sig.incomingMessageHandler(ctx, c)
 }
 
+// Send the message
 func writeTimeoutJSON(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg message) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

@@ -62,6 +62,7 @@ func run() error {
 	}
 }
 
+// Set up the new router
 func NewRouter() *chi.Mux {
 	var (
 		corsEnv string = env.Get("CORS", "http://client.localhost")

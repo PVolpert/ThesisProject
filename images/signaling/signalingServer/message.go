@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ElarOdas/ctxValueBuilder"
+	"github.com/PVolpert/ctxValueBuilder"
 )
 
 type message struct {
@@ -38,7 +38,6 @@ type userListBody struct {
 
 func createUserListMessage(users []userInfo) message {
 	msg := message{Type: userListMessageType, Body: userListBody{Users: users}}
-	fmt.Println(msg)
 	return msg
 }
 
