@@ -23,6 +23,9 @@ services:
     env_file: configs/client/config.env
     depends_on:
       - traefik
+      - api
+      - signaling
+      - op
     labels:
       - traefik.enable=true
       - traefik.http.routers.client.entrypoints=web
@@ -45,7 +48,7 @@ services:
     env_file: configs/api/config.env
     depends_on: 
       - traefik
-       - db
+      - db
     expose:
       - 80
     labels:
