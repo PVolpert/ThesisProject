@@ -1,6 +1,4 @@
 import { CallDisplay } from '../components/Call/CallDisplay';
-import Conference from '../components/Call/Conference/Conference';
-import P2PSidebar from '../components/Call/P2PSidebar/P2PSidebar';
 import { useToken } from '../hooks/useToken';
 import OIDCProvider from '../wrappers/Auth/OIDCProvider';
 import { fetchOIDCProviderInfo } from '../wrappers/Auth/OIDCProviderInfo';
