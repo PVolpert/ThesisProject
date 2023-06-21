@@ -26,6 +26,29 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     const signalingUrl = new URL(`${process.env.REACT_APP_SOCKET_URL}`);
     signalingUrl.searchParams.append('oidc', accessToken);
 
+    // Verifies that neither auth token nor any ict token is expired
+    async function checkTokens() {
+        if (!idToken) {
+            return;
+        }
+        if (idToken.exp < Math.floor(Date.now()) / 1000) {
+        } else {
+            // find bad ICTs
+            const badICTTokens = ictTokens.filter((ictToken) => {
+                return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
+            });
+            // Remove all bad ICTs
+            badICTTokens.forEach((ictToken) => {
+                resetIctToken(ictToken.idToken.iss);
+            });
+        }
+    }
+
+    function doLogout() {
+        resetAuthToken();
+        resetIctTokens();
+    }
+
     // * Check if Tokens are needed
     useEffect(() => {
         if (needsToken === undefined) {
@@ -38,25 +61,6 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             navigate('/call');
         }
     }, [accessToken, idToken, needsToken, navigate]);
-
-    async function checkTokens() {
-        if (!idToken) {
-            return;
-        }
-        if (idToken.exp < Math.floor(Date.now()) / 1000) {
-            resetAuthToken();
-            resetIctTokens();
-        } else {
-            // find bad ICTs
-            const badICTTokens = ictTokens.filter((ictToken) => {
-                return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
-            });
-            // Remove all bad ICTs
-            badICTTokens.forEach((ictToken) => {
-                resetIctToken(ictToken.idToken.iss);
-            });
-        }
-    }
 
     // * Check if Tokens are expired
     useEffect(() => {
@@ -72,5 +76,6 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         accessToken,
         idToken,
         signalingUrl,
+        doLogout,
     };
 }

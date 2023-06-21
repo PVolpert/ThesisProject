@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom';
 
 import Button from './UI/Button';
 import useModal from '../hooks/useModal';
-import { useZustandStore } from '../stores/zustand/ZustandStore';
 import CallOptions from './Call/CallOptions/CallOptions';
 import CallOptionsButton from './Call/CallOptions/CallOptionsButton';
 
@@ -11,21 +10,12 @@ import Signaling from './Signaling';
 import { useToken } from '../hooks/useToken';
 
 function MainNavigation() {
-    const { accessToken, idToken } = useToken();
-    const resetAuth = useZustandStore((state) => state.resetAuthToken);
-    const resetICTs = useZustandStore((state) => {
-        return state.resetIctTokens;
-    });
+    const { accessToken, idToken, doLogout: logOutHandler } = useToken();
     const {
         isModalShown: isShowCallOptions,
         hideModal: hideCallOptions,
         showModal: showCallOptions,
     } = useModal({ shownInitial: false });
-
-    function logOutHandler() {
-        resetAuth();
-        resetICTs();
-    }
 
     return (
         <header className={classes.header}>
