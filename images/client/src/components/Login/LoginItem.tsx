@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import AuthCodeProvider from '../../wrappers/Auth/AuthCodeProvider';
-import OIDCProvider from '../../wrappers/Auth/OIDCProvider';
-import classes from './LoginItem.module.css';
+import AuthCodeProvider from '../../helpers/Auth/AuthCodeProvider';
+import OIDCProvider from '../../helpers/Auth/OIDCProvider';
+
 import OIDCProviderButton from '../UI/OIDCProviderButton';
 
 interface LoginItemProps {
@@ -14,12 +14,9 @@ export default function LoginItem({ authProvider }: LoginItemProps) {
     return (
         <li>
             <OIDCProviderButton
-                onClick={authCodeProvider.redirectToProviderHandler.bind(
-                    authCodeProvider
-                )}
+                onClick={() => authCodeProvider.redirectToProviderHandler()}
                 logo={authProvider.info.img}
-                text={`Login in to ${authProvider.info.name}`}
-                isTokenActive={false}
+                text={`Login in with ${authProvider.info.name}`}
             />
         </li>
     );
