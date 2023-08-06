@@ -1,13 +1,13 @@
 import { useRouteLoaderData } from 'react-router-dom';
 
-import OIDCProvider from '../../../wrappers/Auth/OIDCProvider';
+import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import ICTAuthItem from './ICTAuthItem';
-import classes from './LoginList.module.css';
-import { useZustandStore } from '../../../stores/zustand/ZustandStore';
+import { useStore } from '../../../store/Store';
+import { Description, MainTitle } from '../../UI/Headers';
 
 export default function ICTAuthList() {
     const ictProviders = useRouteLoaderData('call') as OIDCProvider[];
-    const ictTokens = useZustandStore((state) => state.ictTokens);
+    const ictTokens = useStore((state) => state.ictTokens);
     const items = ictProviders.map((ictProvider, index) => {
         let token = ictTokens.find((ictToken) => {
             return ictToken.idToken.iss == ictProvider.info.issuer.href;
@@ -29,9 +29,13 @@ export default function ICTAuthList() {
     }
 
     return (
-        <div className="flex flex-auto">
-            <p>ICT Provider List</p>
+        <div className="flex flex-col space-y-2 p-4 md:self-center">
+            <MainTitle>Call Identity</MainTitle>
+            <Description>
+                Log in to one or more call identity provider
+            </Description>
             <ul>{items}</ul>
+            {/* Background whirls here */}
         </div>
     );
 }

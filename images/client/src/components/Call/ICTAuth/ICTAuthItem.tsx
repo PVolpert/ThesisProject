@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import AuthCodeProvider from '../../../wrappers/Auth/AuthCodeProvider';
-import OIDCProvider from '../../../wrappers/Auth/OIDCProvider';
-import classes from './LoginItem.module.css';
+import AuthCodeProvider from '../../../helpers/Auth/AuthCodeProvider';
+import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import OIDCProviderButton from '../../UI/OIDCProviderButton';
 import { IDToken } from 'oauth4webapi';
 
