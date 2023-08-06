@@ -1,10 +1,9 @@
 import { createPortal } from 'react-dom';
 
-import classes from './Modal.module.css';
 import Card from './Card';
 
 interface BackdropProps {
-    onDismiss: () => void;
+    onHideModal: () => void;
 }
 
 interface ModalOverlayProps {
@@ -13,15 +12,24 @@ interface ModalOverlayProps {
 
 interface ModalProps extends BackdropProps, ModalOverlayProps {}
 
-function Backdrop({ onDismiss }: BackdropProps) {
-    return <div className={classes.backdrop} onClick={onDismiss}></div>;
+function Backdrop({ onHideModal }: BackdropProps) {
+    return (
+        <div
+            className="absolute top-0 left-0 w-full h-screen z-5 bg-white bg-opacity-20 backdrop-blur-sm"
+            onClick={onHideModal}
+        ></div>
+    );
 }
 
 function ModalOverlay({ children }: ModalOverlayProps) {
-    return <Card className={classes.modal}>{children}</Card>;
+    return (
+        <div className="absolute top-[10%] md:top-1/4 left-1/2 overflow-hidden overflow-y-auto  z-10 -translate-x-1/2 -translate-y-[10%]">
+            <Card>{children}</Card>
+        </div>
+    );
 }
 
-export default function Modal({ onDismiss, children }: ModalProps) {
+export default function Modal({ onHideModal, children }: ModalProps) {
     return (
         <>
             {createPortal(
@@ -29,7 +37,7 @@ export default function Modal({ onDismiss, children }: ModalProps) {
                 document.getElementById('root-modal') as Element
             )}
             {createPortal(
-                <Backdrop onDismiss={onDismiss} />,
+                <Backdrop {...{ onHideModal }} />,
                 document.getElementById('root-backdrop') as Element
             )}
         </>
