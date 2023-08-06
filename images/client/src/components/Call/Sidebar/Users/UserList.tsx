@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UserItem from './UserItem';
 import useSignaling from '../../../../hooks/useSignaling';
-import { useZustandStore } from '../../../../stores/zustand/ZustandStore';
-import { UserId, UserInfo } from '../../../../wrappers/Signaling/User';
+import { useStore } from '../../../../store/Store';
+import { UserId, UserInfo } from '../../../../helpers/Signaling/User';
 import {
     Message,
     createUserListMessage,
-} from '../../../../wrappers/Signaling/Messages';
+} from '../../../../helpers/Signaling/Messages';
 import {
     incomingUserListHandler,
     incomingUserOfflineHandler,
     incomingUserOnlineHandler,
-} from '../../../../wrappers/Signaling/MessageHandlers';
+} from '../../../../helpers/Signaling/MessageHandlers';
 import { useToken } from '../../../../hooks/useToken';
+import UserListDisplay from './UserListDisplay';
 
 export default function UserList() {
     //Constant definitions
@@ -25,21 +25,40 @@ export default function UserList() {
     const [userList, setUserList] = useState<UserInfo[]>([]);
 
     // Zustand Store Access
-    const setTarget = useZustandStore((state) => {
-        return state.setTarget;
+    const setCallee = useStore((state) => {
+        return state.setCallee;
+    });
+    const showOutgoingCallModal = useStore((state) => {
+        return state.showOutgoingCallModal;
+    });
+    const resetCallStages = useStore((state) => {
+        return state.resetCallStages;
     });
 
     const navigate = useNavigate();
 
-    // Socket side-effects
+    //
+    const onCallHandlerBuilder = useCallback(
+        (callee: UserInfo) => {
+            const onCallHandler = () => {
+                setCallee(callee);
+                resetCallStages();
+                showOutgoingCallModal();
+            };
+            return onCallHandler;
+        },
+        [navigate, setCallee]
+    );
 
-    // * Effect for Outgoing Socket Message
+    //! Socket side-effects
+
+    //* Request Userlist from signaling on initial component load
     useEffect(() => {
         const msg = createUserListMessage();
         sendJsonMessage(msg);
-    }, [sendJsonMessage]);
+    }, []);
 
-    // * Effect for Incoming Socket Message
+    //* Handle incoming user-type messages
     useEffect(() => {
         // Ignore empty lastJSONMessage & missing login
         if (!lastJsonMessage || !idToken) {
@@ -75,31 +94,10 @@ export default function UserList() {
         handleUserMessages();
     }, [lastJsonMessage]);
 
-    // Build the userlist
-
-    const onCallHandlerBuilder = useCallback(
-        (target: UserId) => {
-            const onCallHandler = () => {
-                setTarget(target);
-                navigate('/call/p2p');
-            };
-            return onCallHandler;
-        },
-        [navigate, setTarget]
+    return (
+        <UserListDisplay
+            userList={userList}
+            onCallHandlerBuilder={onCallHandlerBuilder}
+        />
     );
-    const items = userList.map((user) => {
-        return (
-            <UserItem
-                key={user.issuer + user.subject}
-                userName={user.username}
-                callFct={onCallHandlerBuilder(user)}
-            />
-        );
-    });
-
-    if (items.length === 0) {
-        return <p>No active users :/</p>;
-    }
-
-    return <ul>{items}</ul>;
 }
