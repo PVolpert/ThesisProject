@@ -1,81 +1,118 @@
 import { NavLink } from 'react-router-dom';
 
-import Button from './UI/Button';
-import useModal from '../hooks/useModal';
-import CallOptions from './Call/CallOptions/CallOptions';
-import CallOptionsButton from './Call/CallOptions/CallOptionsButton';
+import useDisplayToggle from '../hooks/useDisplayToggle';
 
-import classes from './MainNavigation.module.css';
 import Signaling from './Signaling';
 import { useToken } from '../hooks/useToken';
+import NavigationDropdown from './Navigation/NavigationDropdown';
+import DropDownButton from './Navigation/DropDownButton';
+import LoginLink from './Navigation/LoginLink';
+import HomeLink from './Navigation/HomeLink';
+import { useStore } from '../store/Store';
+import classes from './MainNavigation.module.css';
 
 function MainNavigation() {
-    const { accessToken, idToken, doLogout: logOutHandler } = useToken();
+    const { accessToken, idToken, resetTokens } = useToken();
+
     const {
-        isModalShown: isShowCallOptions,
-        hideModal: hideCallOptions,
-        showModal: showCallOptions,
-    } = useModal({ shownInitial: false });
+        isShown: isShowDropdown,
+        hideModal: hideDropdown,
+        showModal: showDropdown,
+    } = useDisplayToggle({ shownInitial: false });
+
+    function logOutHandler() {
+        hideDropdown();
+        resetTokens();
+    }
+
+    const showSettingsModal = useStore((state) => state.showSettingsModal);
+
+    const name =
+        idToken && idToken.name ? idToken.name.toString() : 'Unknown name';
+    const username =
+        idToken && idToken.preferred_username
+            ? idToken.preferred_username.toString()
+            : 'Unknown username';
 
     return (
-        <header className={classes.header}>
-            <nav>
-                <ul className={classes.list}>
-                    <li>
+        <nav className=" p-6">
+            <div className="flex items-center justify-between md:space-x-20">
+                <div className="flex space-x-6">
+                    <NavLink
+                        to="/"
+                        className="relative flex place-items-center z-2 font-mono text-xl"
+                        end
+                    >
+                        SAFEGUARD
+                    </NavLink>
+                    <NavLink
+                        to="/"
+                        className={({ isActive }) =>
+                            `flex place-items-center dark:text-amber-200 dark:hover:text-amber-600 text-amber-600 hover:text-amber-400 transition duration-105 ${
+                                isActive ? classes['active'] : ''
+                            }`.trim()
+                        }
+                        end
+                    >
+                        <HomeLink />
+                    </NavLink>
+                    {accessToken && (
                         <NavLink
-                            to="/"
+                            to="/call"
                             className={({ isActive }) =>
-                                isActive ? classes.active : undefined
+                                `flex place-items-center dark:text-amber-200 dark:hover:text-amber-600 text-amber-600 hover:text-amber-400 transition duration-105 ${
+                                    isActive ? classes['active'] : ''
+                                }`.trim()
                             }
-                            end
                         >
-                            Home
+                            Make a Call
                         </NavLink>
-                    </li>
-                    {accessToken && (
-                        <li>
-                            <NavLink
-                                to="/call"
-                                className={({ isActive }) =>
-                                    isActive ? classes.active : undefined
-                                }
-                            >
-                                Make a Call
-                            </NavLink>
-                        </li>
                     )}
-                    {!accessToken && (
-                        <li>
-                            <NavLink
-                                to="/auth/login"
-                                className={({ isActive }) =>
-                                    isActive ? classes.active : undefined
-                                }
-                            >
-                                Authentication
-                            </NavLink>
-                        </li>
-                    )}
-                    {idToken?.name?.toString() && (
-                        <li>Hello {idToken.name.toString()} ! </li>
-                    )}
+                </div>
+                <div className="flex space-x-6 place-items-center">
                     {accessToken && <Signaling />}
-                    {accessToken && (
-                        <CallOptionsButton showCallOptions={showCallOptions} />
+
+                    {!accessToken && (
+                        <NavLink
+                            to="/auth/login"
+                            className={({ isActive }) =>
+                                `border-2 rounded-lg px-2 md:px-8 py-2 shadow-md border-springred text-white hover:text-springred bg-springred hover:bg-inherit ${
+                                    isActive ? 'hidden' : ''
+                                }`.trim()
+                            }
+                        >
+                            <LoginLink />
+                        </NavLink>
                     )}
-                    {accessToken && isShowCallOptions && (
-                        <CallOptions hideCallOptions={hideCallOptions} />
-                    )}
-                    {accessToken && (
-                        <li>
-                            <Button onClick={logOutHandler} style={'ternary'}>
-                                Log out
-                            </Button>
-                        </li>
-                    )}
-                </ul>
-            </nav>
-        </header>
+
+                    <div className="relative flex flex-col space-y-2 justify-items-end">
+                        {idToken && (
+                            <DropDownButton
+                                {...{
+                                    isShowDropdown,
+                                    hideDropdown,
+                                    showDropdown,
+                                }}
+                                username={username}
+                            />
+                        )}
+                        {isShowDropdown && idToken && (
+                            <NavigationDropdown
+                                {...{
+                                    name,
+                                    username,
+                                    logOutHandler,
+                                }}
+                                showSettings={() => {
+                                    hideDropdown();
+                                    showSettingsModal();
+                                }}
+                            />
+                        )}
+                    </div>
+                </div>
+            </div>
+        </nav>
     );
 }
 

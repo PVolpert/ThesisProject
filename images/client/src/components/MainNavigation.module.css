@@ -1,22 +1,5 @@
-.header {
-    max-width: 60rem;
-    margin: auto;
-    padding: 2rem;
-    display: flex;
-    justify-content: space-between;
-}
+.active {
+    @apply text-amber-400;
 
-.list {
-    display: flex;
-    gap: 1rem;
-}
-
-.list a {
-    text-decoration: none;
-    color: var(--color-primary-400);
-}
-
-.list a:hover,
-.list a.active {
-    color: var(--color-primary-800);
+    @apply dark:text-amber-600;
 }
