@@ -1,14 +1,17 @@
 import Conference from './Conference/Conference';
-import P2PSidebar from './P2PSidebar/P2PSidebar';
-import classes from './CallDisplay.module.css';
+import Sidebar from './Sidebar/Sidebar';
 import ICTAuthList from './ICTAuth/ICTAuthList';
+import Page from '../UI/Page';
 
 export function CallDisplay() {
+    // TODO
     return (
-        <div className={classes['call']}>
-            <P2PSidebar />
-            <Conference />
-            <ICTAuthList />
-        </div>
+        <Page className="md:grid md:grid-cols-[minmax(100px,_25%)_1fr] gap-4">
+            <Sidebar />
+            <div className="flex flex-col">
+                <ICTAuthList />
+                <Conference />
+            </div>
+        </Page>
     );
 }
