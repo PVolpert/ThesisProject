@@ -7,6 +7,8 @@ import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
 import RootLayout from './pages/Root';
 import ErrorPage from './pages/Error';
 import P2PPage from './pages/P2P';
+import HomePage from './pages/Home';
+import ConferencePage from './pages/Conference';
 
 const router = createBrowserRouter([
     {
@@ -14,7 +16,10 @@ const router = createBrowserRouter([
         element: <RootLayout />,
         errorElement: <ErrorPage />,
         children: [
-            { index: true, element: <h1>This is the homepage</h1> },
+            {
+                index: true,
+                element: <HomePage />,
+            },
             {
                 path: 'auth',
                 id: 'auth',
@@ -43,7 +48,7 @@ const router = createBrowserRouter([
                     },
                     {
                         path: 'conference/:conferenceId',
-                        element: <h2> Here will be conference</h2>,
+                        element: <ConferencePage />,
                     },
                 ],
             },
