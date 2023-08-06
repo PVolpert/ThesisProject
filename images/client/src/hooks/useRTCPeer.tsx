@@ -1,30 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useZustandStore } from '../stores/zustand/ZustandStore';
+import { useStore } from '../store/Store';
 import useSignaling from './useSignaling';
 import {
     Message,
     createHangUpMessage,
     createSDPMessage,
-} from '../wrappers/Signaling/Messages';
+} from '../helpers/Signaling/Messages';
 import { useNavigate } from 'react-router-dom';
 import {
     incomingAnswerHandler,
     validateHangUp,
     incomingIceCandidateHandler,
     incomingOfferHandler,
-} from '../wrappers/Signaling/MessageHandlers';
+} from '../helpers/Signaling/MessageHandlers';
 import {
     buildOnIceCandidateHandler,
     buildOnIceConnectionStateChangeHandler,
     buildOnIceGatheringStateChangeHandler,
     buildOnNegationNeededHandler,
     buildOnTrackHandler,
-} from '../wrappers/Signaling/EventHandlers';
+} from '../helpers/Signaling/EventHandlers';
 import {
     getUserMedia,
     getUserMediaErrorHandler,
-} from '../wrappers/Signaling/UserMedia';
-import { UserId } from '../wrappers/Signaling/User';
+} from '../helpers/Signaling/UserMedia';
+import { UserId } from '../helpers/Signaling/User';
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 
 interface useRTCPeerConnectionProps {
@@ -54,13 +54,13 @@ export default function useRTCPeerConnection({
         setRTCConnectionState,
         resetRTCConnectionSlice,
         callOptions,
-    } = useZustandStore((state) => {
+    } = useStore((state) => {
         return {
             offerMsg: state.offerMsg,
-            target: state.target,
+            target: state.callee,
             setRTCConnectionState: state.setRTCConnectionState,
             resetRTCConnectionSlice: state.resetRTCConnectionSlice,
-            callOptions: state.callOptions,
+            callOptions: state.callSettings,
         };
     });
 
@@ -201,7 +201,7 @@ export default function useRTCPeerConnection({
     useEffect(() => {
         // Invalid Page Traversal
         if (!callPartner) {
-            navigate('/call');
+            // navigate('/call');
             return;
         }
 
@@ -271,6 +271,61 @@ export default function useRTCPeerConnection({
                 }
         }
     }, [lastJsonMessage]);
+
+    async function createNewPeerConnection(callPartner: UserId) {
+        const newRTCPeerConnection = new RTCPeerConnection();
+        // Required Event Handlers
+        newRTCPeerConnection.onicecandidate = buildOnIceCandidateHandler(
+            callPartner,
+            sendJsonMessage
+        );
+        newRTCPeerConnection.ontrack = buildOnTrackHandler(setRemoteStreams);
+        newRTCPeerConnection.onnegotiationneeded = buildOnNegationNeededHandler(
+            callPartner,
+            sendJsonMessage,
+            newRTCPeerConnection
+        );
+        // Optional Event Handlers
+        newRTCPeerConnection.oniceconnectionstatechange =
+            buildOnIceConnectionStateChangeHandler(newRTCPeerConnection);
+        newRTCPeerConnection.onicegatheringstatechange =
+            buildOnIceGatheringStateChangeHandler();
+        return newRTCPeerConnection;
+    }
+
+    async function initActiveCall() {
+        try {
+            // Generate Assymetric Keypair & Callee Nonce
+
+            // Generate ICTs
+
+            // Request Caller Nonce from Callee
+
+            // Request Usermedia
+            const newLocalStream = (await getUserMedia(
+                callOptions
+            )) as MediaStream;
+            //? Notify Modal here: Getting Usermedia Done or fail
+
+            // Create RTCPeer
+            // ! Remove as dependency
+            const peerConnection = await createNewPeerConnection(
+                target as UserId
+            );
+
+            //TODO: Wait for onnegotationneeded and empty onicecandidate to have passed
+
+            //? Notify for Collection finished
+
+            // TODO: Send Offer
+
+            // ? Notify: Send Offer
+
+            // TODO: Wait for Answer
+        } catch (e) {
+            // TODO: Handle based on
+        }
+    }
 
     return { localStream, remoteStreams, closeCall };
 }
