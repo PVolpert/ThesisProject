@@ -1,11 +1,18 @@
-import { forwardRef } from 'react';
+import { ReactNode, forwardRef } from 'react';
 
-import classes from './Video.module.css';
+interface VideoProps {
+    children?: ReactNode;
+}
 
-interface VideoProps {}
-
-const Video = forwardRef<HTMLVideoElement>(function Video({}: VideoProps, ref) {
-    return <video ref={ref} className={classes['video']} autoPlay></video>;
+const Video = forwardRef<HTMLVideoElement, VideoProps>(function Video(
+    { children }: VideoProps,
+    ref
+) {
+    return (
+        <video ref={ref} className="" autoPlay>
+            {children}
+        </video>
+    );
 });
 
 export default Video;
