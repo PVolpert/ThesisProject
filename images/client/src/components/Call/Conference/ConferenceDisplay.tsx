@@ -10,9 +10,9 @@ import classes from './ConferenceDisplay.module.css';
 export default function ConferenceDisplay() {
     return (
         // ? change form to react-router Form
-        <div className={classes['outer-box']}>
-            <form className={classes['form']}>
-                <div className={classes['Input']}>
+        <div className="hidden">
+            <form className="">
+                <div className="">
                     <label>Select a conference name:</label>
                     <input
                         type="text"
@@ -21,11 +21,9 @@ export default function ConferenceDisplay() {
                         required
                     />
                 </div>
-                <div className={classes['controls']}>
-                    <Button style="secondary">Random</Button>
-                    <Button style="primary" isSubmit={true}>
-                        Join
-                    </Button>
+                <div className="">
+                    <Button className="">Random</Button>
+                    <Button type="submit">Join</Button>
                 </div>
             </form>
         </div>
