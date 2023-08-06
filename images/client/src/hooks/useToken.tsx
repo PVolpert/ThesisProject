@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useZustandStore } from '../stores/zustand/ZustandStore';
+import { useStore } from '../store/Store';
 
 interface useTokenProps {
     needsToken?: boolean;
@@ -8,18 +8,18 @@ interface useTokenProps {
 
 export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     const navigate = useNavigate();
-    const accessToken = useZustandStore((state) => state.accessToken);
-    const idToken = useZustandStore((state) => state.idToken);
-    const resetAuthToken = useZustandStore((state) => {
+    const accessToken = useStore((state) => state.accessToken);
+    const idToken = useStore((state) => state.idToken);
+    const resetAuthToken = useStore((state) => {
         return state.resetAuthToken;
     });
-    const resetIctTokens = useZustandStore((state) => {
+    const resetIctTokens = useStore((state) => {
         return state.resetIctTokens;
     });
-    const resetIctToken = useZustandStore((state) => {
+    const resetIctToken = useStore((state) => {
         return state.resetIctToken;
     });
-    const ictTokens = useZustandStore((state) => {
+    const ictTokens = useStore((state) => {
         return state.ictTokens;
     });
 
@@ -32,6 +32,8 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             return;
         }
         if (idToken.exp < Math.floor(Date.now()) / 1000) {
+            // ? Comment for disabling token checking
+            resetTokens();
         } else {
             // find bad ICTs
             const badICTTokens = ictTokens.filter((ictToken) => {
@@ -44,7 +46,7 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         }
     }
 
-    function doLogout() {
+    function resetTokens() {
         resetAuthToken();
         resetIctTokens();
     }
@@ -76,6 +78,6 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         accessToken,
         idToken,
         signalingUrl,
-        doLogout,
+        resetTokens,
     };
 }
