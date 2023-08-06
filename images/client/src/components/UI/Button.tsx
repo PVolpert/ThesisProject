@@ -1,40 +1,32 @@
 import { ReactNode } from 'react';
 
-import classes from './Button.module.css';
-
 /**
  * Primary, Secondary, Ternary Style should be selectable
  */
 
 interface ButtonProps {
     children?: ReactNode;
-    isSubmit?: true;
+    className?: string;
+    type?: 'submit' | 'reset' | 'button';
     onClick?: (() => void) | ((event: React.FormEvent<any>) => void);
-    style: 'primary' | 'secondary' | 'ternary';
+    disabled?: boolean;
 }
 
 export default function Button({
     children,
-    onClick,
-    style,
-    isSubmit,
+    className = '',
+    type = 'button',
+    onClick = () => {
+        console.log('I am a placeholder click handler');
+    },
+    disabled = false,
 }: ButtonProps) {
-    let type: 'button' | 'submit' = 'button';
-    if (isSubmit) {
-        type = 'submit';
-    }
-
-    let clickHandler: (() => void) | ((event: React.FormEvent) => void) = () =>
-        console.log('I was clicked');
-    if (onClick) {
-        clickHandler = onClick;
-    }
-
     return (
         <button
             type={type}
-            onClick={clickHandler}
-            className={`${classes['button']} ${classes[style]}`}
+            onClick={onClick}
+            className={`flex place-items-center border-2 rounded-lg px-8 py-2 shadow-md ${className}`.trim()}
+            disabled={disabled}
         >
             {children}
         </button>
