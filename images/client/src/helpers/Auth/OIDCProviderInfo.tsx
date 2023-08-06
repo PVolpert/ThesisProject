@@ -20,7 +20,7 @@ export async function fetchOIDCProviderInfo(apiEndpoint: string) {
             new URL(`${process.env.REACT_APP_API_URL}${apiEndpoint}`)
         );
         if (!respJSON.ok) {
-            throw new Error(`${respJSON.status}: ${respJSON.statusText}`);
+            throw respJSON;
         }
 
         const {
@@ -40,7 +40,6 @@ export async function fetchOIDCProviderInfo(apiEndpoint: string) {
         );
         return oidcProviderInfos;
     } catch (error) {
-        console.log(error);
-        return [];
+        throw error;
     }
 }

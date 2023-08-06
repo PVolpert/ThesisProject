@@ -1,13 +1,13 @@
-import { CallOptions } from '../../components/Call/CallOptions/CallOptions';
+import { CallSettings } from '../../components/Settings/CallSettings';
 
-export async function getUserMedia(constraints: CallOptions) {
+export async function getUserMedia(callSettings: CallSettings) {
     try {
-        if (!constraints.audio && !constraints.video) {
+        if (!callSettings.audio && !callSettings.video) {
             return new MediaStream();
         }
 
         const newStream = await navigator.mediaDevices.getUserMedia(
-            constraints
+            callSettings
         );
         return newStream;
     } catch (error) {
