@@ -1,6 +1,7 @@
 services:
   traefik:
     image: "traefik:2.10"
+    restart: on-failure
     volumes: 
       - ./configs/traefik:/etc/traefik
       - /var/run/docker.sock:/var/run/docker.sock:ro

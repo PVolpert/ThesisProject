@@ -81,7 +81,7 @@ $ docker compose up -d
 ```
 
 ```shell
-$ docker compose up -f "compose-dev.yaml" -d
+$ docker compose -f "compose-dev.yaml" up -d
 ```
 
 You can now navigate to [webapp homepage](client.localhost). See [client](./images/client/) for a more extensive documentation about the webapp.
