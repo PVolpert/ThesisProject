@@ -1,7 +1,7 @@
 import { CallDisplay } from '../components/Call/CallDisplay';
 import { useToken } from '../hooks/useToken';
-import OIDCProvider from '../wrappers/Auth/OIDCProvider';
-import { fetchOIDCProviderInfo } from '../wrappers/Auth/OIDCProviderInfo';
+import OIDCProvider from '../helpers/Auth/OIDCProvider';
+import { fetchOIDCProviderInfo } from '../helpers/Auth/OIDCProviderInfo';
 
 export default function CallPage() {
     useToken({ needsToken: true });

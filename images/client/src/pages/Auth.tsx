@@ -1,5 +1,5 @@
-import { fetchOIDCProviderInfo } from '../wrappers/Auth/OIDCProviderInfo';
-import OIDCProvider from '../wrappers/Auth/OIDCProvider';
+import { fetchOIDCProviderInfo } from '../helpers/Auth/OIDCProviderInfo';
+import OIDCProvider from '../helpers/Auth/OIDCProvider';
 
 export async function loader() {
     //? Caching via Service Worker would be a good idea
@@ -9,5 +9,6 @@ export async function loader() {
     const authProviders = authProviderInfos.map(
         (oidcProvider) => new OIDCProvider(oidcProvider)
     );
+
     return authProviders;
 }
