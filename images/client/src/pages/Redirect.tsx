@@ -7,32 +7,35 @@ import {
 
 import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 
-import OIDCProvider from '../wrappers/Auth/OIDCProvider';
-import { fetchTokenEndPointResponse } from '../wrappers/Auth/AuthCodeConsumer';
-import { useZustandStore } from '../stores/zustand/ZustandStore';
+import { fetchTokenEndPointResponse } from '../helpers/Auth/AuthCodeConsumer';
+import { useStore } from '../store/Store';
 import { loader as authProvidersLoader } from './Auth';
 import { loader as ictProvidersLoader } from './Call';
 import { useEffect } from 'react';
+import OIDCProvider from '../helpers/Auth/OIDCProvider';
 
 export default function RedirectPage() {
-    const { tokenEndpointResponse, issuer } = useLoaderData() as {
-        issuer: string;
+    const { tokenEndpointResponse, isServiceOP } = useLoaderData() as {
+        isServiceOP: boolean;
+
         tokenEndpointResponse: OpenIDTokenEndpointResponse;
     };
+
     const navigate = useNavigate();
 
-    const parseAuth = useZustandStore((state) => state.parseAuth);
-    const parseICT = useZustandStore((state) => state.parseICT);
+    const parseAuth = useStore((state) => state.parseAuth);
+    const parseICT = useStore((state) => state.parseICT);
 
     useEffect(() => {
         //? Include a toast?
-        if (!issuer) {
+        if (isServiceOP) {
             parseAuth(tokenEndpointResponse);
+            navigate('/call');
         } else {
             parseICT(tokenEndpointResponse);
+            window.close();
         }
         // Redirect when token is stored
-        navigate('/call');
     }, []);
 
     return (
@@ -42,48 +45,65 @@ export default function RedirectPage() {
     );
 }
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-    const authProviders = await authProvidersLoader();
-    const ictProviders = await ictProvidersLoader();
+export async function loader({ request, params }: LoaderFunctionArgs) {
+    //Request list of Open ID Providers for Service
+    const serviceOPs = await authProvidersLoader();
 
+    //Request list Open ID Providers for ICT
+    const ictOPs = await ictProvidersLoader();
+
+    // Extract redirect id from dynamic route segment
     const { redirectId } = params;
-    const searchParams = new URL(request.url).searchParams;
+
+    // Sanity check for dynamic segment name
     if (!redirectId) {
-        return redirect('/auth/login');
+        throw "Identifier of dynamic segment must be 'redirectID'";
     }
 
-    // Test if redirectId in authProviders
-    let oidcProvider = matchRedirectId(authProviders, redirectId);
-    let ictIssuer: string = '';
-    // Test if redirectId in ictProviders
-    if (!oidcProvider) {
-        oidcProvider = matchRedirectId(ictProviders, redirectId);
-        // Neither in authProviders nor ictProviders --> invalid redirect
-        if (!oidcProvider) {
-            console.log('redirect link does not match');
+    const { OIDCProvider, isServiceOP } = searchICTandServiceOPs(
+        serviceOPs,
+        ictOPs,
+        redirectId
+    );
 
-            return redirect('/auth/login');
-        }
-        ictIssuer = oidcProvider.info.issuer.href;
+    // redirectId is not listed in OPs --> not valid --> redirect to home
+    if (!OIDCProvider) {
+        return redirect('/');
     }
 
+    const searchParams = new URL(request.url).searchParams;
     // Request Token from TokenEndPoint
     const tokenEndpointResponse = await fetchTokenEndPointResponse(
-        oidcProvider,
+        OIDCProvider,
         searchParams
     );
 
-    return { issuer: ictIssuer, tokenEndpointResponse };
+    return { isServiceOP, tokenEndpointResponse };
 }
 
-function matchRedirectId(oidcProviders: OIDCProvider[], redirectId: string) {
-    const oidcProvider = oidcProviders.find((oidcProvider) => {
-        if (redirectId) {
-            return oidcProvider.info.redirect.pathname.endsWith(
-                `/${redirectId}`
-            );
-        }
-        return false;
-    });
+function searchICTandServiceOPs(
+    serviceOPs: OIDCProvider[],
+    ictOPs: OIDCProvider[],
+    redirectId: string
+) {
+    let OIDCProvider = matchRedirectId(serviceOPs, redirectId);
+
+    if (OIDCProvider) {
+        return { OIDCProvider, isServiceOP: true };
+    }
+
+    OIDCProvider = matchRedirectId(ictOPs, redirectId);
+    if (OIDCProvider) {
+        return { OIDCProvider, isServiceOP: false };
+    }
+
+    return { OIDCProvider: null, isServiceOP: false };
+}
+
+// matchRedirectId searches given list of Open Id Providers for a matching redirectId
+function matchRedirectId(OPs: OIDCProvider[], redirectId: string) {
+    const oidcProvider = OPs.find((oidcProvider) =>
+        oidcProvider.info.redirect.pathname.endsWith(`/${redirectId}`)
+    );
     return oidcProvider;
 }
