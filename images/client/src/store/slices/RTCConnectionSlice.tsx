@@ -1,20 +1,22 @@
 import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
-import { CallOptionsSlice } from './CallOptionsSlice';
-import { SdpMessage } from '../../wrappers/Signaling/Messages';
-import { UserId } from '../../wrappers/Signaling/User';
+import { SettingsSlice } from './SettingsSlice';
+import { SdpMessage } from '../../helpers/Signaling/Messages';
+import { UserId, UserInfo } from '../../helpers/Signaling/User';
+import { ModalSlice } from './ModalSlice';
+import { CallStageSlice } from './CallStageSlice';
 
 interface State {
     isRTCConnectionActive: boolean;
     offerMsg: SdpMessage | undefined;
-    target: UserId | undefined;
+    callee: UserInfo | undefined;
 }
 
 interface Actions {
     setRTCConnectionState: (newIsRTCConnectionActive: boolean) => void;
     setSdpOffer: (newSdpOffer: SdpMessage) => void;
-    setTarget: (newTarget: UserId) => void;
+    setCallee: (newCallee: UserInfo) => void;
     resetRTCConnectionSlice: () => void;
 }
 
@@ -23,14 +25,16 @@ export interface RTCConnectionSlice extends State, Actions {}
 const initialState: State = {
     isRTCConnectionActive: false,
     offerMsg: undefined,
-    target: undefined,
+    callee: undefined,
 };
 
 export const createRTCConnectionSlice: StateCreator<
-    CallOptionsSlice &
+    RTCConnectionSlice &
+        SettingsSlice &
         AccessTokenSlice &
         ICTAccessTokenSlice &
-        RTCConnectionSlice,
+        ModalSlice &
+        CallStageSlice,
     [],
     [],
     RTCConnectionSlice
@@ -39,6 +43,6 @@ export const createRTCConnectionSlice: StateCreator<
     setRTCConnectionState: (newIsRTCConnectionActive) =>
         set({ isRTCConnectionActive: newIsRTCConnectionActive }),
     setSdpOffer: (newSdpOffer) => set({ offerMsg: newSdpOffer }),
-    setTarget: (newTarget) => set({ target: newTarget }),
+    setCallee: (newCallee) => set({ callee: newCallee }),
     resetRTCConnectionSlice: () => set({ ...initialState }),
 });

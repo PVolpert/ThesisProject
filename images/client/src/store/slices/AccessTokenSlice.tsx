@@ -4,9 +4,12 @@ import {
     OpenIDTokenEndpointResponse,
 } from 'oauth4webapi';
 import { StateCreator } from 'zustand';
-import { CallOptionsSlice } from './CallOptionsSlice';
+import { SettingsSlice } from './SettingsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { ModalSlice } from './ModalSlice';
+import { CallStageSlice } from './CallStageSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface State {
     accessToken: string;
@@ -26,11 +29,13 @@ const initialState: State = {
 };
 
 export const createAccessTokenSlice: StateCreator<
-    CallOptionsSlice &
-        AccessTokenSlice &
+    AccessTokenSlice &
+        CallStageSlice &
         ICTAccessTokenSlice &
-        RTCConnectionSlice,
-    [],
+        ModalSlice &
+        RTCConnectionSlice &
+        SignalingSlice,
+    SettingsSlice & [],
     [],
     AccessTokenSlice
 > = (set) => ({

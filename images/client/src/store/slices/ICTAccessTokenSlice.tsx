@@ -9,9 +9,12 @@
 // Map seems to be the most reasonable choice
 import { IDToken, OpenIDTokenEndpointResponse } from 'oauth4webapi';
 import { StateCreator } from 'zustand';
-import { CallOptionsSlice } from './CallOptionsSlice';
+import { SettingsSlice } from './SettingsSlice';
 import { AccessTokenSlice, parseToken } from './AccessTokenSlice';
 import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { ModalSlice } from './ModalSlice';
+import { CallStageSlice } from './CallStageSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface TokenSet {
     accessToken: string;
@@ -35,10 +38,13 @@ const initialState: State = {
 };
 
 export const createICTAccessTokenSlice: StateCreator<
-    CallOptionsSlice &
+    ICTAccessTokenSlice &
         AccessTokenSlice &
-        ICTAccessTokenSlice &
-        RTCConnectionSlice,
+        CallStageSlice &
+        ModalSlice &
+        RTCConnectionSlice &
+        SettingsSlice &
+        SignalingSlice,
     [],
     [],
     ICTAccessTokenSlice
