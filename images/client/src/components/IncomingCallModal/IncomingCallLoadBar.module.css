@@ -1,0 +1,4 @@
+.active {
+    @apply border-springred;
+    @apply bg-springred;
+}
