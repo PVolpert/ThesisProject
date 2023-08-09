@@ -1,6 +1,9 @@
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
-import { UserId } from './User';
-import { createIceCandidateMessage, createSDPMessage } from './Messages';
+import { UserId } from '../Signaling/User';
+import {
+    createIceCandidateMessage,
+    createSDPMessage,
+} from '../Signaling/Messages';
 import { getUserMediaErrorHandler } from './UserMedia';
 
 export function buildOnIceCandidateHandler(
@@ -48,6 +51,13 @@ export function buildOnNegationNeededHandler(
             getUserMediaErrorHandler(error);
             // TODO navigate to /call
         }
+    };
+}
+export function buildOnNegotiationNeededHandler() {
+    return async () => {
+        try {
+            //TODO: Notify that onNegotiation Event Fired
+        } catch (error) {}
     };
 }
 
