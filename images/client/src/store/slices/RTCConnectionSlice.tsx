@@ -5,7 +5,7 @@ import { SettingsSlice } from './SettingsSlice';
 import { SdpMessage } from '../../helpers/Signaling/Messages';
 import { UserId, UserInfo } from '../../helpers/Signaling/User';
 import { ModalSlice } from './ModalSlice';
-import { CallStageSlice } from './CallStageSlice';
+import { OutgoingCallSlice } from './OutgoingCallSlice';
 
 interface State {
     isRTCConnectionActive: boolean;
@@ -34,7 +34,7 @@ export const createRTCConnectionSlice: StateCreator<
         AccessTokenSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        CallStageSlice,
+        OutgoingCallSlice,
     [],
     [],
     RTCConnectionSlice

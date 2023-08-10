@@ -13,8 +13,8 @@ import { SettingsSlice } from './SettingsSlice';
 import { AccessTokenSlice, parseToken } from './AccessTokenSlice';
 import { RTCConnectionSlice } from './RTCConnectionSlice';
 import { ModalSlice } from './ModalSlice';
-import { CallStageSlice } from './CallStageSlice';
-import { SignalingSlice } from './SignalingSlice';
+import { OutgoingCallSlice } from './OutgoingCallSlice';
+import { IncomingCallSlice } from './IncomingCallSlice';
 
 interface TokenSet {
     accessToken: string;
@@ -40,11 +40,11 @@ const initialState: State = {
 export const createICTAccessTokenSlice: StateCreator<
     ICTAccessTokenSlice &
         AccessTokenSlice &
-        CallStageSlice &
+        OutgoingCallSlice &
         ModalSlice &
         RTCConnectionSlice &
         SettingsSlice &
-        SignalingSlice,
+        IncomingCallSlice,
     [],
     [],
     ICTAccessTokenSlice

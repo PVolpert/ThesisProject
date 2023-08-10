@@ -4,31 +4,31 @@ import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { RTCConnectionSlice } from './RTCConnectionSlice';
 import { ModalSlice } from './ModalSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
-import { CallStageSlice } from './CallStageSlice';
+import { OutgoingCallSlice } from './OutgoingCallSlice';
 
 interface State {
-    userList: string[];
+    incomingCallStage: 0 | 1;
 }
 
 interface Actions {}
 
-export interface SignalingSlice extends State, Actions {}
+export interface IncomingCallSlice extends State, Actions {}
 
 const initialState: State = {
-    userList: [],
+    incomingCallStage: 0,
 };
 
-export const createSignalingSlice: StateCreator<
+export const createIncomingCallSlice: StateCreator<
     AccessTokenSlice &
         SettingsSlice &
-        CallStageSlice &
+        OutgoingCallSlice &
         ICTAccessTokenSlice &
         ModalSlice &
         RTCConnectionSlice &
-        SignalingSlice,
+        IncomingCallSlice,
     [],
     [],
-    SignalingSlice
+    IncomingCallSlice
 > = (set) => ({
     ...initialState,
 });
