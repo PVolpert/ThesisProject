@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store/Store';
-import useSignaling from './useSignaling';
 import {
     Message,
     createHangUpMessage,
@@ -14,18 +13,13 @@ import {
     incomingOfferHandler,
 } from '../helpers/Signaling/MessageHandlers';
 import {
-    buildOnIceCandidateHandler,
-    buildOnIceConnectionStateChangeHandler,
-    buildOnIceGatheringStateChangeHandler,
-    buildOnNegationNeededHandler,
-    buildOnTrackHandler,
-} from '../helpers/Signaling/EventHandlers';
-import {
     getUserMedia,
     getUserMediaErrorHandler,
-} from '../helpers/Signaling/UserMedia';
-import { UserId } from '../helpers/Signaling/User';
+} from '../helpers/WebRTC/UserMedia';
+
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
+import { requestICTs } from '../helpers/ICT/ICT';
+import { UserId } from '../helpers/Signaling/User';
 
 interface useRTCPeerConnectionProps {
     lastJsonMessage: any;
@@ -48,16 +42,30 @@ export default function useRTCPeerConnection({
     // Access Zustand Store
 
     // ! Look up if one change changes all
+
+    const setOutgoingCallProcessOffer = useStore(
+        (state) => state.setOutgoingCallProcessOffer
+    );
+    const setOutgoingCallProcessICT = useStore(
+        (state) => state.setOutgoingCallProcessICT
+    );
+    const setOutgoingCallProcessSendOffer = useStore(
+        (state) => state.setOutgoingCallProcessSendOffer
+    );
+    const ictLoadState = useStore((state) => state.ictLoadState);
+    const offerLoadState = useStore((state) => state.offerLoadState);
+    const sendOfferLoadState = useStore((state) => state.sendOfferLoadState);
+
     const {
         offerMsg,
-        target,
-        setRTCConnectionState,
+        callee,
+        setRTCConnectionState: setHasActiveRTCConnection,
         resetRTCConnectionSlice,
         callOptions,
     } = useStore((state) => {
         return {
             offerMsg: state.offerMsg,
-            target: state.callee,
+            callee: state.callee,
             setRTCConnectionState: state.setRTCConnectionState,
             resetRTCConnectionSlice: state.resetRTCConnectionSlice,
             callOptions: state.callSettings,
@@ -65,31 +73,33 @@ export default function useRTCPeerConnection({
     });
 
     const callPartner = useMemo(() => {
-        return target || offerMsg?.origin;
-    }, [target, offerMsg]);
+        return callee || offerMsg?.origin;
+    }, [callee, offerMsg]);
 
-    const createPeerConnection = useCallback(async (callPartner: UserId) => {
-        const newRTCPeerConnection = new RTCPeerConnection();
+    async function createNewRTCConnection() {
+        const newRTCConnection = new RTCPeerConnection();
         // Required Event Handlers
-        newRTCPeerConnection.onicecandidate = buildOnIceCandidateHandler(
-            callPartner,
-            sendJsonMessage
-        );
-        newRTCPeerConnection.ontrack = buildOnTrackHandler(setRemoteStreams);
-        newRTCPeerConnection.onnegotiationneeded = buildOnNegationNeededHandler(
-            callPartner,
-            sendJsonMessage,
-            newRTCPeerConnection
-        );
-        // Optional Event Handlers
-        newRTCPeerConnection.oniceconnectionstatechange =
-            buildOnIceConnectionStateChangeHandler(newRTCPeerConnection);
-        newRTCPeerConnection.onicegatheringstatechange =
-            buildOnIceGatheringStateChangeHandler();
-        setRTCConnection(newRTCPeerConnection);
-    }, []);
+        newRTCConnection.onnegotiationneeded = () => {
+            newRTCConnection.createOffer().then((offer) => {
+                newRTCConnection.setLocalDescription(offer);
+            });
+        };
+        newRTCConnection.onicecandidate = (ev) => {
+            let candidate = ev.candidate;
+            // Empty candidate shows no more candidates
+            if (!candidate) {
+                setOutgoingCallProcessOffer('done');
+            }
+        };
 
-    const startPassiveCall = useCallback(async () => {
+        newRTCConnection.ontrack = (event: RTCTrackEvent) => {
+            setRemoteStreams(event.streams);
+        };
+
+        setRTCConnection(newRTCConnection);
+    }
+
+    const startPassiveCall = async () => {
         if (!RTCConnection) {
             return;
         }
@@ -125,7 +135,7 @@ export default function useRTCPeerConnection({
 
             const answerDesc = RTCConnection.localDescription;
             if (!answerDesc) {
-                throw 'no local answer';
+                throw Error('no local answer');
             }
             const msg = createSDPMessage('call-answer', origin, answerDesc);
             sendJsonMessage(msg);
@@ -138,13 +148,33 @@ export default function useRTCPeerConnection({
             // Go back to call & execute cleanup
             navigate('/call');
         }
-    }, [RTCConnection]);
+    };
 
-    const startActiveCall = useCallback(async () => {
-        if (!RTCConnection) {
+// ################## Active Call Functions #################
+    
+    async function startActiveCall() {
+        if (!RTCConnection || !callPartner) {
             return;
         }
         try {
+            doICTPromise(callPartner);
+            addNewLocalStreamToRTCConnection();
+        } catch (error) {
+            console.log(error);
+            //* No HangUp needed because no message sent yet
+            // give user error feedback
+            getUserMediaErrorHandler(error);
+            // Go back to call & execute cleanup
+            navigate('/call');
+        }
+    }
+    
+    async function addNewLocalStreamToRTCConnection() {
+        try {
+            if (!RTCConnection) {
+                throw Error('no rtc available');
+            }
+            // Request media from user
             const newLocalStream = (await getUserMedia(
                 callOptions
             )) as MediaStream;
@@ -155,61 +185,75 @@ export default function useRTCPeerConnection({
                 RTCConnection.addTrack(track, newLocalStream);
             });
         } catch (error) {
-            //* No HangUp needed because no message sent yet
-            // give user error feedback
-            getUserMediaErrorHandler(error);
-            // Go back to call & execute cleanup
-            navigate('/call');
+            console.error(error);
+            throw error;
         }
-    }, [RTCConnection]);
+    }
 
-    const closeRTCConnection = useCallback(async () => {
-        if (!RTCConnection) {
-            return;
+    async function doICTPromise(callPartner: UserId) {
+        try {
+            const icts = requestICTs(callPartner);
+            // Notify store here
+            setOutgoingCallProcessICT('done');
+            return icts;
+        } catch (error) {
+            setOutgoingCallProcessICT('failed');
+            throw Error('ict acquisition failed');
         }
-        // Required Event Handlers
-        RTCConnection.onicecandidate = null;
-        RTCConnection.ontrack = null;
-        RTCConnection.onnegotiationneeded = null;
-        // Optional Event Handlers
-        RTCConnection.oniceconnectionstatechange = null;
-        RTCConnection.onicegatheringstatechange = null;
+    }
 
-        RTCConnection.close();
 
-        setRTCConnection(undefined);
-    }, [RTCConnection]);
 
+// #################### Closing Functions #####################
+    
+    async function closeCall() {
+        // stop recording media
+        closeLocalStream();
+        // stop sending media
+        closeRTCConnection();
+    }
+    
     async function closeLocalStream() {
         if (!localStream) {
+            //No need to close localStream if it does not exist
             return;
         }
+        //Stop all media recording devices
         localStream.getTracks().forEach((track) => track.stop());
+        //Drop the LocalStream from State
         setLocalStream(undefined);
     }
 
-    const closeCall = useCallback(async () => {
-        // stop sending media
-        closeRTCConnection();
-        // stop recording media
-        closeLocalStream();
-        // reset zustand values
+    async function closeRTCConnection() {
+        if (!RTCConnection) {
+            // No need to close the RTCConnection if does not exist
+            return;
+        }
+        //Null all event handlers
+        RTCConnection.onicecandidate = null;
+        RTCConnection.ontrack = null;
+        RTCConnection.onnegotiationneeded = null;
+        //Close the connection
+        RTCConnection.close();
+        //Drop the RTCConnection from State
+        setRTCConnection(undefined);
+        //Reset store flag --> enable future calls
         resetRTCConnectionSlice();
-    }, [RTCConnection, localStream, resetRTCConnectionSlice]);
+    }
+
+    //################ Side Effects #########################
 
     //* Effect to establish a new video call
     useEffect(() => {
-        // Invalid Page Traversal
         if (!callPartner) {
-            // navigate('/call');
+            // Invalid Page Traversal
+            navigate('/call');
             return;
         }
-
-        createPeerConnection(callPartner);
-
-        return () => {
-            closeRTCConnection();
-        };
+        // Call is valid, so create a new RTCConnection
+        createNewRTCConnection();
+        // Notify
+        setHasActiveRTCConnection(true);
     }, []);
 
     // * Deciding wether incoming call or outgoing call
@@ -217,21 +261,36 @@ export default function useRTCPeerConnection({
         if (!RTCConnection) {
             return;
         }
-        setRTCConnectionState(true);
-        console.log('stated RTCConnection is active');
-        // User is getting called
         if (offerMsg) {
-            // ICT of Caller already checked
-            // Provide Callee ICT
             startPassiveCall();
         }
 
-        // User is calling somebody
-        if (target) {
-            // Check Callee ICT
-            // Provide Caller ICT
+        if (callee) {
             startActiveCall();
         }
+    }, [RTCConnection]);
+
+    useEffect(() => {
+        if (
+            offerLoadState != 'done' ||
+            ictLoadState != 'done' ||
+            !RTCConnection ||
+            !callPartner
+        ) {
+            return;
+        }
+
+        const desc = RTCConnection.localDescription;
+
+        if (!desc) {
+            throw Error('Invalid local Description');
+        }
+        // TODO: Create JWT here
+
+        const msg = createSDPMessage('call-offer', callPartner, desc);
+
+        sendJsonMessage(msg);
+        setOutgoingCallProcessSendOffer('done');
 
         return () => {
             if (!callPartner) {
@@ -240,7 +299,7 @@ export default function useRTCPeerConnection({
             const answerMsg = createHangUpMessage(callPartner);
             sendJsonMessage(answerMsg);
         };
-    }, [RTCConnection]);
+    }, [offerLoadState, ictLoadState]);
 
     // * Effect for Incoming Socket Message
     useEffect(() => {
@@ -271,61 +330,6 @@ export default function useRTCPeerConnection({
                 }
         }
     }, [lastJsonMessage]);
-
-    async function createNewPeerConnection(callPartner: UserId) {
-        const newRTCPeerConnection = new RTCPeerConnection();
-        // Required Event Handlers
-        newRTCPeerConnection.onicecandidate = buildOnIceCandidateHandler(
-            callPartner,
-            sendJsonMessage
-        );
-        newRTCPeerConnection.ontrack = buildOnTrackHandler(setRemoteStreams);
-        newRTCPeerConnection.onnegotiationneeded = buildOnNegationNeededHandler(
-            callPartner,
-            sendJsonMessage,
-            newRTCPeerConnection
-        );
-        // Optional Event Handlers
-        newRTCPeerConnection.oniceconnectionstatechange =
-            buildOnIceConnectionStateChangeHandler(newRTCPeerConnection);
-        newRTCPeerConnection.onicegatheringstatechange =
-            buildOnIceGatheringStateChangeHandler();
-        return newRTCPeerConnection;
-    }
-
-    async function initActiveCall() {
-        try {
-            // Generate Assymetric Keypair & Callee Nonce
-
-            // Generate ICTs
-
-            // Request Caller Nonce from Callee
-
-            // Request Usermedia
-            const newLocalStream = (await getUserMedia(
-                callOptions
-            )) as MediaStream;
-            //? Notify Modal here: Getting Usermedia Done or fail
-
-            // Create RTCPeer
-            // ! Remove as dependency
-            const peerConnection = await createNewPeerConnection(
-                target as UserId
-            );
-
-            //TODO: Wait for onnegotationneeded and empty onicecandidate to have passed
-
-            //? Notify for Collection finished
-
-            // TODO: Send Offer
-
-            // ? Notify: Send Offer
-
-            // TODO: Wait for Answer
-        } catch (e) {
-            // TODO: Handle based on
-        }
-    }
 
     return { localStream, remoteStreams, closeCall };
 }
