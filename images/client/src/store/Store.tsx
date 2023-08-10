@@ -14,8 +14,14 @@ import {
     createRTCConnectionSlice,
 } from './slices/RTCConnectionSlice';
 import { ModalSlice, createModalSlice } from './slices/ModalSlice';
-import { CallStageSlice, createCallStageSlice } from './slices/CallStageSlice';
-import { SignalingSlice, createSignalingSlice } from './slices/SignalingSlice';
+import {
+    OutgoingCallSlice,
+    createOutgoingCallSlice,
+} from './slices/OutgoingCallSlice';
+import {
+    IncomingCallSlice,
+    createIncomingCallSlice,
+} from './slices/IncomingCallSlice';
 
 export const useStore = create<
     SettingsSlice &
@@ -23,8 +29,8 @@ export const useStore = create<
         ICTAccessTokenSlice &
         RTCConnectionSlice &
         ModalSlice &
-        CallStageSlice &
-        SignalingSlice
+        OutgoingCallSlice &
+        IncomingCallSlice
 >()(
     persist(
         (...a) => ({
@@ -33,8 +39,8 @@ export const useStore = create<
             ...createICTAccessTokenSlice(...a),
             ...createRTCConnectionSlice(...a),
             ...createModalSlice(...a),
-            ...createCallStageSlice(...a),
-            ...createSignalingSlice(...a),
+            ...createOutgoingCallSlice(...a),
+            ...createIncomingCallSlice(...a),
         }),
         {
             name: 'token-storage',
