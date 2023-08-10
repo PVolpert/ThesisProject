@@ -1,8 +1,8 @@
 import { OIDCProviderInfo } from '../Auth/OIDCProviderInfo';
 import { UserId } from '../Signaling/User';
 
-export async function requestICTs(target: UserId) {
-    const nonce = await gatherNonce(target);
+export async function requestICTs(callPartner: UserId) {
+    const nonce = await gatherNonce(callPartner);
 
     const ictProviders = [] as OIDCProviderInfo[];
 
@@ -24,7 +24,8 @@ export async function requestICTs(target: UserId) {
     return ICTs;
 }
 
-async function gatherNonce(target: UserId) {
+async function gatherNonce(callPartner: UserId) {
+    // TODO: differentiate between caller and callee for nonce
     return 'dummyNonce';
 }
 
