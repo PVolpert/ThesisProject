@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useSignaling from '../../../../hooks/useSignaling';
 import { useStore } from '../../../../store/Store';
-import { UserId, UserInfo } from '../../../../helpers/Signaling/User';
+import { UserInfo } from '../../../../helpers/Signaling/User';
 import {
     Message,
     createUserListMessage,
@@ -31,8 +31,8 @@ export default function UserList() {
     const showOutgoingCallModal = useStore((state) => {
         return state.showOutgoingCallModal;
     });
-    const resetCallStages = useStore((state) => {
-        return state.resetCallStages;
+    const resetOutgoingCall = useStore((state) => {
+        return state.resetOutgoingCallSlice;
     });
 
     const navigate = useNavigate();
@@ -42,7 +42,7 @@ export default function UserList() {
         (callee: UserInfo) => {
             const onCallHandler = () => {
                 setCallee(callee);
-                resetCallStages();
+                resetOutgoingCall();
                 showOutgoingCallModal();
             };
             return onCallHandler;

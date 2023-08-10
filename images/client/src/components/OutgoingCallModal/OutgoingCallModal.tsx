@@ -9,9 +9,9 @@ import { useNavigate } from 'react-router-dom';
 interface OutgoingCallModalProps {}
 
 export default function OutgoingCallModal({}: OutgoingCallModalProps) {
-    const stage = useStore((state) => state.outgoingCallStage);
-    const setOutgoingCallStage = useStore(
-        (state) => state.setOutgoingCallStage
+    const stage = useStore((state) => state.outgoingCallModalStage);
+    const setOutgoingCallModalStage = useStore(
+        (state) => state.setOutgoingCallModalStage
     );
     const hideModal = useStore((state) => state.hideOutgoingCallModal);
     const resetRTCConnectionSlice = useStore(
@@ -32,12 +32,19 @@ export default function OutgoingCallModal({}: OutgoingCallModalProps) {
                             resetRTCConnectionSlice();
                         }}
                         onClickYes={() => {
-                            setOutgoingCallStage(1);
+                            setOutgoingCallModalStage(1);
                             navigate('/call/p2p');
                         }}
                     />
                 )}
-                {stage == 1 && <ShowSetupSteps />}
+                {stage == 1 && (
+                    <ShowSetupSteps
+                        onClickNo={() => {
+                            hideModal();
+                            navigate('/call');
+                        }}
+                    />
+                )}
                 {stage == 2 && <ConfirmCallee />}
             </div>
         </Modal>

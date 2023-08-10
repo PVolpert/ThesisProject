@@ -1,18 +1,10 @@
-import { ReactNode } from 'react';
-
-export type loadState = 'loading' | 'done' | 'failed';
+import { LoadState } from '../../store/slices/OutgoingCallSlice';
 
 interface LoadStateIconProps {
-    children?: ReactNode;
-    className?: string;
-    loadState: loadState;
+    loadState: LoadState;
 }
 
-export default function LoadStateIcon({
-    children,
-    className = '',
-    loadState,
-}: LoadStateIconProps) {
+export default function LoadStateIcon({ loadState }: LoadStateIconProps) {
     switch (loadState) {
         case 'loading':
             return (

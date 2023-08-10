@@ -1,16 +1,12 @@
-import { ReactNode } from 'react';
-import LoadStateIcon, { loadState } from '../UI/LoadStateIcon';
+import LoadStateIcon from '../UI/LoadStateIcon';
+import { LoadState } from '../../store/slices/OutgoingCallSlice';
 
 interface LoadingStatementProps {
-    children?: ReactNode;
-    className?: string;
-    loadState: loadState;
+    loadState: LoadState;
     loadStatement: string;
 }
 
 export default function LoadingStatement({
-    children,
-    className = '',
     loadState,
     loadStatement,
 }: LoadingStatementProps) {

@@ -1,10 +1,20 @@
 import LoadingStatement from '../LoadingStatement';
 import Button from '../../UI/Button';
 import { Description, MainTitle } from '../../UI/Headers';
+import { useStore } from '../../../store/Store';
 
-interface ShowSetupStepsProps {}
+interface ShowSetupStepsProps {
+    onClickYes?: () => void;
+    onClickNo?: () => void;
+}
 
-export default function ShowSetupSteps({}: ShowSetupStepsProps) {
+export default function ShowSetupSteps({
+    onClickNo,
+    onClickYes,
+}: ShowSetupStepsProps) {
+    const ictLoadState = useStore((state) => state.ictLoadState);
+    const offerLoadState = useStore((state) => state.offerLoadState);
+    const sendOfferLoadState = useStore((state) => state.sendOfferLoadState);
     return (
         <>
             <MainTitle>Setting up the call</MainTitle>
@@ -13,15 +23,15 @@ export default function ShowSetupSteps({}: ShowSetupStepsProps) {
             </Description>
             <div className="flex flex-col space-y-4">
                 <LoadingStatement
-                    loadState="done"
+                    loadState={ictLoadState}
                     loadStatement="Requesting ICT Tokens"
                 />
                 <LoadingStatement
-                    loadState="failed"
-                    loadStatement="Logging ICT Tokens"
+                    loadState={offerLoadState}
+                    loadStatement="Creating Offer"
                 />
                 <LoadingStatement
-                    loadState="loading"
+                    loadState={sendOfferLoadState}
                     loadStatement="Sending Call Request"
                 />
                 <LoadingStatement
@@ -31,13 +41,13 @@ export default function ShowSetupSteps({}: ShowSetupStepsProps) {
             </div>
             <div className="flex space-x-4 justify-center">
                 <Button
-                    onClick={() => {}}
+                    onClick={onClickNo}
                     className="bg-springblue  hover:bg-inherit border-springblue hover:text-springblue text-white transition duration-1050"
                 >
                     Cancel
                 </Button>
                 <Button
-                    onClick={() => {}}
+                    onClick={onClickYes}
                     disabled={true}
                     className="bg-springred disabled:bg-inherit disabled:text-springred disabled:cursor-not-allowed  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050"
                 >
