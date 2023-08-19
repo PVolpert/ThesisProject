@@ -12,9 +12,22 @@ export default function ShowSetupSteps({
     onClickNo,
     onClickYes,
 }: ShowSetupStepsProps) {
-    const ictLoadState = useStore((state) => state.ictLoadState);
+    const ictLoadState = useStore((state) => state.ictOfferLoadState);
     const offerLoadState = useStore((state) => state.offerLoadState);
     const sendOfferLoadState = useStore((state) => state.sendOfferLoadState);
+    const answerReceivedState = useStore((state) => state.answerReceivedState);
+
+    function checkLoadState() {
+        return ![
+            ictLoadState,
+            offerLoadState,
+            sendOfferLoadState,
+            answerReceivedState,
+        ].every((loadState) => {
+            return loadState == 'fulfilled';
+        });
+    }
+
     return (
         <>
             <MainTitle>Setting up the call</MainTitle>
@@ -35,7 +48,7 @@ export default function ShowSetupSteps({
                     loadStatement="Sending Call Request"
                 />
                 <LoadingStatement
-                    loadState="loading"
+                    loadState={answerReceivedState}
                     loadStatement="Waiting for Response"
                 />
             </div>
@@ -48,7 +61,7 @@ export default function ShowSetupSteps({
                 </Button>
                 <Button
                     onClick={onClickYes}
-                    disabled={true}
+                    disabled={checkLoadState()}
                     className="bg-springred disabled:bg-inherit disabled:text-springred disabled:cursor-not-allowed  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050"
                 >
                     Continue
