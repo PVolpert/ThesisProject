@@ -11,8 +11,6 @@ import { UserId, UserInfo, isUserEqual } from './User';
 
 // user* Message Handlers
 
-const maxRetries = 100;
-
 export async function incomingUserOnlineHandler(
     msg: userOnlineMessage,
     setUserList: (value: React.SetStateAction<UserInfo[]>) => void,
@@ -72,25 +70,6 @@ export async function incomingUserListHandler(
     setUserList(newUserList);
 }
 
-// Call Message Handlers
-
-export async function incomingCallHandler(
-    msg: SdpMessage,
-    answerCall: (msg: SdpMessage) => void
-) {
-    const { origin, body: { desc } = {} } = msg;
-    if (!origin) {
-        console.error('missing message origin');
-    }
-    if (!desc) {
-        console.error('missing sdp in message body');
-        return;
-    }
-    // console.log('incoming offer sdp', sdp);
-
-    answerCall(msg);
-}
-
 //* RTC Message Handlers
 
 export async function incomingOfferHandler(msg: SdpMessage) {
@@ -106,9 +85,8 @@ export async function incomingOfferHandler(msg: SdpMessage) {
 
 export async function incomingAnswerHandler(
     msg: SdpMessage,
-    RTCConnection: RTCPeerConnection | undefined
+    RTCConnection: RTCPeerConnection
 ) {
-    // ! check if origin matches prior connection
     const { origin, body: { desc } = {} } = msg;
     if (!origin) {
         console.error('sdp Message is missing origin');
@@ -118,85 +96,17 @@ export async function incomingAnswerHandler(
         console.error('sdp Message is missing body');
         return;
     }
+
+    //TODO Validate ICT here
+
     try {
-        //! We verify and prompt callee ict here
-        console.log(`Callee is from ${origin} with id ${origin.subject}`);
-        // if (
-        // window.confirm(
-        // `Do you want to call ${origin.issuer} ${origin.subject}?`
-        // )
-        // ) {
-        const valRTCConnection = await waitForRTCPeerConnection(RTCConnection);
-        valRTCConnection.setRemoteDescription(desc).catch((err) => {
-            console.error(err);
+        RTCConnection.setRemoteDescription(desc).catch((err) => {
+            throw err;
         });
-        // } else {
-        //     throw 'Call denied';
-        // }
     } catch (error) {
         // TODO navigate back to /call
-        console.log(error);
+        throw error;
     }
-}
-
-export async function incomingIceCandidateHandler(
-    msg: IceCandidateMessage,
-    RTCConnection: RTCPeerConnection | undefined
-) {
-    const { body: { candidate } = {} } = msg;
-    if (!candidate) {
-        console.error('sdp Message is missing body');
-        return;
-    }
-    try {
-        //Remote Description must be set before adding ICE Candidates
-        const valRTCConnection = await waitForRTCPeerConnection(RTCConnection);
-        await waitForRemoteDescription(valRTCConnection);
-        //Add the Ice Candidate
-        console.log('Adding the ice candidate');
-        const newIceCandidate = new RTCIceCandidate(candidate);
-        valRTCConnection.addIceCandidate(newIceCandidate);
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-async function waitForRemoteDescription(RTCConnection: RTCPeerConnection) {
-    return new Promise<void>((resolve, reject) => {
-        const checkRemoteDescription = (tries: number) => {
-            // Stop if there is no RTCConnection
-            if (!RTCConnection || tries > maxRetries) {
-                reject('No RTCPeerConnection or max retries reached');
-            }
-            // Restart if there is no remoteDescription
-            if (!RTCConnection.remoteDescription) {
-                setTimeout(checkRemoteDescription, 200, tries + 1);
-            } else {
-                // Proceed if there is a remoteDescription
-                resolve();
-            }
-        };
-        checkRemoteDescription(0);
-    });
-}
-async function waitForRTCPeerConnection(
-    RTCConnection: RTCPeerConnection | undefined
-) {
-    return new Promise<RTCPeerConnection>((resolve, reject) => {
-        const checkRemoteDescription = (tries: number) => {
-            // Restart if there is no remoteConnection
-            if (tries > maxRetries) {
-                reject('Max retries reaced');
-            }
-            if (!RTCConnection) {
-                setTimeout(checkRemoteDescription, 200);
-            } else {
-                // Proceed if there is a rtcConnection
-                resolve(RTCConnection);
-            }
-        };
-        checkRemoteDescription(0);
-    });
 }
 
 export function validateHangUp(
