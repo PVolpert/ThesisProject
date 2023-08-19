@@ -19,6 +19,8 @@ export default function OutgoingCallModal({}: OutgoingCallModalProps) {
     );
     const navigate = useNavigate();
 
+    const setAcceptAnswer = useStore((state) => state.setAcceptAnswer);
+
     return (
         <Modal onHideModal={hideModal}>
             <div className="flex flex-col p-4 space-y-2">
@@ -39,13 +41,28 @@ export default function OutgoingCallModal({}: OutgoingCallModalProps) {
                 )}
                 {stage == 1 && (
                     <ShowSetupSteps
+                        onClickYes={() => {
+                            setOutgoingCallModalStage(2);
+                        }}
                         onClickNo={() => {
                             hideModal();
                             navigate('/call');
                         }}
                     />
                 )}
-                {stage == 2 && <ConfirmCallee />}
+                {stage == 2 && (
+                    <ConfirmCallee
+                        onClickYes={() => {
+                            setAcceptAnswer('fulfilled');
+                            hideModal();
+                        }}
+                        onClickNo={() => {
+                            hideModal();
+                            setAcceptAnswer('rejected');
+                            navigate('/call');
+                        }}
+                    />
+                )}
             </div>
         </Modal>
     );
