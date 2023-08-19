@@ -10,6 +10,7 @@ import LoginLink from './Navigation/LoginLink';
 import HomeLink from './Navigation/HomeLink';
 import { useStore } from '../store/Store';
 import classes from './MainNavigation.module.css';
+import ConnectionStatus from './UI/ConnectionStatus';
 
 function MainNavigation() {
     const { accessToken, idToken, resetTokens } = useToken();
@@ -26,6 +27,10 @@ function MainNavigation() {
     }
 
     const showSettingsModal = useStore((state) => state.showSettingsModal);
+
+    const signalingConnectionState = useStore(
+        (state) => state.signalingConnectionState
+    );
 
     const name =
         idToken && idToken.name ? idToken.name.toString() : 'Unknown name';
@@ -70,7 +75,11 @@ function MainNavigation() {
                     )}
                 </div>
                 <div className="flex space-x-6 place-items-center">
-                    {accessToken && <Signaling />}
+                    {accessToken && (
+                        <ConnectionStatus
+                            connectionState={signalingConnectionState}
+                        />
+                    )}
 
                     {!accessToken && (
                         <NavLink
