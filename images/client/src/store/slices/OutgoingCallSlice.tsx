@@ -8,31 +8,39 @@ import { IncomingCallSlice } from './IncomingCallSlice';
 
 type OutgoingCallModalStage = 0 | 1 | 2;
 
-export type LoadState = 'loading' | 'done' | 'failed';
+export type AsyncTaskState = 'pending' | 'fulfilled' | 'rejected';
 
 interface State {
+    calleeUserName: string;
     outgoingCallModalStage: OutgoingCallModalStage;
-
-    ictLoadState: LoadState;
-    offerLoadState: LoadState;
-    sendOfferLoadState: LoadState;
+    ictOfferLoadState: AsyncTaskState;
+    offerLoadState: AsyncTaskState;
+    sendOfferLoadState: AsyncTaskState;
+    answerReceivedState: AsyncTaskState;
+    acceptAnswer: AsyncTaskState;
 }
 
 interface Actions {
     resetOutgoingCallSlice: () => void;
     setOutgoingCallModalStage: (newStage: OutgoingCallModalStage) => void;
-    setOutgoingCallProcessICT: (newLoadState: LoadState) => void;
-    setOutgoingCallProcessOffer: (newLoadState: LoadState) => void;
-    setOutgoingCallProcessSendOffer: (newLoadState: LoadState) => void;
+    setICTOfferLoadState: (newLoadState: AsyncTaskState) => void;
+    setOfferLoadState: (newLoadState: AsyncTaskState) => void;
+    setOfferSendLoadState: (newLoadState: AsyncTaskState) => void;
+    setAnswerReceivedLoadState: (newLoadState: AsyncTaskState) => void;
+    setCalleeUserName: (newUserName: string) => void;
+    setAcceptAnswer: (newAccept: AsyncTaskState) => void;
 }
 
 export interface OutgoingCallSlice extends State, Actions {}
 
 const initialState: State = {
     outgoingCallModalStage: 0,
-    ictLoadState: 'loading',
-    offerLoadState: 'loading',
-    sendOfferLoadState: 'loading',
+    ictOfferLoadState: 'pending',
+    offerLoadState: 'pending',
+    sendOfferLoadState: 'pending',
+    answerReceivedState: 'pending',
+    calleeUserName: '',
+    acceptAnswer: 'pending',
 };
 
 export const createOutgoingCallSlice: StateCreator<
@@ -51,10 +59,15 @@ export const createOutgoingCallSlice: StateCreator<
     resetOutgoingCallSlice: () => set({ ...initialState }),
     setOutgoingCallModalStage: (newStage) =>
         set({ outgoingCallModalStage: newStage }),
-    setOutgoingCallProcessICT: (newLoadState) =>
-        set({ ictLoadState: newLoadState }),
-    setOutgoingCallProcessOffer: (newLoadState) =>
-        set({ offerLoadState: newLoadState }),
-    setOutgoingCallProcessSendOffer: (newLoadState) =>
+    setICTOfferLoadState: (newLoadState) =>
+        set({ ictOfferLoadState: newLoadState }),
+    setOfferLoadState: (newLoadState) => set({ offerLoadState: newLoadState }),
+    setOfferSendLoadState: (newLoadState) =>
         set({ sendOfferLoadState: newLoadState }),
+    setCalleeUserName: (newUserName) => set({ calleeUserName: newUserName }),
+    setAnswerReceivedLoadState: (newLoadState) =>
+        set({ answerReceivedState: newLoadState }),
+    setAcceptAnswer: (newLoadState) => {
+        set({ acceptAnswer: newLoadState });
+    },
 });
