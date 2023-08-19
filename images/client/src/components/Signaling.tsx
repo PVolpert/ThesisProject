@@ -1,153 +1,75 @@
-import { ReadyState } from 'react-use-websocket';
 import useSignaling from '../hooks/useSignaling';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
-import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/Store';
-import {
-    Message,
-    SdpMessage,
-    createHangUpMessage,
-} from '../helpers/Signaling/Messages';
-import { incomingCallHandler } from '../helpers/Signaling/MessageHandlers';
+import { Message, SdpMessage } from '../helpers/Signaling/Messages';
 import { useToken } from '../hooks/useToken';
 
 export default function Signaling() {
     const { signalingUrl } = useToken();
     const {
-        socket: { lastJsonMessage, sendJsonMessage, readyState },
+        socket: { lastJsonMessage, readyState },
     } = useSignaling({ socketUrl: signalingUrl });
-    const navigate = useNavigate();
     const isRTCConnectionActive = useStore((state) => {
-        return state.isRTCConnectionActive;
-    });
-    const setSdpOffer = useStore((state) => {
-        return state.setSdpOffer;
+        return state.shouldBlockOutsideOffers;
     });
 
-    const answerCall = useCallback((msg: SdpMessage) => {
-        const { origin: { issuer, subject } = {} } = msg;
+    const setIncomingOffer = useStore((state) => state.setIncomingOffer);
+    const setCallPartner = useStore((state) => state.setCallPartner);
+    const showIncomingCallModal = useStore(
+        (state) => state.showIncomingCallModal
+    );
+    const setSignalingConnectionState = useStore(
+        (state) => state.setSignalingConnectionState
+    );
 
-        //TODO Here we can extract and verify the ICT Tokens before RTCPeerConnction is up
-        console.log(`Caller is from ${issuer} with id ${subject}`);
-        // if (window.confirm(`Accept the call from ${issuer}:${subject}?`)) {
-        setSdpOffer(msg);
-        navigate('/call/p2p');
-        // } else {
-        //     if (!msg.origin) {
-        //         return;
-        //     }
-        //     const answerMsg = createHangUpMessage(msg.origin);
-        //     sendJsonMessage(answerMsg);
-        // }
-    }, []);
-    //* Side effect for incoming socket messages of type offer
     useEffect(() => {
-        // Do nothing if already in a call
-        if (isRTCConnectionActive || !lastJsonMessage) {
+        // Update store value of ready state
+        setSignalingConnectionState(readyState);
+    }, [readyState]);
+
+    //* Handle incoming websocket messages of type call offer
+    useEffect(() => {
+        // Ignore initial empty value
+        if (!lastJsonMessage) {
             return;
         }
+        // Do nothing if already in a call
+        if (isRTCConnectionActive) {
+            return;
+        }
+
         // filter out messages without type
         const { type } = lastJsonMessage as Message;
         if (!type) {
-            console.error('missing socket message type');
+            console.error(
+                'socket message is invalid: missing socket message type'
+            );
             return;
         }
-
         if (type === 'call-offer') {
-            // console.log('received call offer');
-            incomingCallHandler(lastJsonMessage, answerCall);
+            const { origin, body: { desc } = {} } =
+                lastJsonMessage as SdpMessage;
+            // Check if message has a origin element
+            if (!origin) {
+                console.error('missing message origin');
+                return;
+            }
+            // Check if message has a desc element
+            if (!desc) {
+                console.error('missing sdp in message body');
+                return;
+            }
+            // TODO: Add a ICT
+
+            // Add call-offer to store
+            setIncomingOffer(desc);
+            // Add call partner to store
+            setCallPartner(origin);
+            // Open Incoming Call Modal
+            showIncomingCallModal();
         }
     }, [lastJsonMessage]);
 
-    // * Translate ReadyState into string
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                />
-            </svg>
-        ),
-        [ReadyState.OPEN]: (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                />
-            </svg>
-        ),
-        [ReadyState.CLOSING]: (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3l8.735 8.735m0 0a.374.374 0 11.53.53m-.53-.53l.53.53m0 0L21 21M14.652 9.348a3.75 3.75 0 010 5.304m2.121-7.425a6.75 6.75 0 010 9.546m2.121-11.667c3.808 3.807 3.808 9.98 0 13.788m-9.546-4.242a3.733 3.733 0 01-1.06-2.122m-1.061 4.243a6.75 6.75 0 01-1.625-6.929m-.496 9.05c-3.068-3.067-3.664-7.67-1.79-11.334M12 12h.008v.008H12V12z"
-                />
-            </svg>
-        ),
-        [ReadyState.CLOSED]: (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3l8.735 8.735m0 0a.374.374 0 11.53.53m-.53-.53l.53.53m0 0L21 21M14.652 9.348a3.75 3.75 0 010 5.304m2.121-7.425a6.75 6.75 0 010 9.546m2.121-11.667c3.808 3.807 3.808 9.98 0 13.788m-9.546-4.242a3.733 3.733 0 01-1.06-2.122m-1.061 4.243a6.75 6.75 0 01-1.625-6.929m-.496 9.05c-3.068-3.067-3.664-7.67-1.79-11.334M12 12h.008v.008H12V12z"
-                />
-            </svg>
-        ),
-        [ReadyState.UNINSTANTIATED]: (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3l8.735 8.735m0 0a.374.374 0 11.53.53m-.53-.53l.53.53m0 0L21 21M14.652 9.348a3.75 3.75 0 010 5.304m2.121-7.425a6.75 6.75 0 010 9.546m2.121-11.667c3.808 3.807 3.808 9.98 0 13.788m-9.546-4.242a3.733 3.733 0 01-1.06-2.122m-1.061 4.243a6.75 6.75 0 01-1.625-6.929m-.496 9.05c-3.068-3.067-3.664-7.67-1.79-11.334M12 12h.008v.008H12V12z"
-                />
-            </svg>
-        ),
-    }[readyState];
-
-    return (
-        <div className="flex flex-col md:flex-row place-items-center space-x-2">
-            <p className="hidden md:block">Status:</p>
-            {connectionStatus}
-        </div>
-    );
+    return <></>;
 }
