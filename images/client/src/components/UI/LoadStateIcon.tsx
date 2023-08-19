@@ -1,12 +1,12 @@
-import { LoadState } from '../../store/slices/OutgoingCallSlice';
+import { AsyncTaskState } from '../../store/slices/OutgoingCallSlice';
 
 interface LoadStateIconProps {
-    loadState: LoadState;
+    loadState: AsyncTaskState;
 }
 
 export default function LoadStateIcon({ loadState }: LoadStateIconProps) {
     switch (loadState) {
-        case 'loading':
+        case 'pending':
             return (
                 <svg
                     className="w-6 text-white animate-spin "
@@ -20,7 +20,7 @@ export default function LoadStateIcon({ loadState }: LoadStateIconProps) {
                         cy="12"
                         r="10"
                         stroke="currentColor"
-                        stroke-width="4"
+                        strokeWidth="4"
                     ></circle>
                     <path
                         className="opacity-75"
@@ -30,7 +30,7 @@ export default function LoadStateIcon({ loadState }: LoadStateIconProps) {
                 </svg>
             );
 
-        case 'done':
+        case 'fulfilled':
             return (
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +47,7 @@ export default function LoadStateIcon({ loadState }: LoadStateIconProps) {
                     />
                 </svg>
             );
-        case 'failed':
+        case 'rejected':
             return (
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
