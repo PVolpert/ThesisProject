@@ -2,30 +2,36 @@ import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { SdpMessage } from '../../helpers/Signaling/Messages';
-import { UserId, UserInfo } from '../../helpers/Signaling/User';
+import { UserId } from '../../helpers/Signaling/User';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
+import { ReadyState } from 'react-use-websocket';
 
 interface State {
-    isRTCConnectionActive: boolean;
-    offerMsg: SdpMessage | undefined;
-    callee: UserInfo | undefined;
+    shouldBlockOutsideOffers: boolean;
+    incomingOffer: RTCSessionDescription | undefined;
+    incomingAnswer: RTCSessionDescription | undefined;
+    callPartner: UserId | undefined;
+    signalingConnectionState: ReadyState;
 }
 
 interface Actions {
-    setRTCConnectionState: (newIsRTCConnectionActive: boolean) => void;
-    setSdpOffer: (newSdpOffer: SdpMessage) => void;
-    setCallee: (newCallee: UserInfo) => void;
+    setShouldBlockOutsideOffers: (enable: boolean) => void;
+    setIncomingOffer: (newOffer: RTCSessionDescription) => void;
+    setIncomingAnswer: (newAnswer: RTCSessionDescription) => void;
+    setCallPartner: (newCallPartner: UserId) => void;
     resetRTCConnectionSlice: () => void;
+    setSignalingConnectionState: (newState: ReadyState) => void;
 }
 
 export interface RTCConnectionSlice extends State, Actions {}
 
 const initialState: State = {
-    isRTCConnectionActive: false,
-    offerMsg: undefined,
-    callee: undefined,
+    shouldBlockOutsideOffers: false,
+    incomingOffer: undefined,
+    incomingAnswer: undefined,
+    callPartner: undefined,
+    signalingConnectionState: ReadyState.CLOSED,
 };
 
 export const createRTCConnectionSlice: StateCreator<
@@ -40,9 +46,12 @@ export const createRTCConnectionSlice: StateCreator<
     RTCConnectionSlice
 > = (set) => ({
     ...initialState,
-    setRTCConnectionState: (newIsRTCConnectionActive) =>
-        set({ isRTCConnectionActive: newIsRTCConnectionActive }),
-    setSdpOffer: (newSdpOffer) => set({ offerMsg: newSdpOffer }),
-    setCallee: (newCallee) => set({ callee: newCallee }),
+    setShouldBlockOutsideOffers: (updateRTCConnectionState) =>
+        set({ shouldBlockOutsideOffers: updateRTCConnectionState }),
+    setIncomingOffer: (newOffer) => set({ incomingOffer: newOffer }),
+    setIncomingAnswer: (newAnswer) => set({ incomingAnswer: newAnswer }),
+    setCallPartner: (newCallPartner) => set({ callPartner: newCallPartner }),
+    setSignalingConnectionState: (newState) =>
+        set({ signalingConnectionState: newState }),
     resetRTCConnectionSlice: () => set({ ...initialState }),
 });
