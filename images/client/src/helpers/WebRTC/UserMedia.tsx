@@ -11,7 +11,7 @@ export async function getUserMedia(callSettings: CallSettings) {
         );
         return newStream;
     } catch (error) {
-        getUserMediaErrorHandler(error);
+        throw error;
     }
 }
 
