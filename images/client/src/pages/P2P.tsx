@@ -19,24 +19,32 @@ export default function P2PPage() {
         lastJsonMessage,
     });
 
-    // * Assign stream to video elements
     useEffect(() => {
-        if (!accessToken || !localStream || !localRef.current) {
+        if (!accessToken) {
             return;
         }
 
-        if (localRef.current && localStream) {
-            localRef.current.srcObject = localStream;
+        if (!localRef.current || !localStream.active) {
+            return;
         }
-
-        if (remoteRef.current && remoteStreams.at(0)) {
-            remoteRef.current.srcObject = remoteStreams[0];
-        }
+        localRef.current.srcObject = localStream;
 
         return () => {
             closeCall();
         };
-    }, [localStream, localRef, remoteStreams, remoteRef]);
+    }, [localStream, localRef]);
+
+    // * Assign stream to video elements
+    useEffect(() => {
+        if (!accessToken) {
+            return;
+        }
+
+        if (!remoteRef.current || !remoteStreams.at(0)?.active) {
+            return;
+        }
+        remoteRef.current.srcObject = remoteStreams[0];
+    }, [remoteStreams, remoteRef]);
 
     return <P2PDisplay localRef={localRef} remoteRef={remoteRef} />;
 }
