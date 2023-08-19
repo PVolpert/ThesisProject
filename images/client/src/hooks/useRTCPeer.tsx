@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store/Store';
 import {
     Message,
+    SdpMessage,
     createHangUpMessage,
     createSDPMessage,
 } from '../helpers/Signaling/Messages';
 import { useNavigate } from 'react-router-dom';
 import {
-    incomingAnswerHandler,
     validateHangUp,
-    incomingIceCandidateHandler,
     incomingOfferHandler,
 } from '../helpers/Signaling/MessageHandlers';
 import {
@@ -30,160 +29,85 @@ export default function useRTCPeerConnection({
     sendJsonMessage,
     lastJsonMessage,
 }: useRTCPeerConnectionProps) {
-    const [RTCConnection, setRTCConnection] = useState<RTCPeerConnection>();
-
-    const [localStream, setLocalStream] = useState<MediaStream>();
-
+    const [RTCConnection] = useState<RTCPeerConnection>(
+        new RTCPeerConnection()
+    );
+    const [localStream, setLocalStream] = useState<MediaStream>(
+        new MediaStream()
+    );
     const [remoteStreams, setRemoteStreams] = useState<readonly MediaStream[]>(
         []
     );
+    const [isDescriptionReady, setIsDescriptionReady] = useState(false);
+    const [isICTready, setIsICTready] = useState(false);
 
     const navigate = useNavigate();
-    // Access Zustand Store
 
-    // ! Look up if one change changes all
+    //  ###### Store Imports #########
 
-    const setOutgoingCallProcessOffer = useStore(
-        (state) => state.setOutgoingCallProcessOffer
+    const accessToken = useStore((state) => state.accessToken);
+
+    const setOfferState = useStore((state) => state.setOfferLoadState);
+    const setOfferICTState = useStore((state) => state.setICTOfferLoadState);
+    const setOfferSendState = useStore((state) => state.setOfferSendLoadState);
+    const setAnswerReceivedLoadState = useStore(
+        (state) => state.setAnswerReceivedLoadState
     );
-    const setOutgoingCallProcessICT = useStore(
-        (state) => state.setOutgoingCallProcessICT
+
+    const acceptAnswer = useStore((state) => state.acceptAnswer);
+    const setAnswerLoadState = useStore((state) => state.setAnswerLoadState);
+    const setICTAnswerLoadState = useStore(
+        (state) => state.setICTAnswerLoadState
     );
-    const setOutgoingCallProcessSendOffer = useStore(
-        (state) => state.setOutgoingCallProcessSendOffer
+    const setAnswerSentLoadState = useStore(
+        (state) => state.setAnswerSentLoadState
     );
-    const ictLoadState = useStore((state) => state.ictLoadState);
-    const offerLoadState = useStore((state) => state.offerLoadState);
-    const sendOfferLoadState = useStore((state) => state.sendOfferLoadState);
 
-    const {
-        offerMsg,
-        callee,
-        setRTCConnectionState: setHasActiveRTCConnection,
-        resetRTCConnectionSlice,
-        callOptions,
-    } = useStore((state) => {
-        return {
-            offerMsg: state.offerMsg,
-            callee: state.callee,
-            setRTCConnectionState: state.setRTCConnectionState,
-            resetRTCConnectionSlice: state.resetRTCConnectionSlice,
-            callOptions: state.callSettings,
-        };
-    });
+    const incomingOffer = useStore((state) => state.incomingOffer);
+    const incomingAnswer = useStore((state) => state.incomingAnswer);
+    const setIncomingAnswer = useStore((state) => state.setIncomingAnswer);
+    const callPartner = useStore((state) => state.callPartner);
+    const setShouldBlockOutsideOffers = useStore(
+        (state) => state.setShouldBlockOutsideOffers
+    );
+    const callSettings = useStore((state) => state.callSettings);
 
-    const callPartner = useMemo(() => {
-        return callee || offerMsg?.origin;
-    }, [callee, offerMsg]);
+    // ##### General Functions #####
 
-    async function createNewRTCConnection() {
-        const newRTCConnection = new RTCPeerConnection();
+    function appendEventHandlers() {
         // Required Event Handlers
-        newRTCConnection.onnegotiationneeded = () => {
-            newRTCConnection.createOffer().then((offer) => {
-                newRTCConnection.setLocalDescription(offer);
+        RTCConnection.onnegotiationneeded = () => {
+            RTCConnection.createOffer().then((offer) => {
+                RTCConnection.setLocalDescription(offer);
             });
         };
-        newRTCConnection.onicecandidate = (ev) => {
+        RTCConnection.onicecandidate = (ev) => {
             let candidate = ev.candidate;
             // Empty candidate shows no more candidates
             if (!candidate) {
-                setOutgoingCallProcessOffer('done');
+                setIsDescriptionReady(true);
+                !incomingOffer
+                    ? setOfferState('fulfilled')
+                    : setAnswerLoadState('fulfilled');
             }
         };
 
-        newRTCConnection.ontrack = (event: RTCTrackEvent) => {
+        RTCConnection.ontrack = (event: RTCTrackEvent) => {
             setRemoteStreams(event.streams);
         };
-
-        setRTCConnection(newRTCConnection);
     }
 
-    const startPassiveCall = async () => {
-        if (!RTCConnection) {
-            return;
-        }
-        if (!offerMsg) {
-            console.error('called passive call w/o incoming call');
-            return;
-        }
-        const { origin, body: { desc } = {} } = offerMsg;
-        if (!origin) {
-            console.error('Missing origin in socket message');
-            return;
-        }
-        if (!desc) {
-            console.error('Missing sdp in message body');
-            return;
-        }
-
+    async function addLocalStreamTracksToRTCConnectionTracks() {
         try {
-            await RTCConnection.setRemoteDescription(desc);
-
             const newLocalStream = (await getUserMedia(
-                callOptions
+                callSettings
             )) as MediaStream;
-
-            setLocalStream(newLocalStream);
-
-            newLocalStream.getTracks().forEach((track) => {
-                RTCConnection.addTrack(track, newLocalStream);
-            });
-
-            const answer = await RTCConnection.createAnswer();
-            await RTCConnection.setLocalDescription(answer);
-
-            const answerDesc = RTCConnection.localDescription;
-            if (!answerDesc) {
-                throw Error('no local answer');
-            }
-            const msg = createSDPMessage('call-answer', origin, answerDesc);
-            sendJsonMessage(msg);
-        } catch (error) {
-            // notify caller that RTC failed
-            const msg = createHangUpMessage(origin);
-            sendJsonMessage(msg);
-            // give user error feedback
-            getUserMediaErrorHandler(error);
-            // Go back to call & execute cleanup
-            navigate('/call');
-        }
-    };
-
-// ################## Active Call Functions #################
-    
-    async function startActiveCall() {
-        if (!RTCConnection || !callPartner) {
-            return;
-        }
-        try {
-            doICTPromise(callPartner);
-            addNewLocalStreamToRTCConnection();
-        } catch (error) {
-            console.log(error);
-            //* No HangUp needed because no message sent yet
-            // give user error feedback
-            getUserMediaErrorHandler(error);
-            // Go back to call & execute cleanup
-            navigate('/call');
-        }
-    }
-    
-    async function addNewLocalStreamToRTCConnection() {
-        try {
-            if (!RTCConnection) {
-                throw Error('no rtc available');
-            }
-            // Request media from user
-            const newLocalStream = (await getUserMedia(
-                callOptions
-            )) as MediaStream;
-            setLocalStream(newLocalStream);
-
             // attach the new LocalStream to the RTCConnection
             newLocalStream.getTracks().forEach((track) => {
-                RTCConnection.addTrack(track, newLocalStream);
+                RTCConnection.addTrack(track, localStream);
             });
+
+            setLocalStream(newLocalStream);
         } catch (error) {
             console.error(error);
             throw error;
@@ -191,92 +115,116 @@ export default function useRTCPeerConnection({
     }
 
     async function doICTPromise(callPartner: UserId) {
+        // TODO Add PoP
         try {
-            const icts = requestICTs(callPartner);
+            const icts = await requestICTs(callPartner);
             // Notify store here
-            setOutgoingCallProcessICT('done');
+            // TODO Add incoming call storage
+            setIsICTready(true);
+
+            !incomingOffer
+                ? setOfferICTState('fulfilled')
+                : setICTAnswerLoadState('fulfilled');
+
             return icts;
         } catch (error) {
-            setOutgoingCallProcessICT('failed');
+            // setOutgoingCallProcessICT('failed');
             throw Error('ict acquisition failed');
         }
     }
 
+    // #### Passive Call Functions #####
 
+    const startPassiveCall = async (
+        newRemoteDescription: RTCSessionDescription
+    ) => {
+        try {
+            await RTCConnection.setRemoteDescription(newRemoteDescription);
 
-// #################### Closing Functions #####################
-    
+            // ? This might be done outside
+            await addLocalStreamTracksToRTCConnectionTracks();
+
+            const answer = await RTCConnection.createAnswer();
+            await RTCConnection.setLocalDescription(answer);
+        } catch (error) {
+            console.log(error);
+            // give user error feedback
+            getUserMediaErrorHandler(error);
+            // Go back to call & execute cleanup
+            navigate('/call');
+        }
+    };
+
+    // ################## Active Call Functions #################
+
+    async function startActiveCall() {
+        try {
+            await addLocalStreamTracksToRTCConnectionTracks();
+        } catch (error) {
+            console.log(error);
+            // give user error feedback
+            getUserMediaErrorHandler(error);
+            // Go back to call & execute cleanup
+            navigate('/call');
+        }
+    }
+
+    // #################### Closing Functions #####################
+
     async function closeCall() {
-        // stop recording media
-        closeLocalStream();
-        // stop sending media
-        closeRTCConnection();
-    }
-    
-    async function closeLocalStream() {
-        if (!localStream) {
-            //No need to close localStream if it does not exist
-            return;
-        }
-        //Stop all media recording devices
-        localStream.getTracks().forEach((track) => track.stop());
-        //Drop the LocalStream from State
-        setLocalStream(undefined);
-    }
-
-    async function closeRTCConnection() {
-        if (!RTCConnection) {
-            // No need to close the RTCConnection if does not exist
-            return;
-        }
         //Null all event handlers
         RTCConnection.onicecandidate = null;
         RTCConnection.ontrack = null;
         RTCConnection.onnegotiationneeded = null;
         //Close the connection
-        RTCConnection.close();
-        //Drop the RTCConnection from State
-        setRTCConnection(undefined);
-        //Reset store flag --> enable future calls
-        resetRTCConnectionSlice();
+        // RTCConnection.close();
+
+        localStream.getTracks().forEach((track) => track.stop());
     }
 
     //################ Side Effects #########################
 
     //* Effect to establish a new video call
     useEffect(() => {
+        if (!accessToken) {
+            return;
+        }
         if (!callPartner) {
             // Invalid Page Traversal
             navigate('/call');
-            return;
+            return () => {
+                setShouldBlockOutsideOffers(false);
+            };
         }
-        // Call is valid, so create a new RTCConnection
-        createNewRTCConnection();
-        // Notify
-        setHasActiveRTCConnection(true);
+
+        try {
+            setShouldBlockOutsideOffers(true);
+
+            appendEventHandlers();
+
+            doICTPromise(callPartner);
+            //Block other users from calling
+            if (incomingOffer) {
+                startPassiveCall(incomingOffer);
+            }
+
+            startActiveCall();
+        } catch (error) {
+            // TODO handle errors about offer here
+            // Check if error is from ict or webrtc
+            // Handle indiviudal error
+        }
+
+        return () => {
+            setShouldBlockOutsideOffers(false);
+            closeCall();
+        };
     }, []);
 
-    // * Deciding wether incoming call or outgoing call
+    // SideEffect for sending messages when ICT is loaded
     useEffect(() => {
-        if (!RTCConnection) {
-            return;
-        }
-        if (offerMsg) {
-            startPassiveCall();
-        }
-
-        if (callee) {
-            startActiveCall();
-        }
-    }, [RTCConnection]);
-
-    useEffect(() => {
-        if (
-            offerLoadState != 'done' ||
-            ictLoadState != 'done' ||
-            !RTCConnection ||
-            !callPartner
-        ) {
+        // ? Might append asymmetric key here
+        if (!isDescriptionReady || !isICTready || !callPartner) {
             return;
         }
 
@@ -287,10 +235,21 @@ export default function useRTCPeerConnection({
         }
         // TODO: Create JWT here
 
-        const msg = createSDPMessage('call-offer', callPartner, desc);
+        switch (desc.type) {
+            case 'offer': {
+                const msg = createSDPMessage('call-offer', callPartner, desc);
+                sendJsonMessage(msg);
+                setOfferSendState('fulfilled');
 
-        sendJsonMessage(msg);
-        setOutgoingCallProcessSendOffer('done');
+                break;
+            }
+            case 'answer': {
+                const msg = createSDPMessage('call-answer', callPartner, desc);
+                sendJsonMessage(msg);
+                setAnswerSentLoadState('fulfilled');
+                break;
+            }
+        }
 
         return () => {
             if (!callPartner) {
@@ -299,7 +258,15 @@ export default function useRTCPeerConnection({
             const answerMsg = createHangUpMessage(callPartner);
             sendJsonMessage(answerMsg);
         };
-    }, [offerLoadState, ictLoadState]);
+    }, [isDescriptionReady, isICTready]);
+
+    useEffect(() => {
+        if (!accessToken || acceptAnswer != 'fulfilled' || !incomingAnswer) {
+            return;
+        }
+
+        RTCConnection.setRemoteDescription(incomingAnswer);
+    }, [incomingAnswer, acceptAnswer]);
 
     // * Effect for Incoming Socket Message
     useEffect(() => {
@@ -312,17 +279,30 @@ export default function useRTCPeerConnection({
         if (!type) {
             console.error('Missing socket message type');
             return;
-        }
-        // Handle RTC-Type Socket Messages
+        } // Handle RTC-Type Socket Messages
         switch (type) {
             case 'call-offer':
                 incomingOfferHandler(lastJsonMessage);
                 break;
             case 'call-answer':
-                incomingAnswerHandler(lastJsonMessage, RTCConnection);
-                break;
-            case 'new-icecandidate':
-                incomingIceCandidateHandler(lastJsonMessage, RTCConnection);
+                try {
+                    const { origin, body: { desc } = {} } =
+                        lastJsonMessage as SdpMessage;
+                    if (!origin) {
+                        console.error('sdp Message is missing origin');
+                        return;
+                    }
+                    if (!desc) {
+                        console.error('sdp Message is missing body');
+                        return;
+                    }
+                    // TODO validate ICT here
+
+                    setIncomingAnswer(desc);
+                    setAnswerReceivedLoadState('fulfilled');
+                } catch (error) {
+                    console.log(error);
+                }
                 break;
             case 'hang-up':
                 if (validateHangUp(lastJsonMessage, callPartner)) {
