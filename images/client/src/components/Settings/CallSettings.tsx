@@ -13,16 +13,14 @@ import CallSettingsDisplay from './CallSettingsDisplay';
  * - Store changes to remote
  */
 
-interface CallSettingsProps {
-    className?: string;
-}
+interface CallSettingsProps {}
 
 export interface CallSettings {
     video: boolean;
     audio: boolean;
 }
 
-export default function CallSettings({}: CallSettingsProps) {
+export default function CallSettings({}: CallSettingsProps = {}) {
     const callSettings: CallSettings = useStore((state) => state.callSettings);
     const updateCallSettings = useStore((state) => state.updateCallSettings);
 

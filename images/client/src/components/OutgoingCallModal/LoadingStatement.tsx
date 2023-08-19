@@ -1,8 +1,8 @@
 import LoadStateIcon from '../UI/LoadStateIcon';
-import { LoadState } from '../../store/slices/OutgoingCallSlice';
+import { AsyncTaskState } from '../../store/slices/OutgoingCallSlice';
 
 interface LoadingStatementProps {
-    loadState: LoadState;
+    loadState: AsyncTaskState;
     loadStatement: string;
 }
 

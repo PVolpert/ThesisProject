@@ -25,9 +25,11 @@ export default function UserList() {
     const [userList, setUserList] = useState<UserInfo[]>([]);
 
     // Zustand Store Access
-    const setCallee = useStore((state) => {
-        return state.setCallee;
+    const setCallPartner = useStore((state) => {
+        return state.setCallPartner;
     });
+    const setCalleeUserName = useStore((state) => state.setCalleeUserName);
+
     const showOutgoingCallModal = useStore((state) => {
         return state.showOutgoingCallModal;
     });
@@ -41,13 +43,15 @@ export default function UserList() {
     const onCallHandlerBuilder = useCallback(
         (callee: UserInfo) => {
             const onCallHandler = () => {
-                setCallee(callee);
+                setCallPartner(callee);
                 resetOutgoingCall();
+                setCalleeUserName(callee.username);
+
                 showOutgoingCallModal();
             };
             return onCallHandler;
         },
-        [navigate, setCallee]
+        [navigate, setCallPartner]
     );
 
     //! Socket side-effects
