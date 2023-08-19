@@ -1,17 +1,13 @@
-import { ReactNode } from 'react';
 import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
 import UserBlock from '../../UI/UserBlock';
 
 interface ConfirmCallerProps {
-    children?: ReactNode;
-    className?: string;
+    onClickYes: () => void;
+    onClickNo: () => void;
 }
 
-export default function ConfirmCaller({
-    children,
-    className = '',
-}: ConfirmCallerProps) {
+export default function ConfirmCaller({ onClickYes }: ConfirmCallerProps) {
     return (
         <>
             {/* TODO Insert Call ID */}
@@ -30,7 +26,10 @@ export default function ConfirmCaller({
                 <Button className="bg-springblue  hover:bg-inherit border-springblue hover:text-springblue text-white transition duration-1050">
                     No
                 </Button>
-                <Button className="bg-springred  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050">
+                <Button
+                    onClick={onClickYes}
+                    className="bg-springred  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050"
+                >
                     Yes
                 </Button>
             </div>

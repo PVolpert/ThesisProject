@@ -4,28 +4,23 @@ import UserBlock from '../../UI/UserBlock';
 import { useStore } from '../../../store/Store';
 
 interface ConfirmCallProps {
-    onClickYes?: () => void;
-    onClickNo?: () => void;
+    onClickYes: () => void;
+    onClickNo: () => void;
 }
 
 export default function ConfirmCall({
     onClickNo,
     onClickYes,
 }: ConfirmCallProps) {
-    const callee = useStore((state) => state.callee);
-
-    const username = callee?.username || 'Unkown';
-
-    // TODO Insert Call ID
+    const username = useStore((state) => state.calleeUserName);
     return (
         <>
-            {/* TODO Insert Call ID */}
-            <MainTitle> Call {username}? </MainTitle>
+            <MainTitle> Call {username || 'Unkown'}? </MainTitle>
             <Description>
-                Are you sure you want to call {username}? You currently use the
-                following identifications:
+                Are you sure you want to call {username || 'Unknown'}? You
+                currently use the following identifications:
             </Description>
-            {/* List all  ICT Tokens here*/}
+            {/*TODO: List all  ICT Tokens here*/}
             <ul className="flex flex-col">
                 <li className="flex justify-center">
                     <UserBlock username="turing" />

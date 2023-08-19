@@ -1,14 +1,16 @@
-import { ReactNode } from 'react';
 import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
 import UserBlock from '../../UI/UserBlock';
 
 interface ConfirmCalleeProps {
-    children?: ReactNode;
-    className?: string;
+    onClickYes: () => void;
+    onClickNo: () => void;
 }
 
-export default function ConfirmCallee({}: ConfirmCalleeProps) {
+export default function ConfirmCallee({
+    onClickYes,
+    onClickNo,
+}: ConfirmCalleeProps) {
     return (
         <>
             <MainTitle>Continue Call</MainTitle>
@@ -23,10 +25,16 @@ export default function ConfirmCallee({}: ConfirmCalleeProps) {
                 </li>
             </ul>
             <div className="flex space-x-4 justify-center">
-                <Button className="bg-springblue  hover:bg-inherit border-springblue hover:text-springblue text-white transition duration-1050">
+                <Button
+                    onClick={onClickNo}
+                    className="bg-springblue  hover:bg-inherit border-springblue hover:text-springblue text-white transition duration-1050"
+                >
                     Close
                 </Button>
-                <Button className="bg-springred  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050">
+                <Button
+                    onClick={onClickYes}
+                    className="bg-springred  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050"
+                >
                     Start
                 </Button>
             </div>
