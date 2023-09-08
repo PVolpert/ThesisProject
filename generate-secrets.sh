@@ -12,8 +12,12 @@ SIGNALING_USER_FILE="${DB_DIR}/signaling.txt"
 DB_ENVSCRIPT_FILE="${DB_DIR}/env.sh"
 
 # * KEYCLOAK ENVS
-PRIVATE_KEY_FILE="${KEYCLOAK_DIR}/private.pem"
-ICT_ENV_FILE="${KEYCLOAK_DIR}/ict.env"
+PRIVATE_KEY_ALPHA_FILE="${KEYCLOAK_DIR}/alpha.pem"
+PRIVATE_KEY_BETA_FILE="${KEYCLOAK_DIR}/beta.pem"
+PRIVATE_KEY_GAMMA_FILE="${KEYCLOAK_DIR}/gamma.pem"
+ICT_ALPHA_ENV_FILE="${KEYCLOAK_DIR}/ict-alpha.env"
+ICT_BETA_ENV_FILE="${KEYCLOAK_DIR}/ict-beta.env"
+ICT_GAMMA_ENV_FILE="${KEYCLOAK_DIR}/ict-gamma.env"
 OP_ENV_FILE="${KEYCLOAK_DIR}/op.env"
 
 # shellcheck source=.env
@@ -53,25 +57,25 @@ fi
 
 
 # Generate db username and pw for api; Add db name from .env
-if [ ! -f "$API_USER_FILE" ]
-then
-    {
-    echo "# This file is auto-generated. Do not change contents" 
-    echo "API_NAME=$(generate_name 14)" 
-    echo "API_PW=$(generate_secret 64)" 
-    echo "WEBAPP_DB=${DB_WEBAPP}"
-    } >> "$API_USER_FILE"
-fi
+# if [ ! -f "$API_USER_FILE" ]
+# then
+#     {
+#     echo "# This file is auto-generated. Do not change contents" 
+#     echo "API_NAME=$(generate_name 14)" 
+#     echo "API_PW=$(generate_secret 64)" 
+#     echo "WEBAPP_DB=${DB_WEBAPP}"
+#     } >> "$API_USER_FILE"
+# fi
 # Generate db username and pw for signaling server; Add db name from .env
-if [ ! -f "$SIGNALING_USER_FILE" ]
-then
-    {
-    echo "# This file is auto-generated. Do not change contents" 
-    echo "SIGNALING_NAME=$(generate_name 14)" 
-    echo "SIGNALING_PW=$(generate_secret 64)" 
-    echo "WEBAPP_DB=${DB_WEBAPP}"
-    } >> "$SIGNALING_USER_FILE"
-fi
+# if [ ! -f "$SIGNALING_USER_FILE" ]
+# then
+#     {
+#     echo "# This file is auto-generated. Do not change contents" 
+#     echo "SIGNALING_NAME=$(generate_name 14)" 
+#     echo "SIGNALING_PW=$(generate_secret 64)" 
+#     echo "WEBAPP_DB=${DB_WEBAPP}"
+#     } >> "$SIGNALING_USER_FILE"
+# fi
 
 # * Generate for global scope
 KEYCLOAK_NAME=$(generate_name 14)
@@ -94,15 +98,17 @@ then
     {
     echo "#!/bin/bash"
     echo "# This file is auto-generated. Do not change contents" 
-    echo "source /run/secrets/db-user-api" 
-    echo "source /run/secrets/db-user-signaling" 
+    # echo "source /run/secrets/db-user-api" 
+    # echo "source /run/secrets/db-user-signaling" 
     echo "source /run/secrets/db-user-keycloak" 
     } >> "$DB_ENVSCRIPT_FILE"
 fi
 
 # * Create keycloak files STEP
 # Create private key file if not exists
-[ ! -f "$PRIVATE_KEY_FILE" ] && openssl genrsa -out "$PRIVATE_KEY_FILE" 2048
+[ ! -f "$PRIVATE_KEY_ALPHA_FILE" ] && openssl genrsa -out "$PRIVATE_KEY_ALPHA_FILE" 2048
+[ ! -f "$PRIVATE_KEY_BETA_FILE" ] && openssl genrsa -out "$PRIVATE_KEY_BETA_FILE" 2048
+[ ! -f "$PRIVATE_KEY_GAMMA_FILE" ] && openssl genrsa -out "$PRIVATE_KEY_GAMMA_FILE" 2048
 
 
 # Write DB username + password to op.env file
@@ -118,4 +124,6 @@ then
 fi
 
 # Write empty key ID to ict.env file
-[ ! -f "$ICT_ENV_FILE" ] && echo "KID=" > "$ICT_ENV_FILE"
+[ ! -f "$ICT_ENV_ALPHA_FILE" ] && echo "KID=" > "$ICT_ALPHA_ENV_FILE"
+[ ! -f "$ICT_ENV_BETA_FILE" ] && echo "KID=" > "$ICT_BETA_ENV_FILE"
+[ ! -f "$ICT_ENV_GAMMA_FILE" ] && echo "KID=" > "$ICT_GAMMA_ENV_FILE"
