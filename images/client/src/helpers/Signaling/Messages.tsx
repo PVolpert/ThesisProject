@@ -6,8 +6,16 @@ export type MessageType =
     | 'userOffline'
     | 'call-offer'
     | 'call-answer'
-    | 'new-icecandidate'
-    | 'hang-up';
+    | 'hang-up'
+    | 'CallOffer'
+    | 'CallAnswer'
+    | 'OPsToPeers'
+    | 'ICTOffer'
+    | 'ICTAnswer'
+    | 'StartExchange'
+    | 'ICTPeerMessage'
+    | 'Confirmation'
+    | 'ICTPhaseFailed';
 
 export interface Message {
     type: MessageType;
@@ -16,42 +24,19 @@ export interface Message {
     body?: any;
 }
 
-interface SdpBody {
+interface WebRTCBody {
     desc: RTCSessionDescription;
-    // TODO Switch from string to ict token
-    ict?: string[];
 }
-export interface SdpMessage extends Message {
-    body: SdpBody;
+export interface WebRTCMessage extends Message {
+    body: WebRTCBody;
 }
 
 export function createSDPMessage(
     type: MessageType,
     target: UserId,
-    desc: RTCSessionDescription,
-    ict?: string[]
+    desc: RTCSessionDescription
 ) {
-    const msg: SdpMessage = { type, target, body: { desc } };
-    return msg;
-}
-
-export interface IceCandidateBody {
-    candidate: RTCIceCandidate;
-}
-
-export interface IceCandidateMessage extends Message {
-    body: IceCandidateBody;
-}
-
-export function createIceCandidateMessage(
-    target: UserId,
-    candidate: RTCIceCandidate
-) {
-    const msg: IceCandidateMessage = {
-        type: 'new-icecandidate',
-        target,
-        body: { candidate },
-    };
+    const msg: WebRTCMessage = { type, target, body: { desc } };
     return msg;
 }
 

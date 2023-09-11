@@ -6,6 +6,7 @@ import { UserId } from '../../helpers/Signaling/User';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { ReadyState } from 'react-use-websocket';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
 
 interface State {
     shouldBlockOutsideOffers: boolean;
@@ -24,7 +25,7 @@ interface Actions {
     setSignalingConnectionState: (newState: ReadyState) => void;
 }
 
-export interface RTCConnectionSlice extends State, Actions {}
+export interface WebRTCPhaseSlice extends State, Actions {}
 
 const initialState: State = {
     shouldBlockOutsideOffers: false,
@@ -34,16 +35,17 @@ const initialState: State = {
     signalingConnectionState: ReadyState.CLOSED,
 };
 
-export const createRTCConnectionSlice: StateCreator<
-    RTCConnectionSlice &
+export const createWebRTCPhaseSlice: StateCreator<
+    WebRTCPhaseSlice &
         SettingsSlice &
         AccessTokenSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        OutgoingCallSlice,
+        OutgoingCallSlice &
+        ICTPhaseSlice,
     [],
     [],
-    RTCConnectionSlice
+    WebRTCPhaseSlice
 > = (set) => ({
     ...initialState,
     setShouldBlockOutsideOffers: (updateRTCConnectionState) =>

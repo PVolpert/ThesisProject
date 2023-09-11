@@ -6,10 +6,12 @@ import {
 import { StateCreator } from 'zustand';
 import { SettingsSlice } from './SettingsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
+import { ImmerStateCreator } from '../storeHelper';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
 
 interface State {
     accessToken: string;
@@ -33,9 +35,11 @@ export const createAccessTokenSlice: StateCreator<
         OutgoingCallSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        RTCConnectionSlice &
-        IncomingCallSlice,
-    SettingsSlice & [],
+        WebRTCPhaseSlice &
+        IncomingCallSlice &
+        SettingsSlice &
+        ICTPhaseSlice,
+    [],
     [],
     AccessTokenSlice
 > = (set) => ({

@@ -1,10 +1,11 @@
 import { StateCreator } from 'zustand';
 import { SettingsSlice } from './SettingsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
 
 type OutgoingCallModalStage = 0 | 1 | 2;
 
@@ -48,9 +49,10 @@ export const createOutgoingCallSlice: StateCreator<
         AccessTokenSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        RTCConnectionSlice &
+        WebRTCPhaseSlice &
         SettingsSlice &
-        IncomingCallSlice,
+        IncomingCallSlice &
+        ICTPhaseSlice,
     [],
     [],
     OutgoingCallSlice

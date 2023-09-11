@@ -1,7 +1,6 @@
 import { IDToken } from 'oauth4webapi';
 import {
-    IceCandidateMessage,
-    SdpMessage,
+    WebRTCMessage,
     hangUpMessage as HangUpMessage,
     userListMessage,
     userOfflineMessage,
@@ -72,7 +71,7 @@ export async function incomingUserListHandler(
 
 //* RTC Message Handlers
 
-export async function incomingOfferHandler(msg: SdpMessage) {
+export async function incomingOfferHandler(msg: WebRTCMessage) {
     // ? Will become more important when changing video/audio
     // ignore incoming requests if already in a call
     const { body: { desc } = {} } = msg;
@@ -84,7 +83,7 @@ export async function incomingOfferHandler(msg: SdpMessage) {
 }
 
 export async function incomingAnswerHandler(
-    msg: SdpMessage,
+    msg: WebRTCMessage,
     RTCConnection: RTCPeerConnection
 ) {
     const { origin, body: { desc } = {} } = msg;

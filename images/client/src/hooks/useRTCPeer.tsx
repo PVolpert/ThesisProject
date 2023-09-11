@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store/Store';
 import {
     Message,
-    SdpMessage,
+    WebRTCMessage,
     createHangUpMessage,
     createSDPMessage,
 } from '../helpers/Signaling/Messages';
@@ -14,10 +14,9 @@ import {
 import {
     getUserMedia,
     getUserMediaErrorHandler,
-} from '../helpers/WebRTC/UserMedia';
+} from '../helpers/WebRTCPhase/UserMedia';
 
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
-import { requestICTs } from '../helpers/ICT/ICT';
 import { UserId } from '../helpers/Signaling/User';
 
 interface useRTCPeerConnectionProps {
@@ -115,22 +114,19 @@ export default function useRTCPeerConnection({
     }
 
     async function doICTPromise(callPartner: UserId) {
-        // TODO Add PoP
-        try {
-            const icts = await requestICTs(callPartner);
-            // Notify store here
-            // TODO Add incoming call storage
-            setIsICTready(true);
-
-            !incomingOffer
-                ? setOfferICTState('fulfilled')
-                : setICTAnswerLoadState('fulfilled');
-
-            return icts;
-        } catch (error) {
-            // setOutgoingCallProcessICT('failed');
-            throw Error('ict acquisition failed');
-        }
+        // // TODO Add PoP
+        // try {
+        //     // Notify store here
+        //     // TODO Add incoming call storage
+        //     setIsICTready(true);
+        //     !incomingOffer
+        //         ? setOfferICTState('fulfilled')
+        //         : setICTAnswerLoadState('fulfilled');
+        //     return icts;
+        // } catch (error) {
+        //     // setOutgoingCallProcessICT('failed');
+        //     throw Error('ict acquisition failed');
+        // }
     }
 
     // #### Passive Call Functions #####
@@ -211,8 +207,8 @@ export default function useRTCPeerConnection({
             startActiveCall();
         } catch (error) {
             // TODO handle errors about offer here
-            // Check if error is from ict or webrtc
-            // Handle indiviudal error
+            // Check if error is from ict or WebRTC
+            // Handle individual error
         }
 
         return () => {
@@ -287,7 +283,7 @@ export default function useRTCPeerConnection({
             case 'call-answer':
                 try {
                     const { origin, body: { desc } = {} } =
-                        lastJsonMessage as SdpMessage;
+                        lastJsonMessage as WebRTCMessage;
                     if (!origin) {
                         console.error('sdp Message is missing origin');
                         return;

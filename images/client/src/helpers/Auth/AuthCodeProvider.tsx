@@ -22,7 +22,10 @@ export default class AuthCodeProvider {
             'code_challenge_method',
             this.#oidcProvider.code_challenge_method
         );
-        searchParams.set('redirect_uri', this.#oidcProvider.info.redirect.href);
+        searchParams.set(
+            'redirect_uri',
+            this.#oidcProvider.info.redirectId.href
+        );
         searchParams.set('response_type', 'code');
         searchParams.set('scope', 'openid email');
 
@@ -35,7 +38,15 @@ export default class AuthCodeProvider {
         const challenge = await this.#oidcProvider.createChallenge();
         const authorizationUrl = await this.#createAuthorizationURL(challenge);
 
-        window.location.assign(authorizationUrl.href);
+        window.location.assign(authorizationUrl);
+    }
+
+    async openNewWindowToProviderHandler() {
+        this.#establishVerifier();
+        const challenge = await this.#oidcProvider.createChallenge();
+        const authorizationUrl = await this.#createAuthorizationURL(challenge);
+
+        window.open(authorizationUrl);
     }
 
     constructor(oidcProvider: OIDCProvider) {

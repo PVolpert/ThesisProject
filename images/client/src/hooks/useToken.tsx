@@ -20,7 +20,7 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         return state.resetIctToken;
     });
     const ictTokens = useStore((state) => {
-        return state.ictTokens;
+        return state.ictTokenSets;
     });
 
     const signalingUrl = new URL(`${process.env.REACT_APP_SOCKET_URL}`);
@@ -35,12 +35,13 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             // ? Comment for disabling token checking
             resetTokens();
         } else {
-            // find bad ICTs
+            // find bad ICT Access Token
             const badICTTokens = ictTokens.filter((ictToken) => {
                 return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
             });
-            // Remove all bad ICTs
+            // Remove all bad ICT Access Token
             badICTTokens.forEach((ictToken) => {
+                console.log('clearing tokens');
                 resetIctToken(ictToken.idToken.iss);
             });
         }

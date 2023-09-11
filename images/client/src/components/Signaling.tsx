@@ -2,7 +2,7 @@ import useSignaling from '../hooks/useSignaling';
 import { useEffect } from 'react';
 
 import { useStore } from '../store/Store';
-import { Message, SdpMessage } from '../helpers/Signaling/Messages';
+import { Message, WebRTCMessage } from '../helpers/Signaling/Messages';
 import { useToken } from '../hooks/useToken';
 
 export default function Signaling() {
@@ -49,7 +49,7 @@ export default function Signaling() {
         }
         if (type === 'call-offer') {
             const { origin, body: { desc } = {} } =
-                lastJsonMessage as SdpMessage;
+                lastJsonMessage as WebRTCMessage;
             // Check if message has a origin element
             if (!origin) {
                 console.error('missing message origin');

@@ -1,10 +1,11 @@
 import { StateCreator } from 'zustand';
 import { SettingsSlice } from './SettingsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { AsyncTaskState, OutgoingCallSlice } from './OutgoingCallSlice';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
 
 interface State {
     incomingCallStage: 0 | 1;
@@ -35,8 +36,9 @@ export const createIncomingCallSlice: StateCreator<
         OutgoingCallSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        RTCConnectionSlice &
-        IncomingCallSlice,
+        WebRTCPhaseSlice &
+        IncomingCallSlice &
+        ICTPhaseSlice,
     [],
     [],
     IncomingCallSlice
