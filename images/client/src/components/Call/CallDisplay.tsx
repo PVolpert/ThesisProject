@@ -6,10 +6,10 @@ import Page from '../UI/Page';
 export function CallDisplay() {
     // TODO
     return (
-        <Page className="md:grid md:grid-cols-[minmax(100px,_25%)_1fr] gap-4">
+        <Page className="lg:grid lg:grid-cols-[minmax(100px,_25%)_1fr] gap-4">
             <Sidebar />
             <div className="flex flex-col">
-                <ICTAuthList />
+                {/* <ICTAuthList /> */}
                 <Conference />
             </div>
         </Page>
