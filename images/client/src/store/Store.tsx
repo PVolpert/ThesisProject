@@ -23,6 +23,7 @@ import {
     createIncomingCallSlice,
 } from './slices/IncomingCallSlice';
 import { ICTPhaseSlice, createICTPhaseSlice } from './slices/ICTPhaseSlice';
+import { SignalingSlice, createSignalingSlice } from './slices/SignalingSlice';
 
 export const useStore = create<
     SettingsSlice &
@@ -32,7 +33,8 @@ export const useStore = create<
         ModalSlice &
         OutgoingCallSlice &
         IncomingCallSlice &
-        ICTPhaseSlice
+        ICTPhaseSlice &
+        SignalingSlice
 >()(
     persist(
         (...a) => ({
@@ -44,6 +46,7 @@ export const useStore = create<
             ...createOutgoingCallSlice(...a),
             ...createIncomingCallSlice(...a),
             ...createICTPhaseSlice(...a),
+            ...createSignalingSlice(...a),
         }),
         {
             name: 'token-storage',
