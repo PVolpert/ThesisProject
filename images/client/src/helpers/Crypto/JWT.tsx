@@ -18,7 +18,7 @@ export async function generateJWT(keyPair: CryptoKeyPair, jwtBody: jwtBody) {
 export async function generateEncJWT(DHSecret: CryptoKey, jwtBody: jwtBody) {
     try {
         const jwt = await new jose.EncryptJWT({ ...jwtBody })
-            .setProtectedHeader({ alg: '', enc: '' })
+            .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
             .encrypt(DHSecret);
 
         return jwt;
