@@ -10,8 +10,8 @@ import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
-import { ImmerStateCreator } from '../storeHelper';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface State {
     accessToken: string;
@@ -38,7 +38,8 @@ export const createAccessTokenSlice: StateCreator<
         WebRTCPhaseSlice &
         IncomingCallSlice &
         SettingsSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     AccessTokenSlice

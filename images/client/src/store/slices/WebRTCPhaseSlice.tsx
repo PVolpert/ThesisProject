@@ -7,33 +7,15 @@ import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { ReadyState } from 'react-use-websocket';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
-interface State {
-    shouldBlockOutsideOffers: boolean;
-    incomingOffer: RTCSessionDescription | undefined;
-    incomingAnswer: RTCSessionDescription | undefined;
-    callPartner: UserId | undefined;
-    signalingConnectionState: ReadyState;
-}
+interface State {}
 
-interface Actions {
-    setShouldBlockOutsideOffers: (enable: boolean) => void;
-    setIncomingOffer: (newOffer: RTCSessionDescription) => void;
-    setIncomingAnswer: (newAnswer: RTCSessionDescription) => void;
-    setCallPartner: (newCallPartner: UserId) => void;
-    resetRTCConnectionSlice: () => void;
-    setSignalingConnectionState: (newState: ReadyState) => void;
-}
+interface Actions {}
 
 export interface WebRTCPhaseSlice extends State, Actions {}
 
-const initialState: State = {
-    shouldBlockOutsideOffers: false,
-    incomingOffer: undefined,
-    incomingAnswer: undefined,
-    callPartner: undefined,
-    signalingConnectionState: ReadyState.CLOSED,
-};
+const initialState: State = {};
 
 export const createWebRTCPhaseSlice: StateCreator<
     WebRTCPhaseSlice &
@@ -42,18 +24,9 @@ export const createWebRTCPhaseSlice: StateCreator<
         ICTAccessTokenSlice &
         ModalSlice &
         OutgoingCallSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     WebRTCPhaseSlice
-> = (set) => ({
-    ...initialState,
-    setShouldBlockOutsideOffers: (updateRTCConnectionState) =>
-        set({ shouldBlockOutsideOffers: updateRTCConnectionState }),
-    setIncomingOffer: (newOffer) => set({ incomingOffer: newOffer }),
-    setIncomingAnswer: (newAnswer) => set({ incomingAnswer: newAnswer }),
-    setCallPartner: (newCallPartner) => set({ callPartner: newCallPartner }),
-    setSignalingConnectionState: (newState) =>
-        set({ signalingConnectionState: newState }),
-    resetRTCConnectionSlice: () => set({ ...initialState }),
-});
+> = (set) => ({});

@@ -16,6 +16,7 @@ import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
 import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 export interface TokenSet {
     accessToken: string;
@@ -46,7 +47,8 @@ export const createICTAccessTokenSlice: StateCreator<
         WebRTCPhaseSlice &
         SettingsSlice &
         IncomingCallSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     ICTAccessTokenSlice

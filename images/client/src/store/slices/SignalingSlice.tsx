@@ -3,32 +3,29 @@ import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
-import { CallSettings } from '../../components/Settings/CallSettings';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
-import { SignalingSlice } from './SignalingSlice';
+import { SettingsSlice } from './SettingsSlice';
+import { UserInfo } from '../../helpers/Signaling/User';
 
 interface State {
-    callSettings: CallSettings;
+    activeUsers: UserInfo[];
 }
 
 interface Actions {
-    updateCallSettings: (newCallSettings: CallSettings) => void;
+    setActiveUsers: (newActiveUsers: UserInfo[]) => void;
 }
 
-export interface SettingsSlice extends State, Actions {}
+export interface SignalingSlice extends State, Actions {}
 
 const initialState: State = {
-    callSettings: {
-        video: true,
-        audio: false,
-    },
+    activeUsers: [],
 };
 
-export const createSettingsSlice: StateCreator<
-    SettingsSlice &
+export const createSignalingSlice: StateCreator<
+    SignalingSlice &
         AccessTokenSlice &
         ICTAccessTokenSlice &
         WebRTCPhaseSlice &
@@ -36,14 +33,13 @@ export const createSettingsSlice: StateCreator<
         OutgoingCallSlice &
         IncomingCallSlice &
         ICTPhaseSlice &
-        SignalingSlice,
+        SettingsSlice,
     [],
     [],
-    SettingsSlice
+    SignalingSlice
 > = (set) => ({
     ...initialState,
-    updateCallSettings: (newCallSettings) =>
-        set({
-            callSettings: { ...newCallSettings },
-        }),
+    setActiveUsers(newActiveUsers) {
+        set({ activeUsers: newActiveUsers });
+    },
 });

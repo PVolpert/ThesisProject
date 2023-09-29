@@ -1,27 +1,44 @@
 import { StateCreator } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
 
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { UserId } from '../../helpers/Signaling/User';
-import { ImmerStateCreator } from '../storeHelper';
+import { UserId, UserInfo } from '../../helpers/Signaling/User';
+import { ReadyState } from 'react-use-websocket';
+import { SignalingSlice } from './SignalingSlice';
+import {
+    OpenIDProviderInfo,
+    convertOIDCProvider,
+} from '../../helpers/ICTPhase/OpenIDProvider';
+import OIDCProvider from '../../helpers/Auth/OIDCProvider';
 
 interface State {
-    nonceMap: Map<string, UserId>;
+    signalingConnectionState: ReadyState;
+    candidates: UserInfo[];
+    type?: 'call' | 'conference';
+    caller?: UserId;
+    trustedOpenIDProviders: OpenIDProviderInfo[];
 }
 
 interface Actions {
-    addNonce: (nonce: string, user: UserId) => void;
-    removeNonce: (nonce: string) => void;
+    setSignalingConnectionState: (newState: ReadyState) => void;
+    setCandidates: (newCandidates: UserInfo[]) => void;
+    setCaller: (newCaller: UserId) => void;
+    setType: (newType: 'call' | 'conference') => void;
+    setTrustedOpenIDProviders: (newOIDCProviders: OIDCProvider[]) => void;
+    resetICTPhaseSlice: () => void;
 }
 
 export interface ICTPhaseSlice extends State, Actions {}
 
 const initialState: State = {
-    nonceMap: new Map(),
+    signalingConnectionState: ReadyState.CLOSED,
+    candidates: [],
+    caller: undefined,
+    type: undefined,
+    trustedOpenIDProviders: [],
 };
 
 export const createICTPhaseSlice: StateCreator<
@@ -31,24 +48,30 @@ export const createICTPhaseSlice: StateCreator<
         ICTAccessTokenSlice &
         ModalSlice &
         OutgoingCallSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     ICTPhaseSlice
 > = (set) => ({
     ...initialState,
-    addNonce: (key, value) => {
-        set((state) => {
-            const newMap = new Map(state.nonceMap);
-            newMap.set(key, value);
-            return { nonceMap: newMap };
+    setSignalingConnectionState: (newState) =>
+        set({ signalingConnectionState: newState }),
+    setCandidates(newCandidates) {
+        set({ candidates: newCandidates });
+    },
+    setCaller(newCaller) {
+        set({ caller: newCaller });
+    },
+    setType(newType) {
+        set({ type: newType });
+    },
+    setTrustedOpenIDProviders(newOIDCProviders) {
+        set({
+            trustedOpenIDProviders: newOIDCProviders.map(convertOIDCProvider),
         });
     },
-    removeNonce: (key) => {
-        set((state) => {
-            const newMap = new Map(state.nonceMap);
-            newMap.delete(key);
-            return { nonceMap: newMap };
-        });
+    resetICTPhaseSlice() {
+        set({ ...initialState });
     },
 });

@@ -5,8 +5,8 @@ import { SettingsSlice } from './SettingsSlice';
 import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
-import { ImmerStateCreator } from '../storeHelper';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface State {
     isSettingsModalShown: boolean;
@@ -43,7 +43,8 @@ export const createModalSlice: StateCreator<
         OutgoingCallSlice &
         SettingsSlice &
         IncomingCallSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     ModalSlice

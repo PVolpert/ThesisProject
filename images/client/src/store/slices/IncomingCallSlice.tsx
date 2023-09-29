@@ -6,6 +6,7 @@ import { ModalSlice } from './ModalSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { AsyncTaskState, OutgoingCallSlice } from './OutgoingCallSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface State {
     incomingCallStage: 0 | 1;
@@ -38,7 +39,8 @@ export const createIncomingCallSlice: StateCreator<
         ModalSlice &
         WebRTCPhaseSlice &
         IncomingCallSlice &
-        ICTPhaseSlice,
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     IncomingCallSlice
