@@ -38,7 +38,6 @@ export default function ICTAuthItem({ ictProvider, IdToken }: LoginItemProps) {
                 <OIDCProviderButton
                     onClick={() => {}}
                     logo={ictProvider.info.img}
-                    // TODO Add username
                     text={`Connected as ${IdToken.name?.toString()}`}
                     isTokenActive={!!IdToken}
                 />
