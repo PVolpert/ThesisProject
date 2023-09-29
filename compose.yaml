@@ -1,212 +1,303 @@
 services:
-  traefik:
-      image: "traefik:2.10"
-      volumes: 
-        - ./configs/traefik:/etc/traefik
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-      networks:
-        - client-side
-      ports: 
-        - "80:80"
-        # Dashboard Port
-        - "8080:8080"
-  
-  client:
-    build: 
-      context: images/client
-    restart: unless-stopped
-    networks:
-      - client-side
-    volumes:
-      - ./images/client:/usr/src/app
-      - /usr/src/app/node_modules
-    env_file: configs/client/config.env
-    depends_on:
-      - traefik
-      - api
-      - signaling
-      - op
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.client.entrypoints=web
-      - traefik.http.routers.client.rule=HOST(`${CLIENT_HOST}`)
-    expose:
-      - 80
- 
+    traefik:
+        image: 'traefik:2.10'
+        volumes:
+            - ./configs/traefik:/etc/traefik
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        networks:
+            - client-side
+        ports:
+            - '80:80'
+            # Dashboard Port
+            - '8080:8080'
 
-  api:
-    build: 
-      context: images/api
-    restart: unless-stopped
-    networks:
-      - client-side
-      - server-side
-    secrets:
-      - db-user-api
-    environment:
-      - STAGE=Production
-    env_file: configs/api/config.env
-    depends_on: 
-      - traefik
-      - db
-    expose:
-      - 80
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.api.entrypoints=web
-      - traefik.http.routers.api.rule=HOST(`${API_HOST}`)
+    client:
+        build:
+            context: images/client
+        restart: unless-stopped
+        networks:
+            - client-side
+        volumes:
+            - ./images/client:/usr/src/app
+            - /usr/src/app/node_modules
+        env_file: configs/client/config.env
+        depends_on:
+            - traefik
+            - api
+            - signaling
+            - op
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.client.entrypoints=web
+            - traefik.http.routers.client.rule=HOST(`${CLIENT_HOST}`)
+        expose:
+            - 80
 
-  signaling:
-    build: 
-      context: images/signaling
-    restart: unless-stopped
-    networks:
-      - client-side
-      - server-side
-    secrets:
-      - db-user-signaling
-    environment:
-      - STAGE=Production
-    env_file: configs/signaling/config.env
-    depends_on: 
-      - traefik
-      - op
-    expose:
-      - 80
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.signaling.entrypoints=web
-      - traefik.http.routers.signaling.rule=HOST(`${SIGNALING_HOST}`)
+    signaling:
+        build:
+            context: images/signaling
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side
+        secrets:
+            - db-user-signaling
+        environment:
+            - STAGE=Production
+        env_file: configs/signaling/config.env
+        depends_on:
+            - traefik
+            - op
+        expose:
+            - 80
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.signaling.entrypoints=web
+            - traefik.http.routers.signaling.rule=HOST(`${SIGNALING_HOST}`)
 
-  backend:
-    build: 
-      context: images/backend
-      target: builder
-    restart: unless-stopped
-    networks:
-      - client-side
-      - server-side
-    volumes:
-      - ./images/backend:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      PORT: 80
-    expose:
-      - 80
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.backend.entrypoints=web
-      - traefik.http.routers.backend.rule=HOST(`${SFU_HOST}`)
+    backend:
+        build:
+            context: images/backend
+            target: builder
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side
+        volumes:
+            - ./images/backend:/usr/src/app
+            - /usr/src/app/node_modules
+        environment:
+            PORT: 80
+        expose:
+            - 80
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.backend.entrypoints=web
+            - traefik.http.routers.backend.rule=HOST(`${SFU_HOST}`)
 
-  db:
-    image: postgres
-    restart: unless-stopped
-    networks:
-      - server-side
-    volumes:
-      - ./configs/db:/docker-entrypoint-initdb.d
-      - db-data:/var/lib/postgresql/data
-    user: postgres
-    secrets:
-      - db-password
-      - db-env
-      - db-user-api
-      - db-user-signaling
-      - db-user-keycloak
-    environment:
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-      - CLIENT_HOST=${CLIENT_HOST}
-      - OP_HOST=${OP_HOST}
-    expose:
-      - ${DB_PORT}
-    healthcheck:
-      test: ["CMD", "pg_isready"]
-      interval: 5s
-      timeout: 10s
-      retries: 5
-      start_period: 0s
+    db:
+        image: postgres
+        restart: unless-stopped
+        networks:
+            - server-side
+        volumes:
+            - ./configs/db:/docker-entrypoint-initdb.d
+            - db-data:/var/lib/postgresql/data
+        user: postgres
+        secrets:
+            - db-password
+            - db-env
+            - db-user-keycloak
+        environment:
+            - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+            - CLIENT_HOST=${CLIENT_HOST}
+            - OP_HOST=${OP_HOST}
+        expose:
+            - ${DB_PORT}
+        healthcheck:
+            test: ['CMD', 'pg_isready']
+            interval: 5s
+            timeout: 10s
+            retries: 5
+            start_period: 0s
 
+    op:
+        image: quay.io/keycloak/keycloak:21.0 # Use Keycloak as OpenID Provider
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side # Restore last on/off state after restart
+        volumes:
+            - ./configs/keycloak:/opt/keycloak/data/import:ro
+        environment:
+            KC_DB: postgres # Use a PostgreSQL database
+            KC_DB_URL:
+                jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_KEYCLOAK}
+                # Specify JDBC URL to the PostgreSQL database ('db' = name of Keycloak Database service, 'keycloak' must be POSTGRES_DB of the Keycloak Database service)
+            KC_PROXY: edge # Configure Keycloak to run behind a reverse proxy with unencrypted HTTP between proxy and Keycloak
+        env_file:
+            - .secrets/keycloak/op.env # Include secrets from generated environment variables
+        command:
+            - 'start-dev --hostname-strict=false --import-realm' # Run Keycloak in development mode
+        depends_on:
+            - traefik # Keycloak requires running reverse proxy
+            - db # Keycloak requires running database
+        labels:
+            - traefik.enable=true # Enable Traefik reverse proxy exposure
+            - traefik.http.routers.op.entrypoints=web # Enable exposure via HTTP entrypoint 'web'
+            - traefik.http.routers.op.rule=Host(`${OP_HOST}`) # Specify routing via hostname provided in environment variable 'OP_HOST'
+            - traefik.http.routers.op.priority=1 # Set priority low (traefik.http.routers.ict.priority must be higher)
 
-  op:
-      image: quay.io/keycloak/keycloak:21.0                         # Use Keycloak as OpenID Provider
-      restart: unless-stopped         
-      networks:
-        - client-side
-        - server-side                         # Restore last on/off state after restart
-      volumes:
-        - ./configs/keycloak:/opt/keycloak/data/import:ro
-      environment:
-        KC_DB: postgres                                             # Use a PostgreSQL database
-        KC_DB_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_KEYCLOAK} 
-                    # Specify JDBC URL to the PostgreSQL database ('db' = name of Keycloak Database service, 'keycloak' must be POSTGRES_DB of the Keycloak Database service)
-        KC_PROXY: edge                                              # Configure Keycloak to run behind a reverse proxy with unencrypted HTTP between proxy and Keycloak
-      env_file:
-        - .secrets/keycloak/op.env                                  # Include secrets from generated environment variables
-      command:
-        - "start-dev --hostname-strict=false --import-realm"        # Run Keycloak in development mode
-      depends_on:
-        - traefik                                                     # Keycloak requires running reverse proxy
-        - db                                                        # Keycloak requires running database
-      labels:
-        - traefik.enable=true                                       # Enable Traefik reverse proxy exposure
-        - traefik.http.routers.op.entrypoints=web                   # Enable exposure via HTTP entrypoint 'web'
-        - traefik.http.routers.op.rule=Host(`${OP_HOST}`)           # Specify routing via hostname provided in environment variable 'OP_HOST'
-        - traefik.http.routers.op.priority=1                        # Set priority low (traefik.http.routers.ict.priority must be higher)
+    ict-alpha:
+        build:
+            context: images/ict
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side # Restore last on/off state after restart
+        environment:
+            KEY_FILE: /run/secrets/alpha_private_key # Set private key file to Docker Secret 'op_private_key'
+            ALG: RS256 # Configure RSA with SHA256 (RS256) as signature algorithm for ID Certifcation Tokens
+            USERINFO:
+                >- # Configure userinfo endpoint ('op' is the Docker-internal hostname of OpenID Provider service)
+                http://op:8080/realms/alpha/protocol/openid-connect/userinfo
+            ISSUER: http://${OP_HOST}/realms/alpha # Configure issuer of issued ID Certifcation Tokens
+            DEFAULT_TOKEN_PERIOD: 3600 # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
+            MAX_TOKEN_PERIOD: 2592000 # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
+            PORT: 8080 # Configure the internal port on which the ICT endpoint is listening
+        env_file:
+            - .secrets/keycloak/ict-alpha.env # Include secrets from generated environment variables
+        secrets:
+            - alpha_private_key
+        depends_on:
+            - traefik # ICT endpoint requires running reverse proxy
+            - op # ICT endpoint requires running OpenID Provider
+        labels:
+            - traefik.enable=true # Enable Traefik reverse proxy exposure
+            - traefik.http.routers.ict-alpha.entrypoints=web # Enable exposure via HTTP entrypoint 'web'
+            - >- # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
+                traefik.http.routers.ict-alpha.rule=(Host(`${OP_HOST}`) &&
+                PathPrefix(`/realms/alpha/protocol/openid-connect/userinfo/ict`))
+            - traefik.http.routers.ict-alpha.priority=2 # Set priority high (traefik.http.routers.op.priority must be lower)
+            - traefik.http.routers.ict-alpha.middlewares=ict-alpha@docker # Include 'ict' middleware from Docker labels below
+            - >- # Remove .../userinfo/ict path from request
+                traefik.http.middlewares.ict-alpha.replacepathregex.regex=^/realms/alpha/protocol/openid-connect/userinfo/ict(.*)
+            - >- # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
+                traefik.http.middlewares.ict-alpha.replacepathregex.replacement=$$1
 
-  ict:
-    build:
-      context: images/ict                                               
-    restart: unless-stopped   
-    networks:
-      - client-side
-      - server-side                                # Restore last on/off state after restart
-    environment:
-      KEY_FILE: /run/secrets/op_private_key                       # Set private key file to Docker Secret 'op_private_key'
-      ALG: RS256                                                  # Configure RSA with SHA256 (RS256) as signature algorithm for ID Certifcation Tokens
-      USERINFO: >-                                                # Configure userinfo endpoint ('op' is the Docker-internal hostname of OpenID Provider service)
-        http://op:8080/realms/ict/protocol/openid-connect/userinfo
-      ISSUER: http://${OP_HOST}/realms/ict                        # Configure issuer of issued ID Certifcation Tokens
-      DEFAULT_TOKEN_PERIOD: 3600                                  # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
-      MAX_TOKEN_PERIOD: 2592000                                   # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
-      PORT: 8080                                                  # Configure the internal port on which the ICT endpoint is listening
-    env_file:
-      - .secrets/keycloak/ict.env                                        # Include secrets from generated environment variables
-    secrets:
-      - op_private_key            
-    depends_on:
-      - traefik                                                     # ICT endpoint requires running reverse proxy
-      - op                                                        # ICT endpoint requires running OpenID Provider
-    labels:
-      - traefik.enable=true                                       # Enable Traefik reverse proxy exposure
-      - traefik.http.routers.ict.entrypoints=web       # Enable exposure via HTTP entrypoint 'web'
-      - >-                                                        # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
-        traefik.http.routers.ict.rule=(Host(`${OP_HOST}`) &&
-        PathPrefix(`/realms/ict/protocol/openid-connect/userinfo/ict`))
-      - traefik.http.routers.ict.priority=2                       # Set priority high (traefik.http.routers.op.priority must be lower)
-      - traefik.http.routers.ict.middlewares=ict@docker           # Include 'ict' middleware from Docker labels below 
-      - >-                                                        # Remove .../userinfo/ict path from request
-        traefik.http.middlewares.ict.replacepathregex.regex=^/realms/ict/protocol/openid-connect/userinfo/ict(.*)
-      - >-                                                        # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
-        traefik.http.middlewares.ict.replacepathregex.replacement=$$1
+    ict-beta:
+        build:
+            context: images/ict
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side # Restore last on/off state after restart
+        environment:
+            KEY_FILE: /run/secrets/beta_private_key # Set private key file to Docker Secret 'op_private_key'
+            ALG: RS256 # Configure RSA with SHA256 (RS256) as signature algorithm for ID Certifcation Tokens
+            USERINFO:
+                >- # Configure userinfo endpoint ('op' is the Docker-internal hostname of OpenID Provider service)
+                http://op:8080/realms/beta/protocol/openid-connect/userinfo
+            ISSUER: http://${OP_HOST}/realms/beta # Configure issuer of issued ID Certifcation Tokens
+            DEFAULT_TOKEN_PERIOD: 3600 # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
+            MAX_TOKEN_PERIOD: 2592000 # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
+            PORT: 8080 # Configure the internal port on which the ICT endpoint is listening
+        env_file:
+            - .secrets/keycloak/ict-beta.env # Include secrets from generated environment variables
+        secrets:
+            - beta_private_key
+        depends_on:
+            - traefik # ICT endpoint requires running reverse proxy
+            - op # ICT endpoint requires running OpenID Provider
+        labels:
+            - traefik.enable=true # Enable Traefik reverse proxy exposure
+            - traefik.http.routers.ict-beta.entrypoints=web # Enable exposure via HTTP entrypoint 'web'
+            - >- # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
+                traefik.http.routers.ict-beta.rule=(Host(`${OP_HOST}`) &&
+                PathPrefix(`/realms/beta/protocol/openid-connect/userinfo/ict`))
+            - traefik.http.routers.ict-beta.priority=2 # Set priority high (traefik.http.routers.op.priority must be lower)
+            - traefik.http.routers.ict-beta.middlewares=ict-beta@docker # Include 'ict' middleware from Docker labels below
+            - >- # Remove .../userinfo/ict path from request
+                traefik.http.middlewares.ict-beta.replacepathregex.regex=^/realms/beta/protocol/openid-connect/userinfo/ict(.*)
+            - >- # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
+                traefik.http.middlewares.ict-beta.replacepathregex.replacement=$$1
+
+    ict-gamma:
+        build:
+            context: images/ict
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side # Restore last on/off state after restart
+        environment:
+            KEY_FILE: /run/secrets/gamma_private_key # Set private key file to Docker Secret 'op_private_key'
+            ALG: RS256 # Configure RSA with SHA256 (RS256) as signature algorithm for ID Certifcation Tokens
+            USERINFO:
+                >- # Configure userinfo endpoint ('op' is the Docker-internal hostname of OpenID Provider service)
+                http://op:8080/realms/gamma/protocol/openid-connect/userinfo
+            ISSUER: http://${OP_HOST}/realms/gamma # Configure issuer of issued ID Certifcation Tokens
+            DEFAULT_TOKEN_PERIOD: 3600 # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
+            MAX_TOKEN_PERIOD: 2592000 # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
+            PORT: 8080 # Configure the internal port on which the ICT endpoint is listening
+        env_file:
+            - .secrets/keycloak/ict-gamma.env # Include secrets from generated environment variables
+        secrets:
+            - gamma_private_key
+        depends_on:
+            - traefik # ICT endpoint requires running reverse proxy
+            - op # ICT endpoint requires running OpenID Provider
+        labels:
+            - traefik.enable=true # Enable Traefik reverse proxy exposure
+            - traefik.http.routers.ict-gamma.entrypoints=web # Enable exposure via HTTP entrypoint 'web'
+            - >- # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
+                traefik.http.routers.ict-gamma.rule=(Host(`${OP_HOST}`) &&
+                PathPrefix(`/realms/gamma/protocol/openid-connect/userinfo/ict`))
+            - traefik.http.routers.ict-gamma.priority=2 # Set priority high (traefik.http.routers.op.priority must be lower)
+            - traefik.http.routers.ict-gamma.middlewares=ict-gamma@docker # Include 'ict' middleware from Docker labels below
+            - >- # Remove .../userinfo/ict path from request
+                traefik.http.middlewares.ict-gamma.replacepathregex.regex=^/realms/gamma/protocol/openid-connect/userinfo/ict(.*)
+            - >- # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
+                traefik.http.middlewares.ict-gamma.replacepathregex.replacement=$$1
+
+    ict:
+        build:
+            context: images/ict
+        restart: unless-stopped
+        networks:
+            - client-side
+            - server-side # Restore last on/off state after restart
+        environment:
+            KEY_FILE: /run/secrets/op_private_key # Set private key file to Docker Secret 'op_private_key'
+            ALG: RS256 # Configure RSA with SHA256 (RS256) as signature algorithm for ID Certifcation Tokens
+            USERINFO:
+                >- # Configure userinfo endpoint ('op' is the Docker-internal hostname of OpenID Provider service)
+                http://op:8080/realms/ict/protocol/openid-connect/userinfo
+            ISSUER: http://${OP_HOST}/realms/ict # Configure issuer of issued ID Certifcation Tokens
+            DEFAULT_TOKEN_PERIOD: 3600 # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
+            MAX_TOKEN_PERIOD: 2592000 # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
+            PORT: 8080 # Configure the internal port on which the ICT endpoint is listening
+        env_file:
+            - .secrets/keycloak/ict.env # Include secrets from generated environment variables
+        secrets:
+            - op_private_key
+        depends_on:
+            - traefik # ICT endpoint requires running reverse proxy
+            - op # ICT endpoint requires running OpenID Provider
+        labels:
+            - traefik.enable=true # Enable Traefik reverse proxy exposure
+            - traefik.http.routers.ict.entrypoints=web # Enable exposure via HTTP entrypoint 'web'
+            - >-
+                traefik.http.routers.ict.rule=(Host(`${OP_HOST}`) &&
+                PathPrefix(`/realms/ict/protocol/openid-connect/userinfo/ict`))
+            - traefik.http.routers.ict.priority=2 # Set priority high (traefik.http.routers.op.priority must be lower)
+            - traefik.http.routers.ict.middlewares=ict@docker # Include 'ict' middleware from Docker labels below
+            - >- # Remove .../userinfo/ict path from request
+                traefik.http.middlewares.ict.replacepathregex.regex=^/realms/ict/protocol/openid-connect/userinfo/ict(.*)
+            - >- # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
+                traefik.http.middlewares.ict.replacepathregex.replacement=$$1
 
 networks:
-  client-side: {}
-  server-side: {}
+    client-side: {}
+    server-side: {}
 
 volumes:
-  db-data: {}
+    db-data: {}
 
 secrets:
-  db-password:
-    file: .secrets/db/password.txt
-  db-env:
-    file: .secrets/db/env.sh
-  db-user-api:
-    file: .secrets/db/api.txt
-  db-user-signaling:
-    file: .secrets/db/signaling.txt
-  db-user-keycloak:
-    file: .secrets/db/keycloak.txt
-  op_private_key:
-    file: .secrets/keycloak/private.pem
+    db-password:
+        file: .secrets/db/password.txt
+    db-env:
+        file: .secrets/db/env.sh
 
+    db-user-signaling:
+        file: .secrets/db/signaling.txt
+    db-user-keycloak:
+        file: .secrets/db/keycloak.txt
+    op_private_key:
+        file: .secrets/keycloak/ict.pem
+    alpha_private_key:
+        file: .secrets/keycloak/alpha.pem
+    beta_private_key:
+        file: .secrets/keycloak/beta.pem
+    gamma_private_key:
+        file: .secrets/keycloak/gamma.pem

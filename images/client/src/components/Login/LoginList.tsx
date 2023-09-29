@@ -1,13 +1,9 @@
-import { useRouteLoaderData } from 'react-router-dom';
-
-import OIDCProvider from '../../helpers/Auth/OIDCProvider';
 import LoginItem from './LoginItem';
+import { serviceProviders } from '../../helpers/Auth/OIDCProviderInfo';
 
 export default function LoginList() {
-    const authProviders = useRouteLoaderData('auth') as OIDCProvider[];
-
-    const items = authProviders.map((authProvider, index) => (
-        <LoginItem key={index} authProvider={authProvider} />
+    const items = serviceProviders.map((serviceProvider, index) => (
+        <LoginItem key={index} authProvider={serviceProvider} />
     ));
 
     if (!items.length) {

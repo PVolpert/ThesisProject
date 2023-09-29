@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import Call, { loader as callLoader } from './pages/Call';
-import { loader as oidcProviderLoader } from './pages/Auth';
+import Call from './pages/Call';
 import LoginPage from './pages/Login';
 import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
 import RootLayout from './pages/Root';
@@ -23,7 +22,7 @@ const router = createBrowserRouter([
             {
                 path: 'auth',
                 id: 'auth',
-                loader: oidcProviderLoader,
+                // loader: oidcProviderLoader,
                 children: [
                     { path: 'login', element: <LoginPage /> },
                     {
@@ -35,7 +34,7 @@ const router = createBrowserRouter([
             },
             {
                 path: 'call',
-                loader: callLoader,
+                // loader: callLoader,
                 id: 'call',
                 children: [
                     {

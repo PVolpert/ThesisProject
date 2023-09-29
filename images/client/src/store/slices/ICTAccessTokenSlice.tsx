@@ -7,26 +7,28 @@
 // Add or update an indiviual Token
 
 // Map seems to be the most reasonable choice
-import { IDToken, OpenIDTokenEndpointResponse } from 'oauth4webapi';
+import { IDToken } from 'oauth4webapi';
 import { StateCreator } from 'zustand';
 import { SettingsSlice } from './SettingsSlice';
-import { AccessTokenSlice, parseToken } from './AccessTokenSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { AccessTokenSlice } from './AccessTokenSlice';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
-interface TokenSet {
+export interface TokenSet {
     accessToken: string;
     idToken: IDToken;
 }
 
 interface State {
-    ictTokens: TokenSet[];
+    ictTokenSets: TokenSet[];
 }
 
 interface Actions {
-    parseICT: (tokenResponse: OpenIDTokenEndpointResponse) => void;
+    parseICT: (tokenSet: TokenSet) => void;
     resetIctToken: (issuer: string) => void;
     resetIctTokens: () => void;
 }
@@ -34,7 +36,7 @@ interface Actions {
 export interface ICTAccessTokenSlice extends State, Actions {}
 
 const initialState: State = {
-    ictTokens: [],
+    ictTokenSets: [],
 };
 
 export const createICTAccessTokenSlice: StateCreator<
@@ -42,32 +44,33 @@ export const createICTAccessTokenSlice: StateCreator<
         AccessTokenSlice &
         OutgoingCallSlice &
         ModalSlice &
-        RTCConnectionSlice &
+        WebRTCPhaseSlice &
         SettingsSlice &
-        IncomingCallSlice,
+        IncomingCallSlice &
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     ICTAccessTokenSlice
 > = (set) => ({
     ...initialState,
-    parseICT: (tokenResponse) =>
+    parseICT: (tokenSet) =>
         set((state) => {
-            const newTokenSet = parseToken(tokenResponse);
             if (
-                state.ictTokens.some((ictToken) => {
-                    return ictToken.idToken.iss == newTokenSet.idToken.iss;
+                state.ictTokenSets.some((ictToken) => {
+                    return ictToken.idToken.iss == tokenSet.idToken.iss;
                 })
             ) {
                 return state;
             }
             return {
-                ictTokens: state.ictTokens.concat([newTokenSet]),
+                ictTokenSets: state.ictTokenSets.concat([tokenSet]),
             };
         }),
     resetIctToken: (issuer) =>
         set((state) => ({
-            ictTokens: state.ictTokens.filter((ictToken) => {
-                return issuer != ictToken.idToken.iss;
+            ictTokenSets: state.ictTokenSets.filter((ictToken) => {
+                return issuer != ictToken.idToken.issuer;
             }),
         })),
     resetIctTokens: () => set(() => ({ ...initialState })),

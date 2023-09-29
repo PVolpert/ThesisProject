@@ -38,28 +38,7 @@ services:
     expose:
       - 3000  
 
-  # api:
-  #   build: 
-  #     context: images/api
-  #     target: dev-envs
-  #   restart: on-failure
-  #   networks:
-  #     - client-side
-  #     - server-side
-  #   secrets:
-  #     - db-user-api
-  #   environment:
-  #     - STAGE=Development
-  #   env_file: configs/api/config.env
-  #   depends_on: 
-  #      - traefik
-  #      - db
-  #   expose:
-  #     - 80
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.api.entrypoints=web
-  #     - traefik.http.routers.api.rule=HOST(`${API_HOST}`)
+  
 
   signaling:
     build: 
@@ -116,8 +95,6 @@ services:
     secrets:
       - db-password
       - db-env
-      # - db-user-api
-      # - db-user-signaling
       - db-user-keycloak
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
@@ -316,8 +293,7 @@ secrets:
     file: .secrets/db/password.txt
   db-env:
     file: .secrets/db/env.sh
-  # db-user-api:
-  #   file: .secrets/db/api.txt
+
   db-user-signaling:
     file: .secrets/db/signaling.txt
   db-user-keycloak:

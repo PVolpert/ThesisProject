@@ -1,315 +1,312 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useStore } from '../store/Store';
-import {
-    Message,
-    SdpMessage,
-    createHangUpMessage,
-    createSDPMessage,
-} from '../helpers/Signaling/Messages';
-import { useNavigate } from 'react-router-dom';
-import {
-    validateHangUp,
-    incomingOfferHandler,
-} from '../helpers/Signaling/MessageHandlers';
-import {
-    getUserMedia,
-    getUserMediaErrorHandler,
-} from '../helpers/WebRTC/UserMedia';
+export {};
+// import { useEffect, useMemo, useState } from 'react';
+// import { useStore } from '../store/Store';
+// import {
+//     Message,
+//     WebRTCMessage,
+//     createHangUpMessage,
+//     createSDPMessage,
+// } from '../helpers/Signaling/Messages';
+// import { useNavigate } from 'react-router-dom';
+// import {
+//     validateHangUp,
+//     incomingOfferHandler,
+// } from '../helpers/Signaling/MessageHandlers';
+// import {
+//     getUserMedia,
+//     getUserMediaErrorHandler,
+// } from '../helpers/WebRTCPhase/UserMedia';
 
-import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
-import { requestICTs } from '../helpers/ICT/ICT';
-import { UserId } from '../helpers/Signaling/User';
+// import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
+// import { UserId } from '../helpers/Signaling/User';
 
-interface useRTCPeerConnectionProps {
-    lastJsonMessage: any;
-    sendJsonMessage: SendJsonMessage;
-}
+// interface useRTCPeerConnectionProps {
+//     lastJsonMessage: any;
+//     sendJsonMessage: SendJsonMessage;
+// }
 
-export default function useRTCPeerConnection({
-    sendJsonMessage,
-    lastJsonMessage,
-}: useRTCPeerConnectionProps) {
-    const [RTCConnection] = useState<RTCPeerConnection>(
-        new RTCPeerConnection()
-    );
-    const [localStream, setLocalStream] = useState<MediaStream>(
-        new MediaStream()
-    );
-    const [remoteStreams, setRemoteStreams] = useState<readonly MediaStream[]>(
-        []
-    );
-    const [isDescriptionReady, setIsDescriptionReady] = useState(false);
-    const [isICTready, setIsICTready] = useState(false);
+// export default function useRTCPeerConnection({
+//     sendJsonMessage,
+//     lastJsonMessage,
+// }: useRTCPeerConnectionProps) {
+//     const [RTCConnection] = useState<RTCPeerConnection>(
+//         new RTCPeerConnection()
+//     );
+//     const [localStream, setLocalStream] = useState<MediaStream>(
+//         new MediaStream()
+//     );
+//     const [remoteStreams, setRemoteStreams] = useState<readonly MediaStream[]>(
+//         []
+//     );
+//     const [isDescriptionReady, setIsDescriptionReady] = useState(false);
+//     const [isICTready, setIsICTready] = useState(false);
 
-    const navigate = useNavigate();
+//     const navigate = useNavigate();
 
-    //  ###### Store Imports #########
+//     //  ###### Store Imports #########
 
-    const accessToken = useStore((state) => state.accessToken);
+//     const accessToken = useStore((state) => state.accessToken);
 
-    const setOfferState = useStore((state) => state.setOfferLoadState);
-    const setOfferICTState = useStore((state) => state.setICTOfferLoadState);
-    const setOfferSendState = useStore((state) => state.setOfferSendLoadState);
-    const setAnswerReceivedLoadState = useStore(
-        (state) => state.setAnswerReceivedLoadState
-    );
+//     const setOfferState = useStore((state) => state.setOfferLoadState);
+//     const setOfferICTState = useStore((state) => state.setICTOfferLoadState);
+//     const setOfferSendState = useStore((state) => state.setOfferSendLoadState);
+//     const setAnswerReceivedLoadState = useStore(
+//         (state) => state.setAnswerReceivedLoadState
+//     );
 
-    const acceptAnswer = useStore((state) => state.acceptAnswer);
-    const setAnswerLoadState = useStore((state) => state.setAnswerLoadState);
-    const setICTAnswerLoadState = useStore(
-        (state) => state.setICTAnswerLoadState
-    );
-    const setAnswerSentLoadState = useStore(
-        (state) => state.setAnswerSentLoadState
-    );
+//     const acceptAnswer = useStore((state) => state.acceptAnswer);
+//     const setAnswerLoadState = useStore((state) => state.setAnswerLoadState);
+//     const setICTAnswerLoadState = useStore(
+//         (state) => state.setICTAnswerLoadState
+//     );
+//     const setAnswerSentLoadState = useStore(
+//         (state) => state.setAnswerSentLoadState
+//     );
 
-    const incomingOffer = useStore((state) => state.incomingOffer);
-    const incomingAnswer = useStore((state) => state.incomingAnswer);
-    const setIncomingAnswer = useStore((state) => state.setIncomingAnswer);
-    const callPartner = useStore((state) => state.callPartner);
-    const setShouldBlockOutsideOffers = useStore(
-        (state) => state.setShouldBlockOutsideOffers
-    );
-    const callSettings = useStore((state) => state.callSettings);
+//     const incomingOffer = useStore((state) => state.incomingOffer);
+//     const incomingAnswer = useStore((state) => state.incomingAnswer);
+//     const setIncomingAnswer = useStore((state) => state.setIncomingAnswer);
+//     const callPartner = useStore((state) => state.callPartner);
+//     const setShouldBlockOutsideOffers = useStore(
+//         (state) => state.setShouldBlockOutsideOffers
+//     );
+//     const callSettings = useStore((state) => state.callSettings);
 
-    // ##### General Functions #####
+//     // ##### General Functions #####
 
-    function appendEventHandlers() {
-        // Required Event Handlers
-        RTCConnection.onnegotiationneeded = () => {
-            RTCConnection.createOffer().then((offer) => {
-                RTCConnection.setLocalDescription(offer);
-            });
-        };
-        RTCConnection.onicecandidate = (ev) => {
-            let candidate = ev.candidate;
-            // Empty candidate shows no more candidates
-            if (!candidate) {
-                setIsDescriptionReady(true);
-                !incomingOffer
-                    ? setOfferState('fulfilled')
-                    : setAnswerLoadState('fulfilled');
-            }
-        };
+//     function appendEventHandlers() {
+//         // Required Event Handlers
+//         RTCConnection.onnegotiationneeded = () => {
+//             RTCConnection.createOffer().then((offer) => {
+//                 RTCConnection.setLocalDescription(offer);
+//             });
+//         };
+//         RTCConnection.onicecandidate = (ev) => {
+//             let candidate = ev.candidate;
+//             // Empty candidate shows no more candidates
+//             if (!candidate) {
+//                 setIsDescriptionReady(true);
+//                 !incomingOffer
+//                     ? setOfferState('fulfilled')
+//                     : setAnswerLoadState('fulfilled');
+//             }
+//         };
 
-        RTCConnection.ontrack = (event: RTCTrackEvent) => {
-            setRemoteStreams(event.streams);
-        };
-    }
+//         RTCConnection.ontrack = (event: RTCTrackEvent) => {
+//             setRemoteStreams(event.streams);
+//         };
+//     }
 
-    async function addLocalStreamTracksToRTCConnectionTracks() {
-        try {
-            const newLocalStream = (await getUserMedia(
-                callSettings
-            )) as MediaStream;
-            // attach the new LocalStream to the RTCConnection
-            newLocalStream.getTracks().forEach((track) => {
-                RTCConnection.addTrack(track, localStream);
-            });
+//     async function addLocalStreamTracksToRTCConnectionTracks() {
+//         try {
+//             const newLocalStream = (await getUserMedia(
+//                 callSettings
+//             )) as MediaStream;
+//             // attach the new LocalStream to the RTCConnection
+//             newLocalStream.getTracks().forEach((track) => {
+//                 RTCConnection.addTrack(track, localStream);
+//             });
 
-            setLocalStream(newLocalStream);
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    }
+//             setLocalStream(newLocalStream);
+//         } catch (error) {
+//             console.error(error);
+//             throw error;
+//         }
+//     }
 
-    async function doICTPromise(callPartner: UserId) {
-        // TODO Add PoP
-        try {
-            const icts = await requestICTs(callPartner);
-            // Notify store here
-            // TODO Add incoming call storage
-            setIsICTready(true);
+//     async function doICTPromise(callPartner: UserId) {
+//         // // TODO Add PoP
+//         // try {
+//         //     // Notify store here
+//         //     // TODO Add incoming call storage
+//         //     setIsICTready(true);
+//         //     !incomingOffer
+//         //         ? setOfferICTState('fulfilled')
+//         //         : setICTAnswerLoadState('fulfilled');
+//         //     return icts;
+//         // } catch (error) {
+//         //     // setOutgoingCallProcessICT('failed');
+//         //     throw Error('ict acquisition failed');
+//         // }
+//     }
 
-            !incomingOffer
-                ? setOfferICTState('fulfilled')
-                : setICTAnswerLoadState('fulfilled');
+//     // #### Passive Call Functions #####
 
-            return icts;
-        } catch (error) {
-            // setOutgoingCallProcessICT('failed');
-            throw Error('ict acquisition failed');
-        }
-    }
+//     const startPassiveCall = async (
+//         newRemoteDescription: RTCSessionDescription
+//     ) => {
+//         try {
+//             await RTCConnection.setRemoteDescription(newRemoteDescription);
 
-    // #### Passive Call Functions #####
+//             // ? This might be done outside
+//             await addLocalStreamTracksToRTCConnectionTracks();
 
-    const startPassiveCall = async (
-        newRemoteDescription: RTCSessionDescription
-    ) => {
-        try {
-            await RTCConnection.setRemoteDescription(newRemoteDescription);
+//             const answer = await RTCConnection.createAnswer();
+//             await RTCConnection.setLocalDescription(answer);
+//         } catch (error) {
+//             console.log(error);
+//             // give user error feedback
+//             getUserMediaErrorHandler(error);
+//             // Go back to call & execute cleanup
+//             navigate('/call');
+//         }
+//     };
 
-            // ? This might be done outside
-            await addLocalStreamTracksToRTCConnectionTracks();
+//     // ################## Active Call Functions #################
 
-            const answer = await RTCConnection.createAnswer();
-            await RTCConnection.setLocalDescription(answer);
-        } catch (error) {
-            console.log(error);
-            // give user error feedback
-            getUserMediaErrorHandler(error);
-            // Go back to call & execute cleanup
-            navigate('/call');
-        }
-    };
+//     async function startActiveCall() {
+//         try {
+//             await addLocalStreamTracksToRTCConnectionTracks();
+//         } catch (error) {
+//             console.log(error);
+//             // give user error feedback
+//             getUserMediaErrorHandler(error);
+//             // Go back to call & execute cleanup
+//             navigate('/call');
+//         }
+//     }
 
-    // ################## Active Call Functions #################
+//     // #################### Closing Functions #####################
 
-    async function startActiveCall() {
-        try {
-            await addLocalStreamTracksToRTCConnectionTracks();
-        } catch (error) {
-            console.log(error);
-            // give user error feedback
-            getUserMediaErrorHandler(error);
-            // Go back to call & execute cleanup
-            navigate('/call');
-        }
-    }
+//     async function closeCall() {
+//         //Null all event handlers
+//         RTCConnection.onicecandidate = null;
+//         RTCConnection.ontrack = null;
+//         RTCConnection.onnegotiationneeded = null;
+//         //Close the connection
+//         // RTCConnection.close();
 
-    // #################### Closing Functions #####################
+//         localStream.getTracks().forEach((track) => track.stop());
+//     }
 
-    async function closeCall() {
-        //Null all event handlers
-        RTCConnection.onicecandidate = null;
-        RTCConnection.ontrack = null;
-        RTCConnection.onnegotiationneeded = null;
-        //Close the connection
-        // RTCConnection.close();
+//     //################ Side Effects #########################
 
-        localStream.getTracks().forEach((track) => track.stop());
-    }
+//     //* Effect to establish a new video call
+//     useEffect(() => {
+//         if (!accessToken) {
+//             return;
+//         }
+//         if (!callPartner) {
+//             // Invalid Page Traversal
+//             navigate('/call');
+//             return () => {
+//                 setShouldBlockOutsideOffers(false);
+//             };
+//         }
 
-    //################ Side Effects #########################
+//         try {
+//             setShouldBlockOutsideOffers(true);
 
-    //* Effect to establish a new video call
-    useEffect(() => {
-        if (!accessToken) {
-            return;
-        }
-        if (!callPartner) {
-            // Invalid Page Traversal
-            navigate('/call');
-            return () => {
-                setShouldBlockOutsideOffers(false);
-            };
-        }
+//             appendEventHandlers();
 
-        try {
-            setShouldBlockOutsideOffers(true);
+//             doICTPromise(callPartner);
+//             //Block other users from calling
+//             if (incomingOffer) {
+//                 startPassiveCall(incomingOffer);
+//             }
 
-            appendEventHandlers();
+//             startActiveCall();
+//         } catch (error) {
+//             // TODO handle errors about offer here
+//             // Check if error is from ict or WebRTC
+//             // Handle individual error
+//         }
 
-            doICTPromise(callPartner);
-            //Block other users from calling
-            if (incomingOffer) {
-                startPassiveCall(incomingOffer);
-            }
+//         return () => {
+//             setShouldBlockOutsideOffers(false);
+//             closeCall();
+//         };
+//     }, []);
 
-            startActiveCall();
-        } catch (error) {
-            // TODO handle errors about offer here
-            // Check if error is from ict or webrtc
-            // Handle indiviudal error
-        }
+//     // SideEffect for sending messages when ICT is loaded
+//     useEffect(() => {
+//         // ? Might append asymmetric key here
+//         if (!isDescriptionReady || !isICTready || !callPartner) {
+//             return;
+//         }
 
-        return () => {
-            setShouldBlockOutsideOffers(false);
-            closeCall();
-        };
-    }, []);
+//         const desc = RTCConnection.localDescription;
 
-    // SideEffect for sending messages when ICT is loaded
-    useEffect(() => {
-        // ? Might append asymmetric key here
-        if (!isDescriptionReady || !isICTready || !callPartner) {
-            return;
-        }
+//         if (!desc) {
+//             throw Error('Invalid local Description');
+//         }
+//         // TODO: Create JWT here
 
-        const desc = RTCConnection.localDescription;
+//         switch (desc.type) {
+//             case 'offer': {
+//                 const msg = createSDPMessage('call-offer', callPartner, desc);
+//                 sendJsonMessage(msg);
+//                 setOfferSendState('fulfilled');
 
-        if (!desc) {
-            throw Error('Invalid local Description');
-        }
-        // TODO: Create JWT here
+//                 break;
+//             }
+//             case 'answer': {
+//                 const msg = createSDPMessage('call-answer', callPartner, desc);
+//                 sendJsonMessage(msg);
+//                 setAnswerSentLoadState('fulfilled');
+//                 break;
+//             }
+//         }
 
-        switch (desc.type) {
-            case 'offer': {
-                const msg = createSDPMessage('call-offer', callPartner, desc);
-                sendJsonMessage(msg);
-                setOfferSendState('fulfilled');
+//         return () => {
+//             if (!callPartner) {
+//                 return;
+//             }
+//             const answerMsg = createHangUpMessage(callPartner);
+//             sendJsonMessage(answerMsg);
+//         };
+//     }, [isDescriptionReady, isICTready]);
 
-                break;
-            }
-            case 'answer': {
-                const msg = createSDPMessage('call-answer', callPartner, desc);
-                sendJsonMessage(msg);
-                setAnswerSentLoadState('fulfilled');
-                break;
-            }
-        }
+//     useEffect(() => {
+//         if (!accessToken || acceptAnswer != 'fulfilled' || !incomingAnswer) {
+//             return;
+//         }
 
-        return () => {
-            if (!callPartner) {
-                return;
-            }
-            const answerMsg = createHangUpMessage(callPartner);
-            sendJsonMessage(answerMsg);
-        };
-    }, [isDescriptionReady, isICTready]);
+//         RTCConnection.setRemoteDescription(incomingAnswer);
+//     }, [incomingAnswer, acceptAnswer]);
 
-    useEffect(() => {
-        if (!accessToken || acceptAnswer != 'fulfilled' || !incomingAnswer) {
-            return;
-        }
+//     // * Effect for Incoming Socket Message
+//     useEffect(() => {
+//         // Listen only after RTCPeer is active
+//         if (!lastJsonMessage) {
+//             return;
+//         }
+//         const { type } = lastJsonMessage as Message;
+//         // Missing type --> not a message --> error
+//         if (!type) {
+//             console.error('Missing socket message type');
+//             return;
+//         } // Handle RTC-Type Socket Messages
+//         switch (type) {
+//             case 'call-offer':
+//                 incomingOfferHandler(lastJsonMessage);
+//                 break;
+//             case 'call-answer':
+//                 try {
+//                     const { origin, body: { desc } = {} } =
+//                         lastJsonMessage as WebRTCMessage;
+//                     if (!origin) {
+//                         console.error('sdp Message is missing origin');
+//                         return;
+//                     }
+//                     if (!desc) {
+//                         console.error('sdp Message is missing body');
+//                         return;
+//                     }
+//                     // TODO validate ICT here
 
-        RTCConnection.setRemoteDescription(incomingAnswer);
-    }, [incomingAnswer, acceptAnswer]);
+//                     setIncomingAnswer(desc);
+//                     setAnswerReceivedLoadState('fulfilled');
+//                 } catch (error) {
+//                     console.log(error);
+//                 }
+//                 break;
+//             case 'hang-up':
+//                 if (validateHangUp(lastJsonMessage, callPartner)) {
+//                     navigate('/call');
+//                 }
+//         }
+//     }, [lastJsonMessage]);
 
-    // * Effect for Incoming Socket Message
-    useEffect(() => {
-        // Listen only after RTCPeer is active
-        if (!lastJsonMessage) {
-            return;
-        }
-        const { type } = lastJsonMessage as Message;
-        // Missing type --> not a message --> error
-        if (!type) {
-            console.error('Missing socket message type');
-            return;
-        } // Handle RTC-Type Socket Messages
-        switch (type) {
-            case 'call-offer':
-                incomingOfferHandler(lastJsonMessage);
-                break;
-            case 'call-answer':
-                try {
-                    const { origin, body: { desc } = {} } =
-                        lastJsonMessage as SdpMessage;
-                    if (!origin) {
-                        console.error('sdp Message is missing origin');
-                        return;
-                    }
-                    if (!desc) {
-                        console.error('sdp Message is missing body');
-                        return;
-                    }
-                    // TODO validate ICT here
-
-                    setIncomingAnswer(desc);
-                    setAnswerReceivedLoadState('fulfilled');
-                } catch (error) {
-                    console.log(error);
-                }
-                break;
-            case 'hang-up':
-                if (validateHangUp(lastJsonMessage, callPartner)) {
-                    navigate('/call');
-                }
-        }
-    }, [lastJsonMessage]);
-
-    return { localStream, remoteStreams, closeCall };
-}
+//     return { localStream, remoteStreams, closeCall };
+// }

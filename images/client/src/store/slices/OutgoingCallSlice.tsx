@@ -1,10 +1,12 @@
 import { StateCreator } from 'zustand';
 import { SettingsSlice } from './SettingsSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 type OutgoingCallModalStage = 0 | 1 | 2;
 
@@ -27,7 +29,6 @@ interface Actions {
     setOfferLoadState: (newLoadState: AsyncTaskState) => void;
     setOfferSendLoadState: (newLoadState: AsyncTaskState) => void;
     setAnswerReceivedLoadState: (newLoadState: AsyncTaskState) => void;
-    setCalleeUserName: (newUserName: string) => void;
     setAcceptAnswer: (newAccept: AsyncTaskState) => void;
 }
 
@@ -48,9 +49,11 @@ export const createOutgoingCallSlice: StateCreator<
         AccessTokenSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        RTCConnectionSlice &
+        WebRTCPhaseSlice &
         SettingsSlice &
-        IncomingCallSlice,
+        IncomingCallSlice &
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     OutgoingCallSlice
@@ -64,7 +67,7 @@ export const createOutgoingCallSlice: StateCreator<
     setOfferLoadState: (newLoadState) => set({ offerLoadState: newLoadState }),
     setOfferSendLoadState: (newLoadState) =>
         set({ sendOfferLoadState: newLoadState }),
-    setCalleeUserName: (newUserName) => set({ calleeUserName: newUserName }),
+
     setAnswerReceivedLoadState: (newLoadState) =>
         set({ answerReceivedState: newLoadState }),
     setAcceptAnswer: (newLoadState) => {

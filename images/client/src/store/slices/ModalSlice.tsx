@@ -2,9 +2,11 @@ import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { RTCConnectionSlice } from './RTCConnectionSlice';
+import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
+import { ICTPhaseSlice } from './ICTPhaseSlice';
+import { SignalingSlice } from './SignalingSlice';
 
 interface State {
     isSettingsModalShown: boolean;
@@ -37,10 +39,12 @@ export const createModalSlice: StateCreator<
     ModalSlice &
         AccessTokenSlice &
         ICTAccessTokenSlice &
-        RTCConnectionSlice &
+        WebRTCPhaseSlice &
         OutgoingCallSlice &
         SettingsSlice &
-        IncomingCallSlice,
+        IncomingCallSlice &
+        ICTPhaseSlice &
+        SignalingSlice,
     [],
     [],
     ModalSlice

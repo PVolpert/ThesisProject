@@ -55,7 +55,7 @@ class Oauth4WebApiWrapper {
             this.#oidcProvider.authServer,
             this.#oidcProvider.client,
             params,
-            this.#oidcProvider.info.redirect.href,
+            this.#oidcProvider.info.redirectId.href,
             this.#oidcProvider.verifier.verifier
         );
         return response;
@@ -178,8 +178,6 @@ export async function fetchTokenEndPointResponse(
 ) {
     // Load Verifier
     oidcProvider.verifier.load();
-    // Create Auth Server
-    await oidcProvider.createAuthServer();
 
     const authCodeConsumer = new AuthCodeConsumer(oidcProvider, searchParams);
     await authCodeConsumer.fetchTokenEndPointResponse();

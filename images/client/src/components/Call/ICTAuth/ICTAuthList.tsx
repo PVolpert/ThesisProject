@@ -1,26 +1,9 @@
-import { useRouteLoaderData } from 'react-router-dom';
-
-import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import ICTAuthItem from './ICTAuthItem';
-import { useStore } from '../../../store/Store';
 import { Description, MainTitle } from '../../UI/Headers';
+import { ictProviders } from '../../../helpers/Auth/OIDCProviderInfo';
 
 export default function ICTAuthList() {
-    const ictProviders = useRouteLoaderData('call') as OIDCProvider[];
-    const ictTokens = useStore((state) => state.ictTokens);
     const items = ictProviders.map((ictProvider, index) => {
-        let token = ictTokens.find((ictToken) => {
-            return ictToken.idToken.iss == ictProvider.info.issuer.href;
-        });
-        if (!!token) {
-            return (
-                <ICTAuthItem
-                    key={index}
-                    ictProvider={ictProvider}
-                    IdToken={token.idToken}
-                />
-            );
-        }
         return <ICTAuthItem key={index} ictProvider={ictProvider} />;
     });
 
@@ -35,7 +18,6 @@ export default function ICTAuthList() {
                 Log in to one or more call identity provider
             </Description>
             <ul>{items}</ul>
-            {/* Background whirls here */}
         </div>
     );
 }

@@ -1,65 +1,44 @@
 import { IDToken } from 'oauth4webapi';
-import {
-    IceCandidateMessage,
-    SdpMessage,
-    hangUpMessage as HangUpMessage,
-    userListMessage,
-    userOfflineMessage,
-    userOnlineMessage,
-} from './Messages';
+import { incomingUserListMessage, incomingUserStateMessage } from './Messages';
 import { UserId, UserInfo, isUserEqual } from './User';
+import {
+    isIncomingMessage,
+    isIncomingUserListMessage,
+    isIncomingUserStateMessage,
+    isOriginMessage,
+} from './MessageChecker';
 
 // user* Message Handlers
 
 export async function incomingUserOnlineHandler(
-    msg: userOnlineMessage,
-    setUserList: (value: React.SetStateAction<UserInfo[]>) => void,
-    idToken: IDToken | null
+    { body: { user } }: incomingUserStateMessage,
+    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
+    activeUsers: UserInfo[],
+    idToken: IDToken
 ) {
-    if (!idToken) {
-        return;
-    }
-    const { body: { user } = {} } = msg;
-    if (!user) {
-        console.error('useronline message is missing user');
-        return;
-    }
+    // Ignore self
     if (isUserEqual(user, { issuer: idToken.iss, subject: idToken.sub })) {
         return;
     }
 
-    setUserList((prevList) => {
-        return prevList.concat(user);
-    });
+    setActiveUsers(activeUsers.concat(user));
 }
 export async function incomingUserOfflineHandler(
-    msg: userOfflineMessage,
-    setUserList: (value: React.SetStateAction<UserInfo[]>) => void
+    { body: { user } }: incomingUserStateMessage,
+    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
+    activeUsers: UserInfo[]
 ) {
-    const { body: { user } = {} } = msg;
-    if (!user) {
-        console.error('useroffline message is missing user');
-        return;
-    }
-    setUserList((prevList) => {
-        return prevList.filter((prevUser) => {
+    setActiveUsers(
+        activeUsers.filter((prevUser) => {
             return !isUserEqual(prevUser, user);
-        });
-    });
+        })
+    );
 }
 export async function incomingUserListHandler(
-    msg: userListMessage,
-    setUserList: (value: React.SetStateAction<UserInfo[]>) => void,
+    { body: { users } }: incomingUserListMessage,
+    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
     idToken: IDToken
 ) {
-    if (!idToken) {
-        return;
-    }
-    const { body: { users } = {} } = msg;
-    if (!users) {
-        console.error('userlist Message is missing users');
-        return;
-    }
     const newUserList = users.filter((user) => {
         return !isUserEqual(user, {
             issuer: idToken.iss,
@@ -67,56 +46,68 @@ export async function incomingUserListHandler(
         });
     });
 
-    setUserList(newUserList);
+    setActiveUsers(newUserList);
 }
 
-//* RTC Message Handlers
-
-export async function incomingOfferHandler(msg: SdpMessage) {
-    // ? Will become more important when changing video/audio
-    // ignore incoming requests if already in a call
-    const { body: { desc } = {} } = msg;
-    if (!desc) {
-        console.error('sdp Message is missing body');
-        return;
-    }
-    console.error('unexpected offer');
-}
-
-export async function incomingAnswerHandler(
-    msg: SdpMessage,
-    RTCConnection: RTCPeerConnection
+export async function globalMessageHandler(
+    rawMessage: any,
+    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
+    activeUsers: UserInfo[],
+    idToken: IDToken,
+    setCaller: (newCaller: UserId) => void,
+    setType: (newMode: 'conference' | 'call') => void,
+    showIncomingCallModal: () => void
 ) {
-    const { origin, body: { desc } = {} } = msg;
-    if (!origin) {
-        console.error('sdp Message is missing origin');
+    if (!isIncomingMessage(rawMessage)) {
+        console.log('Ignoring invalid message');
         return;
     }
-    if (!desc) {
-        console.error('sdp Message is missing body');
-        return;
+    const { type } = rawMessage;
+    switch (type) {
+        case 'userList':
+            if (!isIncomingUserListMessage(rawMessage)) {
+                console.log('Ignoring invalid message');
+                return;
+            }
+
+            incomingUserListHandler(rawMessage, setActiveUsers, idToken);
+            break;
+        case 'userOnline':
+            if (!isIncomingUserStateMessage(rawMessage)) {
+                console.log('Ignoring invalid message');
+                return;
+            }
+            incomingUserOnlineHandler(
+                rawMessage,
+                setActiveUsers,
+                activeUsers,
+                idToken
+            );
+            break;
+        case 'userOffline':
+            if (!isIncomingUserStateMessage(rawMessage)) {
+                console.log('Ignoring invalid message');
+                return;
+            }
+            incomingUserOfflineHandler(rawMessage, setActiveUsers, activeUsers);
+            break;
+        case 'Call-Offer':
+            if (!isOriginMessage(rawMessage)) {
+                console.log('Ignoring invalid message');
+                return;
+            }
+            setCaller(rawMessage.origin);
+            setType('call');
+            showIncomingCallModal();
+            break;
+        case 'Conference-Offer':
+            if (!isOriginMessage(rawMessage)) {
+                console.log('Ignoring invalid message');
+                return;
+            }
+            setCaller(rawMessage.origin);
+            setType('conference');
+            showIncomingCallModal();
+            break;
     }
-
-    //TODO Validate ICT here
-
-    try {
-        RTCConnection.setRemoteDescription(desc).catch((err) => {
-            throw err;
-        });
-    } catch (error) {
-        // TODO navigate back to /call
-        throw error;
-    }
-}
-
-export function validateHangUp(
-    msg: HangUpMessage,
-    callPartner: UserId | undefined
-) {
-    const { origin } = msg;
-
-    if (!origin || !callPartner || !isUserEqual(callPartner, origin)) {
-        return false;
-    }
-    return true;
 }

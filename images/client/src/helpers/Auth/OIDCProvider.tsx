@@ -61,6 +61,7 @@ export default class OIDCProvider {
                 );
             }
             this.authServer = as;
+            return this;
         } catch (error) {
             throw error;
         }
@@ -76,6 +77,7 @@ export default class OIDCProvider {
     constructor(info: OIDCProviderInfo) {
         this.verifier = new VerifierStorage(info.name + 'verifier');
         this.info = info;
-        this.client = this.#createClient(this.info.clientID);
+
+        this.client = this.#createClient(this.info.clientId);
     }
 }

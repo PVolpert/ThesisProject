@@ -10,9 +10,9 @@ import {
     createICTAccessTokenSlice,
 } from './slices/ICTAccessTokenSlice';
 import {
-    RTCConnectionSlice,
-    createRTCConnectionSlice,
-} from './slices/RTCConnectionSlice';
+    WebRTCPhaseSlice,
+    createWebRTCPhaseSlice,
+} from './slices/WebRTCPhaseSlice';
 import { ModalSlice, createModalSlice } from './slices/ModalSlice';
 import {
     OutgoingCallSlice,
@@ -22,32 +22,38 @@ import {
     IncomingCallSlice,
     createIncomingCallSlice,
 } from './slices/IncomingCallSlice';
+import { ICTPhaseSlice, createICTPhaseSlice } from './slices/ICTPhaseSlice';
+import { SignalingSlice, createSignalingSlice } from './slices/SignalingSlice';
 
 export const useStore = create<
     SettingsSlice &
         AccessTokenSlice &
         ICTAccessTokenSlice &
-        RTCConnectionSlice &
+        WebRTCPhaseSlice &
         ModalSlice &
         OutgoingCallSlice &
-        IncomingCallSlice
+        IncomingCallSlice &
+        ICTPhaseSlice &
+        SignalingSlice
 >()(
     persist(
         (...a) => ({
             ...createAccessTokenSlice(...a),
             ...createSettingsSlice(...a),
             ...createICTAccessTokenSlice(...a),
-            ...createRTCConnectionSlice(...a),
+            ...createWebRTCPhaseSlice(...a),
             ...createModalSlice(...a),
             ...createOutgoingCallSlice(...a),
             ...createIncomingCallSlice(...a),
+            ...createICTPhaseSlice(...a),
+            ...createSignalingSlice(...a),
         }),
         {
             name: 'token-storage',
             partialize: (state) => ({
                 accessToken: state.accessToken,
                 idToken: state.idToken,
-                ictTokens: state.ictTokens,
+                ictTokens: state.ictTokenSets,
             }),
         }
     )

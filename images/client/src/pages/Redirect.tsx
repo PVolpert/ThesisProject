@@ -9,10 +9,15 @@ import { OpenIDTokenEndpointResponse } from 'oauth4webapi';
 
 import { fetchTokenEndPointResponse } from '../helpers/Auth/AuthCodeConsumer';
 import { useStore } from '../store/Store';
-import { loader as authProvidersLoader } from './Auth';
-import { loader as ictProvidersLoader } from './Call';
+// import { loader as authProvidersLoader } from './Auth';
+// import { loader as ictProvidersLoader } from './Call';
 import { useEffect } from 'react';
 import OIDCProvider from '../helpers/Auth/OIDCProvider';
+import {
+    ictProviders,
+    serviceProviders,
+} from '../helpers/Auth/OIDCProviderInfo';
+import { parseToken } from '../store/slices/AccessTokenSlice';
 
 export default function RedirectPage() {
     const { tokenEndpointResponse, isServiceOP } = useLoaderData() as {
@@ -32,7 +37,14 @@ export default function RedirectPage() {
             parseAuth(tokenEndpointResponse);
             navigate('/call');
         } else {
-            parseICT(tokenEndpointResponse);
+            const newTokenPair = parseToken(tokenEndpointResponse);
+            window.opener.postMessage(
+                JSON.stringify({
+                    type: 'OIDCtokens',
+                    data: newTokenPair,
+                }),
+                `${process.env.REACT_APP_CLIENT_URL}`
+            );
             window.close();
         }
         // Redirect when token is stored
@@ -46,12 +58,6 @@ export default function RedirectPage() {
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-    //Request list of Open ID Providers for Service
-    const serviceOPs = await authProvidersLoader();
-
-    //Request list Open ID Providers for ICT
-    const ictOPs = await ictProvidersLoader();
-
     // Extract redirect id from dynamic route segment
     const { redirectId } = params;
 
@@ -60,21 +66,21 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         throw "Identifier of dynamic segment must be 'redirectID'";
     }
 
-    const { OIDCProvider, isServiceOP } = searchICTandServiceOPs(
-        serviceOPs,
-        ictOPs,
+    const { selectedOIDCProvider, isServiceOP } = searchICTandServiceOPs(
+        serviceProviders,
+        ictProviders,
         redirectId
     );
 
     // redirectId is not listed in OPs --> not valid --> redirect to home
-    if (!OIDCProvider) {
+    if (!selectedOIDCProvider) {
         return redirect('/');
     }
 
     const searchParams = new URL(request.url).searchParams;
     // Request Token from TokenEndPoint
     const tokenEndpointResponse = await fetchTokenEndPointResponse(
-        OIDCProvider,
+        selectedOIDCProvider,
         searchParams
     );
 
@@ -86,24 +92,22 @@ function searchICTandServiceOPs(
     ictOPs: OIDCProvider[],
     redirectId: string
 ) {
-    let OIDCProvider = matchRedirectId(serviceOPs, redirectId);
+    let selectedOIDCProvider = matchRedirectId(serviceOPs, redirectId);
 
-    if (OIDCProvider) {
-        return { OIDCProvider, isServiceOP: true };
+    if (selectedOIDCProvider) {
+        return { selectedOIDCProvider, isServiceOP: true };
     }
-
-    OIDCProvider = matchRedirectId(ictOPs, redirectId);
-    if (OIDCProvider) {
-        return { OIDCProvider, isServiceOP: false };
+    selectedOIDCProvider = matchRedirectId(ictOPs, redirectId);
+    if (selectedOIDCProvider) {
+        return { selectedOIDCProvider, isServiceOP: false };
     }
-
-    return { OIDCProvider: null, isServiceOP: false };
+    return { selectedOIDCProvider: null, isServiceOP: false };
 }
 
 // matchRedirectId searches given list of Open Id Providers for a matching redirectId
 function matchRedirectId(OPs: OIDCProvider[], redirectId: string) {
-    const oidcProvider = OPs.find((oidcProvider) =>
-        oidcProvider.info.redirect.pathname.endsWith(`/${redirectId}`)
-    );
+    const oidcProvider = OPs.find((oidcProvider) => {
+        return oidcProvider.info.redirectId.pathname.endsWith(`/${redirectId}`);
+    });
     return oidcProvider;
 }

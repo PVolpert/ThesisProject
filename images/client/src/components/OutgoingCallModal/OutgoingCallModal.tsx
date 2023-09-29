@@ -1,69 +1,52 @@
-import OutgoingCallLoadbar from './OutgoingCallLoadBar';
 import ConfirmCall from './OutgoingCallSteps/ConfirmCall';
-import ShowSetupSteps from './OutgoingCallSteps/ShowSetupSteps';
-import ConfirmCallee from './OutgoingCallSteps/ConfirmCallee';
 import Modal from '../UI/Modal';
 import { useStore } from '../../store/Store';
 import { useNavigate } from 'react-router-dom';
+import ConfirmConference from './OutgoingCallSteps/ConfirmConference';
 
 interface OutgoingCallModalProps {}
 
 export default function OutgoingCallModal({}: OutgoingCallModalProps) {
-    const stage = useStore((state) => state.outgoingCallModalStage);
-    const setOutgoingCallModalStage = useStore(
-        (state) => state.setOutgoingCallModalStage
-    );
-    const hideModal = useStore((state) => state.hideOutgoingCallModal);
-    const resetRTCConnectionSlice = useStore(
-        (state) => state.resetRTCConnectionSlice
-    );
-    const navigate = useNavigate();
+    const candidates = useStore((state) => state.candidates);
+    const type = useStore((state) => state.type);
 
-    const setAcceptAnswer = useStore((state) => state.setAcceptAnswer);
+    const hideModal = useStore((state) => state.hideOutgoingCallModal);
+    const resetICTPhaseSlice = useStore((state) => state.resetICTPhaseSlice);
+
+    const navigate = useNavigate();
 
     return (
         <Modal onHideModal={hideModal}>
-            <div className="flex flex-col p-4 space-y-2">
-                <div className="flex-1 md:flex hidden">
-                    <OutgoingCallLoadbar stage={stage} />
-                </div>
-                {stage == 0 && (
-                    <ConfirmCall
-                        onClickNo={() => {
-                            hideModal();
-                            resetRTCConnectionSlice();
-                        }}
-                        onClickYes={() => {
-                            setOutgoingCallModalStage(1);
-                            navigate('/call/p2p');
-                        }}
-                    />
-                )}
-                {stage == 1 && (
-                    <ShowSetupSteps
-                        onClickYes={() => {
-                            setOutgoingCallModalStage(2);
-                        }}
-                        onClickNo={() => {
-                            hideModal();
-                            navigate('/call');
-                        }}
-                    />
-                )}
-                {stage == 2 && (
-                    <ConfirmCallee
-                        onClickYes={() => {
-                            setAcceptAnswer('fulfilled');
-                            hideModal();
-                        }}
-                        onClickNo={() => {
-                            hideModal();
-                            setAcceptAnswer('rejected');
-                            navigate('/call');
-                        }}
-                    />
-                )}
-            </div>
+            {(candidates.length === 0 || !type) && (
+                <p>There seems to be an mistake </p>
+            )}
+            {type === 'call' && (
+                <ConfirmCall
+                    onClickNo={() => {
+                        resetICTPhaseSlice();
+                        hideModal();
+                    }}
+                    onClickYes={() => {
+                        navigate('/call/p2p');
+                        hideModal();
+                    }}
+                    callee={candidates[0]}
+                />
+            )}
+
+            {type === 'conference' && (
+                <ConfirmConference
+                    onClickNo={() => {
+                        resetICTPhaseSlice();
+                        hideModal();
+                    }}
+                    onClickYes={() => {
+                        navigate('/call/conference');
+                        hideModal();
+                    }}
+                    candidates={candidates}
+                ></ConfirmConference>
+            )}
         </Modal>
     );
 }
