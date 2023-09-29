@@ -42,3 +42,27 @@ export async function generateSharedSecretJWT(
 
     return generateEncJWT(DHSecret, { SharedSecretJWK });
 }
+
+export async function verifySharedSecretJWT(
+    DHSecret: CryptoKey,
+    DHJWT: string
+) {
+    const { payload } = await jose.jwtDecrypt(DHJWT, DHSecret);
+
+    if (!payload[sharedSecretClaimID]) {
+        throw new Error(`DHJWT does not contain ${sharedSecretClaimID} claim`);
+    }
+
+    const DHPubKey = crypto.subtle.importKey(
+        'jwk',
+        payload[sharedSecretClaimID],
+        {
+            name: 'AES-GCM',
+            length: 256,
+        },
+        true,
+        ['encrypt', 'decrypt']
+    );
+
+    return DHPubKey;
+}
