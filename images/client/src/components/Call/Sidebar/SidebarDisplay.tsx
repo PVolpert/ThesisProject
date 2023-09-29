@@ -1,5 +1,5 @@
 import { Description, MainTitle, SubTitle } from '../../UI/Headers';
-import UserList from './Users/UserList';
+import ActiveUsers from './Users/ActiveUsers';
 
 interface P2PSidebarDisplayProps {}
 
@@ -10,7 +10,7 @@ export default function P2PSidebarDisplay({}: P2PSidebarDisplayProps) {
             <Description>
                 The following users are logged in. Pick a user you want to call
             </Description>
-            <UserList />
+            <ActiveUsers />
         </aside>
     );
 }
