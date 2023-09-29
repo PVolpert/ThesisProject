@@ -1,9 +1,9 @@
 import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
-import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import { ictProviders } from '../../../helpers/Auth/OIDCProviderInfo';
+import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 
-interface ConfirmCallerProps {
+interface ConfirmIncomingConferenceProps {
     onClickYes: () => void;
     onClickNo: () => void;
     onCheckBoxChangeHandlerBuilder: (ictProvider: OIDCProvider) => () => void;
@@ -12,21 +12,21 @@ interface ConfirmCallerProps {
     username: string;
 }
 
-export default function ConfirmCaller({
+export default function ConfirmIncomingConference({
     onClickYes,
     onClickNo,
     onCheckBoxChangeHandlerBuilder,
     checkedCount,
     formData,
     username,
-}: ConfirmCallerProps) {
+}: ConfirmIncomingConferenceProps) {
     return (
         <div className="flex flex-col space-y-4 p-4">
             {/* TODO Insert Call ID */}
-            <MainTitle> Accept Call? </MainTitle>
+            <MainTitle> Join Conference? </MainTitle>
             <Description>
-                You are getting called by {username}. Do you want to accept the
-                call? The caller has the following identifications.
+                You are invited to a conference by {username}. Continue with
+                conference establishment?
             </Description>
 
             <div className="flex flex-col space-y-1">
@@ -34,17 +34,19 @@ export default function ConfirmCaller({
                     Pick at least one trusted OIDC Provider:
                 </Description>
                 {ictProviders.map((ictProvider) => {
+                    console.log(
+                        `checkbox_${ictProvider.info.name}`,
+                        formData.get(`checkbox_${ictProvider.info.name}`)
+                    );
                     return (
                         <div>
                             <input
                                 type="checkbox"
                                 id={`checkbox_${ictProvider.info.name}`}
                                 className="hidden"
-                                checked={
-                                    formData.get(
-                                        `checkbox_${ictProvider.info.name}`
-                                    ) || false
-                                }
+                                checked={formData.get(
+                                    `checkbox_${ictProvider.info.name}`
+                                )}
                                 onChange={onCheckBoxChangeHandlerBuilder(
                                     ictProvider
                                 )}
@@ -55,7 +57,7 @@ export default function ConfirmCaller({
                             >
                                 <div
                                     key={ictProvider.info.name}
-                                    className={`flex items-center justify-center w-full py-2 space-x-3  border rounded shadow-sm hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition duration-1050 ${
+                                    className={`flex items-center justify-center w-full py-2 space-x-3 rounded shadow-sm hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition duration-1050 ${
                                         formData.get(
                                             `checkbox_${ictProvider.info.name}`
                                         ) || false
@@ -86,7 +88,7 @@ export default function ConfirmCaller({
                 <Button
                     onClick={onClickYes}
                     disabled={checkedCount === 0}
-                    className="bg-springblue hover:bg-inherit disabled:bg-inherit disabled:text-inherit disabled:cursor-not-allowed border-springblue hover:text-springblue text-white transition duration-1050"
+                    className="bg-springblue  hover:bg-inherit disabled:bg-inherit disabled:cursor-not-allowed border-springblue hover:text-springblue text-white transition duration-1050"
                 >
                     Yes
                 </Button>

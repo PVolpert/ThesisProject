@@ -1,10 +1,12 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../store/Store';
 import Modal from '../UI/Modal';
 import ConfirmCaller from './IncomingCallSteps/ConfirmCaller';
-import ShowCallSteps from './IncomingCallSteps/ShowCallSteps';
-import IncomingCallLoadbar from './IncomingCallLoadBar';
 import { useNavigate } from 'react-router-dom';
+import ConfirmIncomingConference from './IncomingCallSteps/ConfirmIncomingConference';
+import { ictProviders } from '../../helpers/Auth/OIDCProviderInfo';
+import OIDCProvider from '../../helpers/Auth/OIDCProvider';
+import { getUsernamesOfUnknownInActiveUsers } from '../../helpers/Signaling/User';
 
 interface IncomingCallModalProps {
     children?: ReactNode;
@@ -12,41 +14,112 @@ interface IncomingCallModalProps {
 }
 
 export default function IncomingCallModal({}: IncomingCallModalProps) {
-    const stage = useStore((state) => state.incomingCallStage);
-
+    const caller = useStore((state) => state.caller);
+    const activeUsers = useStore((state) => state.activeUsers);
+    const type = useStore((state) => state.type);
     const hideModal = useStore((state) => state.hideIncomingCallModal);
-    const setIncomingCallModalStage = useStore(
-        (state) => state.setIncomingCallModalStage
+    const setTrustedOpenIDProviders = useStore(
+        (state) => state.setTrustedOpenIDProviders
     );
     const navigate = useNavigate();
 
+    const callerUserName = useMemo(() => {
+        if (!caller) {
+            return;
+        }
+        return getUsernamesOfUnknownInActiveUsers([caller], activeUsers)[0];
+    }, [caller]);
+
+    const [checkedCount, setCheckedCount] = useState(0);
+
+    const [formData, setFormData] = useState<Map<string, boolean>>(new Map());
+
+    useEffect(() => {
+        const formDataMap = new Map(
+            ictProviders.map((ictProvider) => [
+                `checkbox_${ictProvider.info.name}`,
+                false,
+            ])
+        );
+
+        setFormData(formDataMap);
+    }, []);
+
+    // Checkbox Changed function
+    const onCheckBoxChangeHandlerBuilder = (ictProvider: OIDCProvider) => {
+        const onCheckBoxChangeHandler = () => {
+            if (!formData.get(`checkbox_${ictProvider.info.name}`)) {
+                const newMap = new Map(formData);
+                newMap.set(`checkbox_${ictProvider.info.name}`, true);
+                setFormData(newMap);
+                setCheckedCount((prior) => {
+                    return prior + 1;
+                });
+                return;
+            }
+            const newMap = new Map(formData);
+            newMap.set(`checkbox_${ictProvider.info.name}`, false);
+            setFormData(newMap);
+            setCheckedCount((prior) => {
+                return prior - 1;
+            });
+            return;
+        };
+        return onCheckBoxChangeHandler;
+    };
+
     return (
         <Modal onHideModal={hideModal}>
-            <div className="flex flex-col p-4 space-y-2">
-                <div className="flex-1 flex ">
-                    <IncomingCallLoadbar stage={stage} />
-                </div>
-                {stage == 0 && (
-                    <ConfirmCaller
-                        onClickYes={() => {
-                            setIncomingCallModalStage(1);
-                            navigate('/call/p2p');
-                        }}
-                        onClickNo={() => {}}
-                    />
-                )}
-                {stage == 1 && (
-                    <ShowCallSteps
-                        onClickYes={() => {
-                            hideModal();
-                        }}
-                        onClickNo={() => {
-                            hideModal();
-                            navigate('/call/');
-                        }}
-                    />
-                )}
-            </div>
+            {!caller && <p>Something went wrong</p>}
+
+            {caller && type === 'conference' && (
+                <ConfirmCaller
+                    onClickYes={() => {
+                        const trustedProviders = ictProviders.filter(
+                            (ictProvider) =>
+                                formData.get(
+                                    `checkbox_${ictProvider.info.name}`
+                                ) === true
+                        );
+                        setTrustedOpenIDProviders(trustedProviders);
+                        hideModal();
+                        navigate('/call/p2p');
+                    }}
+                    onClickNo={() => {
+                        hideModal();
+                    }}
+                    onCheckBoxChangeHandlerBuilder={
+                        onCheckBoxChangeHandlerBuilder
+                    }
+                    checkedCount={checkedCount}
+                    formData={formData}
+                    username={callerUserName || 'unknown'}
+                />
+            )}
+            {caller && type === 'call' && (
+                <ConfirmIncomingConference
+                    onClickYes={() => {
+                        const trustedProviders = ictProviders.filter(
+                            (ictProvider) =>
+                                formData.get(
+                                    `checkbox_${ictProvider.info.name}`
+                                ) === true
+                        );
+                        setTrustedOpenIDProviders(trustedProviders);
+                        hideModal();
+                        navigate('/call/conference');
+                    }}
+                    onClickNo={() => {
+                        hideModal();
+                    }}
+                    onCheckBoxChangeHandlerBuilder={
+                        onCheckBoxChangeHandlerBuilder
+                    }
+                    checkedCount={checkedCount}
+                    formData={formData}
+                    username={callerUserName || 'unkown'}
+                />
+            )}
         </Modal>
     );
 }
