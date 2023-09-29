@@ -1,20 +1,11 @@
 import {
-    sendCallAnswerEventDetail,
-    sendCallOfferEventDetail,
-    sendConfirmationEventDetail,
+    sendCandidatesEventDetail,
     sendEventDetail,
-    sendICTAnswerEventDetail,
-    sendICTOfferEventDetail,
-    sendICTPeerMessageEventDetail,
-    sendICTPhaseFailedEventID,
-    sendJWTEventDetail,
-    sendOPsToPeersEventDetail,
-    sendStartExchangeEventDetail,
+    sendICTMessageEventDetail,
+    sendNotifyMessageEventDetail,
+    sendOPNMessageEventDetail,
     timedEventDetail,
-    verifyCallAnswersEventDetail,
-    verifyCalleeIDsEventDetail,
-    verifyCallerIDEventDetail,
-    verifyPeersIDsEventDetail,
+    verifyEventDetail,
 } from './Events';
 
 export function isCustomEvent(event: Event): event is CustomEvent {
@@ -32,96 +23,37 @@ export function isSendEvent<ID>(
 ): event is CustomEvent<sendEventDetail<ID>> {
     return isTimedEvent(event) && 'target' in event;
 }
-export function isSendJWTEvent<ID>(
+export function isSendICTMessageEvent<ID>(
     event: Event
-): event is CustomEvent<sendJWTEventDetail<ID>> {
-    return isSendEvent(event) && 'jwt' in event.detail;
-}
-
-export function isSendCallOfferEvent<ID>(
-    event: Event
-): event is CustomEvent<sendCallOfferEventDetail<ID>> {
-    return isSendEvent(event);
-}
-
-export function isSendCallAnswerEvent<ID>(
-    event: Event
-): event is CustomEvent<sendCallAnswerEventDetail<ID>> {
-    return isSendEvent(event) && 'OPs' in event.detail;
-}
-
-export function isSendOPsToPeersEvent<ID>(
-    event: Event
-): event is CustomEvent<sendOPsToPeersEventDetail<ID>> {
-    return isSendEvent(event) && 'OPs' in event.detail;
-}
-
-export function isSendICTOfferEvent<ID>(
-    event: Event
-): event is CustomEvent<sendICTOfferEventDetail<ID>> {
-    return isSendJWTEvent(event);
-}
-
-export function isSendICTAnswerEvent<ID>(
-    event: Event
-): event is CustomEvent<sendICTAnswerEventDetail<ID>> {
-    return isSendJWTEvent(event);
-}
-
-export function isSendStartExchangeEvent<ID>(
-    event: Event
-): event is CustomEvent<sendStartExchangeEventDetail<ID>> {
-    return isSendJWTEvent(event);
-}
-
-export function isSendICTPeerMessageEvent<ID>(
-    event: Event
-): event is CustomEvent<sendICTPeerMessageEventDetail<ID>> {
-    return isSendJWTEvent(event);
-}
-
-export function isSendConfirmationEvent<ID>(
-    event: Event
-): event is CustomEvent<sendConfirmationEventDetail<ID>> {
+): event is CustomEvent<sendICTMessageEventDetail<ID>> {
     return (
-        isSendEvent(event) && 'sign' in event.detail && 'nonce' in event.detail
+        isSendEvent(event) && 'jwt' in event.detail && 'type' in event.detail
     );
 }
-
-export function isSendICTPhaseFailedEvent<ID>(
+export function isSendNotifyMessageEvent<ID>(
     event: Event
-): event is CustomEvent<sendICTPhaseFailedEventID<ID>> {
-    return isSendEvent(event);
+): event is CustomEvent<sendNotifyMessageEventDetail<ID>> {
+    return isSendEvent(event) && 'type' in event.detail;
+}
+export function isSendOPNMessageEvent<ID>(
+    event: Event
+): event is CustomEvent<sendOPNMessageEventDetail<ID>> {
+    return (
+        isSendEvent(event) && 'OPNMap' in event.detail && 'type' in event.detail
+    );
+}
+export function isSendCandidatesMessageEvent<ID>(
+    event: Event
+): event is CustomEvent<sendCandidatesEventDetail<ID>> {
+    return isSendEvent(event) && 'candidateIDs' in event.detail;
 }
 
-export function isVerifyCallAnswersEvent<ID>(
+export function isVerifyEvent<ID>(
     event: Event
-): event is CustomEvent<verifyCallAnswersEventDetail<ID>> {
-    return isTimedEvent(event) && 'callPartnersOPs' in event.detail;
-}
-
-export function isVerifyCallerIDEvent(
-    event: Event
-): event is CustomEvent<verifyCallerIDEventDetail> {
+): event is CustomEvent<verifyEventDetail<ID>> {
     return (
         isTimedEvent(event) &&
-        'identity' in event.detail &&
-        'partnerOPs' in event.detail
+        'candidates' in event.detail &&
+        'type' in event.detail
     );
-}
-
-export function isVerifyCalleeIDsEvent<ID>(
-    event: Event
-): event is CustomEvent<verifyCalleeIDsEventDetail<ID>> {
-    return (
-        isTimedEvent(event) &&
-        'callees' in event.detail &&
-        'keyPairs' in event.detail
-    );
-}
-
-export function isVerifyPeersIDsEvent<ID>(
-    event: Event
-): event is CustomEvent<verifyPeersIDsEventDetail<ID>> {
-    return isTimedEvent(event) && 'callees' in event.detail;
 }

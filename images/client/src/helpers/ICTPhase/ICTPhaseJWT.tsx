@@ -1,6 +1,6 @@
 import * as jose from 'jose';
-import { OPsMap } from './ICTPhase';
-import { verifyICT } from '../ICT/ICT';
+import { OPNMap } from './ICTPhase';
+import { verifyICT } from './ICT';
 
 import { OpenIDProviderInfo } from './OpenIDProvider';
 import { generateJWT } from '../Crypto/JWT';
@@ -13,7 +13,7 @@ export async function generateICTOfferJWT(
     keyPair: CryptoKeyPair,
     ict: string,
     nonce: string,
-    partnerOPs: OPsMap
+    partnerOPs: OPNMap
 ) {
     const ictOfferBody = {
         [ictClaimID]: ict,
@@ -36,7 +36,7 @@ export async function generateICTAnswerMessage(
 
 async function verifyICTMessage(
     callJWT: string,
-    OPs: OPsMap,
+    OPs: OPNMap,
     ict: string,
     nonce: string,
     trustedOpenIDProviders: OpenIDProviderInfo[]
@@ -47,7 +47,7 @@ async function verifyICTMessage(
 
         // OP in OPs
         // Verify Nonce
-        if (nonce !== OPs.get(OPID)) {
+        if (nonce !== (await OPs.get(OPID))) {
             throw Error('Given nonce and supplied nonce do not match');
         }
 
@@ -86,9 +86,9 @@ async function verifyICTMessage(
     }
 }
 
-export async function verifyICTOffer(
+export async function verifyICTOfferJWT(
     callJWT: string,
-    selfOPs: OPsMap,
+    selfOPs: OPNMap,
     trustedOpenIDProviders: OpenIDProviderInfo[]
 ) {
     // Extract unverified JWT Values
@@ -103,20 +103,24 @@ export async function verifyICTOffer(
         trustedOpenIDProviders
     );
 
-    return { publicKey, identity, candidateOPs };
+    return {
+        receivedICTPubKey: publicKey,
+        identity,
+        receivedOPNMap: candidateOPs,
+    };
 }
 
-export async function verifyICTAnswer(
-    JWTAnswer: string,
-    selfOPs: OPsMap,
+export async function verifyICTAnswerJWT(
+    ictAnswer: string,
+    issuedOPNMap: OPNMap,
     trustedOpenIDProviders: OpenIDProviderInfo[]
 ) {
     // Extract unverified JWT Values
-    const { ict, nonce } = extractUnverifiedICTAnswerValues(JWTAnswer);
+    const { ict, nonce } = extractUnverifiedICTAnswerValues(ictAnswer);
 
     const { publicKey, identity } = await verifyICTMessage(
-        JWTAnswer,
-        selfOPs,
+        ictAnswer,
+        issuedOPNMap,
         ict,
         nonce,
         trustedOpenIDProviders
@@ -141,7 +145,7 @@ function extractUnverifiedICTOfferValues(callJWT: string) {
     const jwtBody = {
         ict: claimsJWT[ictClaimID] as string,
         nonce: claimsJWT[nonceClaimID] as string,
-        candidateOPs: claimsJWT[OPsClaimID] as OPsMap,
+        candidateOPs: claimsJWT[OPsClaimID] as OPNMap,
     };
 
     return jwtBody;
@@ -188,34 +192,4 @@ function extractUnverifiedICTValues(ict: string) {
     };
 
     return ICTBody;
-}
-
-const targetsClaimID = 'trg';
-
-export async function generateTargetsJWT<ID>(
-    keyPair: CryptoKeyPair,
-    targets: ID[],
-    nonce: string
-) {
-    const jwt = await new jose.SignJWT({
-        [targetsClaimID]: targets,
-        [nonceClaimID]: nonce,
-    })
-        .setProtectedHeader({ alg: 'ES384' })
-        .sign(keyPair.privateKey);
-
-    return jwt;
-}
-
-export async function verifyTargetsJWT<ID>(pubKey: CryptoKey, jwt: string) {
-    const { payload } = await jose.jwtVerify(jwt, pubKey);
-
-    if (!payload[targetsClaimID] || !payload[nonceClaimID]) {
-        throw Error('TargetsJWT has not the correct claims');
-    }
-
-    const targets = payload[targetsClaimID] as ID[];
-    const responseNonce = payload[nonceClaimID] as string;
-
-    return { targets, responseNonce };
 }

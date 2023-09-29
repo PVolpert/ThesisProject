@@ -1,90 +1,65 @@
-import { ICTPhaseCandidate, OPsMap } from './ICTPhase';
+import { Candidate, OPNMap } from './ICTPhase';
 
+export const EventID = {
+    sendICTMessage: 'sendICTMessage',
+    sendOPNMessage: 'sendOPNMessage',
+    notify: 'notifyMessage',
+    sendCandidates: 'sendStartExchange',
+
+    verify: 'verify',
+    startSecret: 'startSecret',
+};
 export interface timedEventDetail {
     time: number;
 }
 
 // Events to Signaling Service
+export type ICTMessageType = 'ICT-Offer' | 'ICT-Answer' | 'ICT-Transfer';
+
+export type OPNMessageType = 'Call-Answer' | 'Peer-OPN';
+
+export type NotifyMessageType =
+    | 'Conference-Offer'
+    | 'Call-Offer'
+    | 'Confirmation';
 export interface sendEventDetail<ID> extends timedEventDetail {
     target: ID;
 }
 
-export interface sendJWTEventDetail<ID> extends sendEventDetail<ID> {
+export interface sendICTMessageEventDetail<ID> extends sendEventDetail<ID> {
+    type: ICTMessageType;
     jwt: string;
 }
-export const sendCallOfferEventId = 'sendCallOffer';
-export interface sendCallOfferEventDetail<ID> extends sendEventDetail<ID> {}
 
-export const sendCallAnswerEventId = 'sendCallAnswer';
-export interface sendCallAnswerEventDetail<ID> extends sendEventDetail<ID> {
-    OPs: OPsMap;
+export interface sendNotifyMessageEventDetail<ID> extends sendEventDetail<ID> {
+    type: NotifyMessageType;
 }
 
-export const sendOPsToPeersEventId = 'sendOPsToPeers';
-export interface sendOPsToPeersEventDetail<ID> extends sendEventDetail<ID> {
-    OPs: OPsMap;
+export interface sendOPNMessageEventDetail<ID> extends sendEventDetail<ID> {
+    OPNMap: Map<string, string>;
+    type: OPNMessageType;
 }
 
-export const sendICTOfferEventId = 'sendICTOffer';
-export interface sendICTOfferEventDetail<ID> extends sendJWTEventDetail<ID> {}
-
-export const sendICTAnswerEventId = 'sendICTAnswer';
-export interface sendICTAnswerEventDetail<ID> extends sendJWTEventDetail<ID> {}
-
-export const sendStartExchangeEventId = 'sendStartExchange';
-export interface sendStartExchangeEventDetail<ID>
-    extends sendJWTEventDetail<ID> {}
-
-export const sendICTPeerMessageEventId = 'sendICTPeerMessage';
-export interface sendICTPeerMessageEventDetail<ID>
-    extends sendJWTEventDetail<ID> {}
-
-export const sendConfirmationEventId = 'sendConfirmation';
-export interface sendConfirmationEventDetail<ID> extends sendEventDetail<ID> {
-    sign: string;
-    nonce: string;
+export interface sendCandidatesEventDetail<ID> extends sendEventDetail<ID> {
+    candidateIDs: ID[];
 }
-
-export const sendICTPhaseFailedEventID = 'sendICTPhaseFailed';
-export interface sendICTPhaseFailedEventID<ID> extends sendEventDetail<ID> {}
 
 // Events to UI
+export type VerifyEventType =
+    | 'Caller'
+    | 'Callees'
+    | 'Peers'
+    | 'OPN'
+    | 'Peer-OPN';
 
-export const verifyCallAnswersEventId = 'selectPeersOPs';
-export interface verifyCallAnswersEventDetail<ID> extends timedEventDetail {
-    callCandidatesOPs: Map<ID, OPsMap>;
+export interface verifyEventDetail<ID> extends timedEventDetail {
+    candidates: Map<ID, Candidate>;
+    type: VerifyEventType;
 }
-
-export const verifyCallerIDEventId = 'verifyCallerID';
-export interface verifyCallerIDEventDetail extends timedEventDetail {
-    identity: { name: string; email: string };
-    partnerOPs: OPsMap;
-}
-
-export const verifyCalleeIDsEventId = 'verifyCalleeIDs';
-export interface verifyCalleeIDsEventDetail<ID> extends timedEventDetail {
-    callees: Map<ID, ICTPhaseCandidate>;
-    keyPairs: Map<ID, CryptoKeyPair>;
-}
-
-export const verifyPeersIDsEventId = 'verifyPeersIDs';
-export interface verifyPeersIDsEventDetail<ID> extends timedEventDetail {
-    callees: Map<ID, ICTPhaseCandidate>;
-}
-
-export const newSendICTPhaseFailedEvent = new CustomEvent(
-    'sendICTPhaseFailed',
-    {
-        detail: {
-            time: Date.now(),
-        },
-    }
-);
 
 // Switch ICT Phase
 
-export const startSecretEventID = 'startSecret';
 export interface startSecretEventDetail<ID> extends timedEventDetail {
-    callees: Map<ID, ICTPhaseCandidate>;
+    callees: Map<ID, Candidate>;
     keyPairs: Map<ID, CryptoKeyPair>;
 }
