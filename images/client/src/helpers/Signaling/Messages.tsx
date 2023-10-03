@@ -1,4 +1,3 @@
-import { OPNMap } from '../ICTPhase/ICTPhase';
 import { UserId } from './User';
 
 export type MessageType =

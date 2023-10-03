@@ -3,8 +3,6 @@ import UserIcon from '../../UI/UserIcon';
 import { Description } from '../../UI/Headers';
 
 interface AuthenticationBoxProps {
-    children?: ReactNode;
-    className?: string;
     name: string;
     mail: string;
     issIcon: ReactNode;
@@ -12,8 +10,6 @@ interface AuthenticationBoxProps {
 }
 
 export default function AuthenticationBox({
-    children,
-    className = '',
     name,
     mail,
     issIcon,

@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import Button from '../../UI/Button';
 import { Description, MainTitle } from '../../UI/Headers';
 import RadioItem from './RadioItem';

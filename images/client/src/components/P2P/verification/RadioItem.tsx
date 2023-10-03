@@ -1,5 +1,4 @@
-import { ReactNode, useState } from 'react';
-import ICTAuthItem from '../../Call/ICTAuth/ICTAuthItem';
+import { useState } from 'react';
 import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import { IDToken } from 'oauth4webapi';
 import { useStore } from '../../../store/Store';
@@ -7,16 +6,12 @@ import AuthCodeProvider from '../../../helpers/Auth/AuthCodeProvider';
 import OIDCProviderButton from '../../UI/OIDCProviderButton';
 
 interface RadioItemProps {
-    children?: ReactNode;
-    className?: string;
     ictProvider: OIDCProvider;
     idToken?: IDToken;
     radioName: string;
 }
 
 export default function RadioItem({
-    children,
-    className = '',
     ictProvider,
     idToken,
     radioName,

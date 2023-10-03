@@ -1,6 +1,5 @@
 import Conference from './Conference/Conference';
 import Sidebar from './Sidebar/Sidebar';
-import ICTAuthList from './ICTAuth/ICTAuthList';
 import Page from '../UI/Page';
 
 export function CallDisplay() {

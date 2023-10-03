@@ -1,4 +1,4 @@
-import { Candidate, OPNMap } from './ICTPhase';
+import { Candidate } from './ICTPhase';
 
 export const EventID = {
     sendICTMessage: 'sendICTMessage',

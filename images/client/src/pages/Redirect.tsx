@@ -29,7 +29,6 @@ export default function RedirectPage() {
     const navigate = useNavigate();
 
     const parseAuth = useStore((state) => state.parseAuth);
-    const parseICT = useStore((state) => state.parseICT);
 
     useEffect(() => {
         //? Include a toast?
@@ -43,7 +42,7 @@ export default function RedirectPage() {
                     type: 'OIDCtokens',
                     data: newTokenPair,
                 }),
-                `${process.env.REACT_APP_CLIENT_URL}`
+                `${import.meta.env.VITE_CLIENT_URL}`
             );
             window.close();
         }

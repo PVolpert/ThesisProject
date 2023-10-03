@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import Page from '../../UI/Page';
 import { Description, MainTitle } from '../../UI/Headers';
 import AuthenticationBox from './AuthenticationBox';
 import Button from '../../UI/Button';

@@ -23,7 +23,7 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
         return state.ictTokenSets;
     });
 
-    const signalingUrl = new URL(`${process.env.REACT_APP_SOCKET_URL}`);
+    const signalingUrl = new URL(`${import.meta.env.VITE_SOCKET_URL}`);
     signalingUrl.searchParams.append('oidc', accessToken);
 
     // Verifies that neither auth token nor any ict token is expired
@@ -58,7 +58,7 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             return;
         }
         if (needsToken && (!accessToken || !idToken)) {
-            navigate('/auth/login');
+            navigate('/login');
         }
         if (!needsToken && accessToken && idToken) {
             navigate('/call');

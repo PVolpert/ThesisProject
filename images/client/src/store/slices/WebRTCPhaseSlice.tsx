@@ -2,10 +2,8 @@ import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { UserId } from '../../helpers/Signaling/User';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
-import { ReadyState } from 'react-use-websocket';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
 import { SignalingSlice } from './SignalingSlice';
 
@@ -29,4 +27,4 @@ export const createWebRTCPhaseSlice: StateCreator<
     [],
     [],
     WebRTCPhaseSlice
-> = (set) => ({});
+> = () => ({ ...initialState });

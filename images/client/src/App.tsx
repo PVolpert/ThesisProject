@@ -1,13 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import Call from './pages/Call';
-import LoginPage from './pages/Login';
-import RedirectPage, { loader as redirectLoader } from './pages/Redirect';
-import RootLayout from './pages/Root';
-import ErrorPage from './pages/Error';
-import P2PPage from './pages/P2P';
-import HomePage from './pages/Home';
-import ConferencePage from './pages/Conference';
+import Call from './pages/Call.tsx';
+import LoginPage from './pages/Login.tsx';
+import RedirectPage, { loader as redirectLoader } from './pages/Redirect.tsx';
+import RootLayout from './pages/Root.tsx';
+import ErrorPage from './pages/Error.tsx';
+import P2PPage from './pages/P2P.tsx';
+import HomePage from './pages/Home.tsx';
+import ConferencePage from './pages/Conference.tsx';
 
 const router = createBrowserRouter([
     {
@@ -19,22 +19,16 @@ const router = createBrowserRouter([
                 index: true,
                 element: <HomePage />,
             },
+
+            { path: 'login', element: <LoginPage /> },
             {
-                path: 'auth',
-                id: 'auth',
-                // loader: oidcProviderLoader,
-                children: [
-                    { path: 'login', element: <LoginPage /> },
-                    {
-                        path: 'redirect/:redirectId',
-                        loader: redirectLoader,
-                        element: <RedirectPage />,
-                    },
-                ],
+                path: 'redirect/:redirectId',
+                loader: redirectLoader,
+                element: <RedirectPage />,
             },
+
             {
                 path: 'call',
-                // loader: callLoader,
                 id: 'call',
                 children: [
                     {
@@ -55,8 +49,6 @@ const router = createBrowserRouter([
     },
 ]);
 
-function App() {
+export default function App() {
     return <RouterProvider router={router} />;
 }
-
-export default App;

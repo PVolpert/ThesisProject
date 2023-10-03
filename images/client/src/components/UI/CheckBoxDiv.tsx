@@ -1,4 +1,4 @@
-import { Description, SubSubTitle, SubTitle } from './Headers';
+import { Description, SubSubTitle } from './Headers';
 
 interface CheckBoxDivProps {
     isChecked: boolean;

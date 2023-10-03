@@ -23,7 +23,7 @@ COPY . /usr/src/app
 RUN npm run build
 
 # Serve the app
-CMD ["npm", "run" ,"start"]
+CMD ["npm", "run" ,"dev"]
 
 #* Docker Dev Environment Setup
 FROM builder as dev-envs
@@ -38,7 +38,7 @@ adduser -S --shell /bin/bash --ingroup docker vscode
 EOF
 # install Docker tools (cli, buildx, compose)
 COPY --from=gloursdocker/docker / /
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "dev" ]
 
 #* Production
 FROM nginx:alpine

@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../../../UI/Button';
 import { UserId } from '../../../../helpers/Signaling/User';
 import UserItem from './UserItem';

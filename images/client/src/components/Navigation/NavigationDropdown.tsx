@@ -1,6 +1,4 @@
 import { ReactNode } from 'react';
-import UserIcon from '../UI/UserIcon';
-import { Description } from '../UI/Headers';
 import SettingsButton from './SettingsButton';
 import LogOutButton from './LogOutButton';
 import UserBlock from '../UI/UserBlock';
