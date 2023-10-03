@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import ConfirmIncomingConference from './IncomingCallSteps/ConfirmIncomingConference';
 import { ictProviders } from '../../helpers/Auth/OIDCProviderInfo';
 import OIDCProvider from '../../helpers/Auth/OIDCProvider';
-import { getUsernamesOfUnknownInActiveUsers } from '../../helpers/Signaling/User';
 
 interface IncomingCallModalProps {
     children?: ReactNode;
@@ -15,7 +14,6 @@ interface IncomingCallModalProps {
 
 export default function IncomingCallModal({}: IncomingCallModalProps) {
     const caller = useStore((state) => state.caller);
-    const activeUsers = useStore((state) => state.activeUsers);
     const type = useStore((state) => state.type);
     const hideModal = useStore((state) => state.hideIncomingCallModal);
     const setTrustedOpenIDProviders = useStore(
@@ -27,7 +25,7 @@ export default function IncomingCallModal({}: IncomingCallModalProps) {
         if (!caller) {
             return;
         }
-        return getUsernamesOfUnknownInActiveUsers([caller], activeUsers)[0];
+        return caller.username;
     }, [caller]);
 
     const [checkedCount, setCheckedCount] = useState(0);

@@ -8,14 +8,14 @@ import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { IncomingCallSlice } from './IncomingCallSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { UserInfo } from '../../helpers/Signaling/User';
+import { UserId } from '../../helpers/Signaling/User';
 
 interface State {
-    activeUsers: UserInfo[];
+    activeUsers: UserId[];
 }
 
 interface Actions {
-    setActiveUsers: (newActiveUsers: UserInfo[]) => void;
+    setActiveUsers: (newActiveUsers: UserId[]) => void;
 }
 
 export interface SignalingSlice extends State, Actions {}

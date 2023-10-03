@@ -1,5 +1,5 @@
 import { OPNMap } from '../ICTPhase/ICTPhase';
-import { UserId, UserInfo } from './User';
+import { UserId } from './User';
 
 export type MessageType =
     // User State Messages
@@ -34,7 +34,7 @@ export interface incomingOriginMessage extends incomingMessage {
 }
 
 interface userListBody {
-    users: UserInfo[];
+    users: UserId[];
 }
 export interface userListMessage extends Message {
     body?: userListBody;
@@ -48,7 +48,7 @@ export function createUserListMessage() {
 }
 
 interface userStateBody {
-    user: UserInfo;
+    user: UserId;
 }
 export interface incomingUserStateMessage extends incomingMessage {
     body: userStateBody;

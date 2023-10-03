@@ -1,13 +1,13 @@
 import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
 
-import { UserInfo } from '../../../helpers/Signaling/User';
+import { UserId } from '../../../helpers/Signaling/User';
 import UserBlock from '../../UI/UserBlock';
 
 interface ConfirmConferenceProps {
     onClickYes: () => void;
     onClickNo: () => void;
-    candidates: UserInfo[];
+    candidates: UserId[];
 }
 
 export default function ConfirmConference({

@@ -5,7 +5,7 @@ import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { ModalSlice } from './ModalSlice';
 import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { SettingsSlice } from './SettingsSlice';
-import { UserId, UserInfo } from '../../helpers/Signaling/User';
+import { UserId } from '../../helpers/Signaling/User';
 import { ReadyState } from 'react-use-websocket';
 import { SignalingSlice } from './SignalingSlice';
 import {
@@ -16,7 +16,7 @@ import OIDCProvider from '../../helpers/Auth/OIDCProvider';
 
 interface State {
     signalingConnectionState: ReadyState;
-    candidates: UserInfo[];
+    candidates: UserId[];
     type?: 'call' | 'conference';
     caller?: UserId;
     trustedOpenIDProviders: OpenIDProviderInfo[];
@@ -24,7 +24,7 @@ interface State {
 
 interface Actions {
     setSignalingConnectionState: (newState: ReadyState) => void;
-    setCandidates: (newCandidates: UserInfo[]) => void;
+    setCandidates: (newCandidates: UserId[]) => void;
     setCaller: (newCaller: UserId) => void;
     setType: (newType: 'call' | 'conference') => void;
     setTrustedOpenIDProviders: (newOIDCProviders: OIDCProvider[]) => void;

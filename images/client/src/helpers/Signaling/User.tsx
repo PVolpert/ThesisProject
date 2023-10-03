@@ -1,20 +1,9 @@
 export interface UserId {
-    issuer: string;
-    subject: string;
-}
-
-export interface UserInfo extends UserId {
     username: string;
 }
 
-export function isUserEqual(
-    user1: UserId | UserInfo,
-    user2: UserId | UserInfo
-) {
-    if (user1.issuer !== user2.issuer || user1.subject !== user2.subject) {
-        return false;
-    }
-    return true;
+export function isUserEqual(user1: UserId, user2: UserId) {
+    return user1.username === user2.username;
 }
 
 // Function to convert a UserId object to a string
@@ -29,8 +18,7 @@ export function stringToUserId(str: string): UserId {
         if (
             typeof parsed === 'object' &&
             parsed !== null &&
-            'issuer' in parsed &&
-            'subject' in parsed
+            'username' in parsed
         ) {
             return parsed as UserId;
         }
@@ -38,28 +26,4 @@ export function stringToUserId(str: string): UserId {
         // Handle parsing errors here
     }
     throw new Error();
-}
-
-export function getUsernamesOfUnknownInActiveUsers(
-    unknownUsers: UserId[],
-    activeUsers: UserInfo[]
-): string[] {
-    const usernames: string[] = unknownUsers
-        .filter((unknownUser) =>
-            activeUsers.some(
-                (activeUser) =>
-                    activeUser.issuer === unknownUser.issuer &&
-                    activeUser.subject === unknownUser.subject
-            )
-        )
-        .map(
-            (matchedUser) =>
-                activeUsers.find(
-                    (activeUser) =>
-                        activeUser.issuer === matchedUser.issuer &&
-                        activeUser.subject === matchedUser.subject
-                )!.username
-        );
-
-    return usernames;
 }

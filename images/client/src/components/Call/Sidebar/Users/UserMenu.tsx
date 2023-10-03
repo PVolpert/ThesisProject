@@ -1,11 +1,11 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import Button from '../../../UI/Button';
-import { UserId, UserInfo } from '../../../../helpers/Signaling/User';
+import { UserId } from '../../../../helpers/Signaling/User';
 import UserItem from './UserItem';
 import { useStore } from '../../../../store/Store';
 
 interface UseMenuProps {
-    activeUsers: UserInfo[];
+    activeUsers: UserId[];
 }
 
 export default function UseMenu({ activeUsers }: UseMenuProps) {
@@ -29,7 +29,7 @@ export default function UseMenu({ activeUsers }: UseMenuProps) {
     }, [activeUsers]);
 
     // Call Function
-    const onCallHandlerBuilder = (callee: UserInfo) => {
+    const onCallHandlerBuilder = (callee: UserId) => {
         const onCallHandler = () => {
             setCandidates([callee]);
             setType('call');
@@ -49,7 +49,7 @@ export default function UseMenu({ activeUsers }: UseMenuProps) {
     };
 
     // Checkbox Changed function
-    const onCheckBoxChangeHandlerBuilder = (user: UserInfo) => {
+    const onCheckBoxChangeHandlerBuilder = (user: UserId) => {
         const onCheckBoxChangeHandler = () => {
             if (!formData.get(`checkbox_${user.username}`)) {
                 const newMap = new Map(formData);

@@ -1,6 +1,5 @@
-import { IDToken } from 'oauth4webapi';
 import { incomingUserListMessage, incomingUserStateMessage } from './Messages';
-import { UserId, UserInfo, isUserEqual } from './User';
+import { UserId, isUserEqual } from './User';
 import {
     isIncomingMessage,
     isIncomingUserListMessage,
@@ -11,22 +10,22 @@ import {
 // user* Message Handlers
 
 export async function incomingUserOnlineHandler(
-    { body: { user } }: incomingUserStateMessage,
-    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
-    activeUsers: UserInfo[],
-    idToken: IDToken
+    { body: { user: newUser } }: incomingUserStateMessage,
+    self: UserId,
+    activeUsers: UserId[],
+    setActiveUsers: (newActiveUsers: UserId[]) => void
 ) {
     // Ignore self
-    if (isUserEqual(user, { issuer: idToken.iss, subject: idToken.sub })) {
+    if (isUserEqual(newUser, self)) {
         return;
     }
 
-    setActiveUsers(activeUsers.concat(user));
+    setActiveUsers(activeUsers.concat(newUser));
 }
 export async function incomingUserOfflineHandler(
     { body: { user } }: incomingUserStateMessage,
-    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
-    activeUsers: UserInfo[]
+    activeUsers: UserId[],
+    setActiveUsers: (newActiveUsers: UserId[]) => void
 ) {
     setActiveUsers(
         activeUsers.filter((prevUser) => {
@@ -36,14 +35,11 @@ export async function incomingUserOfflineHandler(
 }
 export async function incomingUserListHandler(
     { body: { users } }: incomingUserListMessage,
-    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
-    idToken: IDToken
+    setActiveUsers: (newActiveUsers: UserId[]) => void,
+    self: UserId
 ) {
     const newUserList = users.filter((user) => {
-        return !isUserEqual(user, {
-            issuer: idToken.iss,
-            subject: idToken.sub,
-        });
+        return !isUserEqual(user, self);
     });
 
     setActiveUsers(newUserList);
@@ -51,9 +47,9 @@ export async function incomingUserListHandler(
 
 export async function globalMessageHandler(
     rawMessage: any,
-    setActiveUsers: (newActiveUsers: UserInfo[]) => void,
-    activeUsers: UserInfo[],
-    idToken: IDToken,
+    activeUsers: UserId[],
+    self: UserId,
+    setActiveUsers: (newActiveUsers: UserId[]) => void,
     setCaller: (newCaller: UserId) => void,
     setType: (newMode: 'conference' | 'call') => void,
     showIncomingCallModal: () => void
@@ -70,7 +66,7 @@ export async function globalMessageHandler(
                 return;
             }
 
-            incomingUserListHandler(rawMessage, setActiveUsers, idToken);
+            incomingUserListHandler(rawMessage, setActiveUsers, self);
             break;
         case 'userOnline':
             if (!isIncomingUserStateMessage(rawMessage)) {
@@ -79,9 +75,9 @@ export async function globalMessageHandler(
             }
             incomingUserOnlineHandler(
                 rawMessage,
-                setActiveUsers,
+                self,
                 activeUsers,
-                idToken
+                setActiveUsers
             );
             break;
         case 'userOffline':
@@ -89,7 +85,7 @@ export async function globalMessageHandler(
                 console.log('Ignoring invalid message');
                 return;
             }
-            incomingUserOfflineHandler(rawMessage, setActiveUsers, activeUsers);
+            incomingUserOfflineHandler(rawMessage, activeUsers, setActiveUsers);
             break;
         case 'Call-Offer':
             if (!isOriginMessage(rawMessage)) {
