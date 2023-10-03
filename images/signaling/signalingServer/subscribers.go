@@ -16,7 +16,7 @@ func (sig *signalingServer) addSubscriber(user *userId, s *subscriber) {
 	sig.subscribersMu.Unlock()
 	sig.logf("adding %s", *user)
 
-	msg := createUserOnlineMessage(userInfo{*user, s.username})
+	msg := createUserOnlineMessage(*user)
 	sig.broadcast(msg)
 }
 
@@ -30,14 +30,13 @@ func (sig *signalingServer) deleteSubscriber(user *userId) {
 	sig.broadcast(msg)
 }
 
-func (sig *signalingServer) getSubscriberSlice() []userInfo {
+func (sig *signalingServer) getSubscriberSlice() []userId {
 	sig.subscribersMu.Lock()
 	defer sig.subscribersMu.Unlock()
-	var userList []userInfo
-	for user, subscriber := range sig.subscribers {
+	var userList []userId
+	for user, _ := range sig.subscribers {
 
-		userName := subscriber.username
-		userList = append(userList, userInfo{user, userName})
+		userList = append(userList, user)
 	}
 	return userList
 }

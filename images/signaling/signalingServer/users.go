@@ -2,6 +2,7 @@ package signalingServer
 
 import (
 	"context"
+	"errors"
 	// "math/rand"
 
 	// "github.com/PVolpert/ctxValueBuilder"
@@ -9,43 +10,29 @@ import (
 )
 
 type userId struct {
-	Issuer  string `json:"issuer,omitempty"`
-	Subject string `json:"subject,omitempty"`
-}
-
-// userId + Display Information
-type userInfo struct {
-	userId
 	Username string `json:"username,omitempty"`
 }
 
 // const userIdContextKey = "UserIDKey"
 
 func isTargetValid(id userId) bool {
-	if id.Issuer == "" || id.Subject == "" {
+	if id.Username == "" {
 		return false
 	}
 	return true
 }
 
 func idFromContext(ctx context.Context) (*userId, error) {
-	token, _, err := oidcauth.FromContext(ctx)
+	_, claims, err := oidcauth.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return &userId{token.Issuer(), token.Subject()}, nil
-}
-
-func usernameFromContext(ctx context.Context) string {
-	_, claims, err := oidcauth.FromContext(ctx)
-	if err != nil {
-		return ""
-	}
 	switch typedUsername := claims["preferred_username"].(type) {
 	case string:
-		return typedUsername
+		return &userId{typedUsername}, nil
 	default:
-		return ""
+		err := errors.New("Username argument not found")
+		return nil, err
 	}
 }
 
