@@ -9,12 +9,14 @@ interface RadioItemProps {
     ictProvider: OIDCProvider;
     idToken?: IDToken;
     radioName: string;
+    onChangeHandler: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function RadioItem({
     ictProvider,
     idToken,
     radioName,
+    onChangeHandler,
 }: RadioItemProps) {
     const [authCodeProvider] = useState(new AuthCodeProvider(ictProvider));
     const parseICT = useStore((state) => state.parseICT);
@@ -55,7 +57,7 @@ export default function RadioItem({
             {idToken && (
                 <label
                     htmlFor={`radio_${ictProvider.info.name}`}
-                    className="flex cursor-pointer checked:bg-springblue checked:border-springblue items-center justify-center w-full py-2 space-x-3 bg-zinc-100 dark:bg-zinc-600 border border-zinc-500 bg-inherit rounded shadow-sm  hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition duration-1050"
+                    className="flex cursor-pointer items-center justify-center w-full py-2 space-x-3 bg-zinc-100 dark:bg-zinc-600 border border-zinc-500 rounded shadow-sm"
                 >
                     <span className="w-6 h-6">{ictProvider.info.img}</span>
                     <span className="">
@@ -68,7 +70,9 @@ export default function RadioItem({
                 type="radio"
                 name={radioName}
                 id={`radio_${ictProvider.info.name}`}
+                value={ictProvider.info.name}
                 disabled={!idToken}
+                onChange={onChangeHandler}
             />
         </div>
     );
