@@ -70,7 +70,7 @@ export default function IncomingCallModal({}: IncomingCallModalProps) {
         <Modal onHideModal={hideModal}>
             {!caller && <p>Something went wrong</p>}
 
-            {caller && type === 'conference' && (
+            {caller && type === 'call' && (
                 <ConfirmCaller
                     onClickYes={() => {
                         const trustedProviders = ictProviders.filter(
@@ -94,7 +94,7 @@ export default function IncomingCallModal({}: IncomingCallModalProps) {
                     username={callerUserName || 'unknown'}
                 />
             )}
-            {caller && type === 'call' && (
+            {caller && type === 'conference' && (
                 <ConfirmIncomingConference
                     onClickYes={() => {
                         const trustedProviders = ictProviders.filter(
