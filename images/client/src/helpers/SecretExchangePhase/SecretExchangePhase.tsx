@@ -1,4 +1,4 @@
-import { Candidate } from '../ICTPhase/ICTPhase';
+import { Candidate, Identity } from '../ICTPhase/ICTPhase';
 import {
     deriveDHSecret,
     generateDHPair,
@@ -21,7 +21,7 @@ import {
 import { MutexMap } from '../Mutex/MutexMap';
 
 class SecretExchangePhaseGroupMember {
-    identity: { name: string; email: string };
+    identity: Identity;
     ICTPubKey: CryptoKey;
     dhSecret?: CryptoKey;
     constructor(candidate: Candidate) {

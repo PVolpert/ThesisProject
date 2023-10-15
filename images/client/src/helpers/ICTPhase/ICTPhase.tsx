@@ -19,17 +19,24 @@ import {
 } from './ICTPhaseJWT';
 import { createKeyPair, getICT } from './ICT';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
-import { OpenIDProviderInfo } from './OpenIDProvider';
+import { ICTProviderInfo } from './OpenIDProvider';
 import { MutexMap } from '../Mutex/MutexMap';
+import { ReactNode } from 'react';
 
 export type OPNMap = MutexMap<string, string>;
+export interface Identity {
+    name: string;
+    mail: string;
+    issName: string;
+    issImg: ReactNode;
+}
 
 class ICTPhaseSelf<ID> {
     // KeyPair used for signing messages
     issuedICTKeyPairsMap: MutexMap<ID, CryptoKeyPair>;
     //
     issuedOPNMap: MutexMap<ID, OPNMap>;
-    trustedOIDCProviders?: OpenIDProviderInfo[];
+    trustedOIDCProviders?: ICTProviderInfo[];
 
     constructor() {
         this.issuedICTKeyPairsMap = new MutexMap();
@@ -41,7 +48,7 @@ export class Candidate {
     // Saved verified Public Key of Call Partner
     receivedICTPubKey?: CryptoKey;
     // Saved identity of Call Partner
-    identity?: { name: string; email: string };
+    identity?: Identity;
     receivedOPNMap: OPNMap;
 
     constructor() {
@@ -92,7 +99,11 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newVerifyCallAnswersEvent);
     }
 
-    sendICTMessage(target: ID, ictMessage: string, type: ICTMessageType) {
+    protected sendICTMessage(
+        target: ID,
+        ictMessage: string,
+        type: ICTMessageType
+    ) {
         const newSendICTMessageEvent = new CustomEvent<
             sendICTMessageEventDetail<ID>
         >(EventID.sendICTMessage, {
@@ -106,7 +117,7 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendICTMessageEvent);
     }
 
-    sendNotifyMessage(target: ID, type: NotifyMessageType) {
+    protected sendNotifyMessage(target: ID, type: NotifyMessageType) {
         const newSendNotifyMessageEvent = new CustomEvent<
             sendNotifyMessageEventDetail<ID>
         >(EventID.notify, {
@@ -119,7 +130,11 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendNotifyMessageEvent);
     }
 
-    async sendOPNMessage(target: ID, OPNMap: OPNMap, type: OPNMessageType) {
+    protected async sendOPNMessage(
+        target: ID,
+        OPNMap: OPNMap,
+        type: OPNMessageType
+    ) {
         const newSendOPNMessageEvent = new CustomEvent<
             sendOPNMessageEventDetail<ID>
         >(EventID.sendOPNMessage, {
@@ -133,7 +148,7 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendOPNMessageEvent);
     }
 
-    sendCandidates(target: ID, candidateIDs: ID[]) {
+    protected sendCandidates(target: ID, candidateIDs: ID[]) {
         const newSendCandidatesEvent = new CustomEvent<
             sendCandidatesEventDetail<ID>
         >(EventID.sendCandidates, {
@@ -199,9 +214,9 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     // Called after Callee verification
     async setCallerParameters(
-        trustedOIDCProviders: OpenIDProviderInfo[],
+        trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -223,7 +238,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     protected async getICTOffers(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -240,7 +255,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     protected async getICTs(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -290,7 +305,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
             targets: ID[];
             ict: string;
             keyPair: CryptoKeyPair;
-            oidcProvider: OpenIDProviderInfo;
+            oidcProvider: ICTProviderInfo;
         }[]
     ) {
         return (
@@ -362,18 +377,17 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
         candidate: Candidate,
         ictAnswer: string,
         issuedOPNMap: OPNMap,
-        trustedOIDCProviders: OpenIDProviderInfo[]
+        trustedOIDCProviders: ICTProviderInfo[]
     ) {
-        const verifiedICTValues = await verifyICTAnswerJWT(
-            ictAnswer,
-            issuedOPNMap,
-            trustedOIDCProviders
-        );
-
-        const { identity, publicKey } = verifiedICTValues;
+        const { identity, publicKey: receivedICTPubKey } =
+            await verifyICTAnswerJWT(
+                ictAnswer,
+                issuedOPNMap,
+                trustedOIDCProviders
+            );
 
         // Save PubKey for Verifikation
-        candidate = { ...candidate, receivedICTPubKey: publicKey, identity };
+        candidate = { ...candidate, receivedICTPubKey, identity };
 
         if (await haveCandidatesIDandKey(this.candidatesMap)) {
             await this.issueVerification('Callees');
@@ -386,7 +400,7 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
         super();
     }
 
-    async receiveCall(origin: ID, trustedOIDCProviders: OpenIDProviderInfo[]) {
+    async receiveCall(origin: ID, trustedOIDCProviders: ICTProviderInfo[]) {
         try {
             const newOPNMap = generateOPNMap(trustedOIDCProviders);
             this.self.issuedOPNMap.set(origin, newOPNMap);
@@ -429,23 +443,19 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
         }
     }
 
-    async verifyICTOffer(
+    protected async verifyICTOffer(
         candidate: Candidate,
         ictOffer: string,
         issuedOPN: OPNMap,
-        trustedOIDCProviders: OpenIDProviderInfo[]
+        trustedOIDCProviders: ICTProviderInfo[]
     ) {
         try {
-            const verifiedICTOfferValues = await verifyICTOfferJWT(
-                ictOffer,
-                issuedOPN,
-                trustedOIDCProviders
-            );
-            if (!verifiedICTOfferValues)
-                throw new Error('Verification of JWT failed');
-
             const { identity, receivedOPNMap, receivedICTPubKey } =
-                verifiedICTOfferValues;
+                await verifyICTOfferJWT(
+                    ictOffer,
+                    issuedOPN,
+                    trustedOIDCProviders
+                );
 
             // Save PubKey for Verifikation
             candidate = {
@@ -463,14 +473,14 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
 
     // Callee Post Verify Caller
     async setCalleeParameters(
-        oidcProvider: OpenIDProviderInfo,
+        oidcProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: ID
     ) {
         await this.getICTAnswer(oidcProvider, tokenSet, target);
     }
-    async getICTAnswer(
-        selectedOIDCProvider: OpenIDProviderInfo,
+    protected async getICTAnswer(
+        selectedOIDCProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: ID
     ) {
@@ -601,7 +611,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
 
     async setPeersOpenIDProvider(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -660,7 +670,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
         }
     }
 
-    async getConfirmation() {
+    protected async getConfirmation() {
         try {
             const groupLeaderID = this.groupLeaderID;
 
@@ -705,7 +715,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
     }
 }
 
-function generateOPNMap(oidcProviders: OpenIDProviderInfo[]) {
+function generateOPNMap(oidcProviders: ICTProviderInfo[]) {
     const OPNMap: OPNMap = new MutexMap();
     oidcProviders.forEach((oidcProvider) => {
         const nonce = generateNonce();

@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import LoadingStatement from '../../OutgoingCallModal/LoadingStatement';
 import Button from '../../UI/Button';
 import { useStore } from '../../../store/Store';

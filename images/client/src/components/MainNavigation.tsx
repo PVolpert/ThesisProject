@@ -1,8 +1,6 @@
 import { NavLink } from 'react-router-dom';
 
 import useDisplayToggle from '../hooks/useDisplayToggle';
-
-import Signaling from './Signaling';
 import { useToken } from '../hooks/useToken';
 import NavigationDropdown from './Navigation/NavigationDropdown';
 import DropDownButton from './Navigation/DropDownButton';
@@ -83,7 +81,7 @@ function MainNavigation() {
 
                     {!accessToken && (
                         <NavLink
-                            to="/auth/login"
+                            to="/login"
                             className={({ isActive }) =>
                                 `border-2 rounded-lg px-2 md:px-8 py-2 shadow-md border-springred text-white hover:text-springred bg-springred hover:bg-inherit ${
                                     isActive ? 'hidden' : ''

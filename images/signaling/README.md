@@ -74,7 +74,7 @@ Messages are not directly send to users but are first stored in the message chan
 
 ### Message Types
 
-The message types are divided into user management messages and signaling messages. Usermanagement messages send their user information in the form of a userInfo struct which is a userId struct with an added username field.
+The message types are divided into user management messages and signaling messages.
 
 -   User management
     -   userList

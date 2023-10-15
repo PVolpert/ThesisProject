@@ -1,18 +1,8 @@
-import { ReactNode } from 'react';
 import Page from '../UI/Page';
 import { useToken } from '../../hooks/useToken';
-import LoginLink from '../Navigation/LoginLink';
 import { NavLink } from 'react-router-dom';
 
-interface HomeDisplayProps {
-    children?: ReactNode;
-    className?: string;
-}
-
-export default function HomeDisplay({
-    children,
-    className = '',
-}: HomeDisplayProps) {
+export default function HomeDisplay() {
     const { accessToken } = useToken();
     return (
         <Page>
@@ -52,7 +42,7 @@ export default function HomeDisplay({
                         <div className="mt-8">
                             {!accessToken && (
                                 <NavLink
-                                    to="/auth/login"
+                                    to="/login"
                                     className={`border-2 rounded-lg px-2 md:px-8 py-2 shadow-md border-springred text-white hover:text-springred bg-springred hover:bg-inherit`}
                                 >
                                     Log in

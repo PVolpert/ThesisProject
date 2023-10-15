@@ -29,9 +29,15 @@ const serviceProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-Service',
-        issuer: new URL(`${process.env.REACT_APP_OP_HOST_URL}/realms/service`),
+        issuer: new URL(
+            `${
+                import.meta.env.VITE_OP_HOST_URL || 'http://unkown'
+            }/realms/service`
+        ),
         redirectId: new URL(
-            `${process.env.REACT_APP_CLIENT_URL}/auth/redirect/dream`
+            `${
+                import.meta.env.VITE_CLIENT_URL || 'http://unkown'
+            }/redirect/dream`
         ),
     },
 ];
@@ -62,9 +68,9 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Alpha',
-        issuer: new URL(`${process.env.REACT_APP_OP_HOST_URL}/realms/alpha`),
+        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/alpha`),
         redirectId: new URL(
-            `${process.env.REACT_APP_CLIENT_URL}/auth/redirect/destiny`
+            `${import.meta.env.VITE_CLIENT_URL}/redirect/destiny`
         ),
     },
     {
@@ -86,9 +92,9 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Beta',
-        issuer: new URL(`${process.env.REACT_APP_OP_HOST_URL}/realms/beta`),
+        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/beta`),
         redirectId: new URL(
-            `${process.env.REACT_APP_CLIENT_URL}/auth/redirect/desire`
+            `${import.meta.env.VITE_CLIENT_URL}/redirect/desire`
         ),
     },
     {
@@ -110,9 +116,9 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Gamma',
-        issuer: new URL(`${process.env.REACT_APP_OP_HOST_URL}/realms/gamma`),
+        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/gamma`),
         redirectId: new URL(
-            `${process.env.REACT_APP_CLIENT_URL}/auth/redirect/delirium`
+            `${import.meta.env.VITE_CLIENT_URL}/redirect/delirium`
         ),
     },
 ];

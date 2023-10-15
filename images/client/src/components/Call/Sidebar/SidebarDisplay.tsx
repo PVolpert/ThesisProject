@@ -1,4 +1,4 @@
-import { Description, MainTitle, SubTitle } from '../../UI/Headers';
+import { Description, SubTitle } from '../../UI/Headers';
 import ActiveUsers from './Users/ActiveUsers';
 
 interface P2PSidebarDisplayProps {}

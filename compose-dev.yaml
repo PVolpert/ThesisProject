@@ -28,7 +28,6 @@ services:
     env_file: configs/client/config.env
     depends_on:
       - traefik
-      # - api
       - signaling
       - op
     labels:
@@ -36,7 +35,7 @@ services:
       - traefik.http.routers.client.entrypoints=web
       - traefik.http.routers.client.rule=HOST(`${CLIENT_HOST}`)
     expose:
-      - 3000  
+      - 5173  
 
   
 
@@ -164,13 +163,15 @@ services:
       - traefik.http.routers.ict-alpha.entrypoints=web       # Enable exposure via HTTP entrypoint 'web'
       - >-                                                        # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
         traefik.http.routers.ict-alpha.rule=(Host(`${OP_HOST}`) &&
-        PathPrefix(`/realms/alpha/protocol/openid-connect/userinfo/ict`))
+        PathPrefix(`/realms/alpha/protocol/openid-connect/ict`))
       - traefik.http.routers.ict-alpha.priority=2                       # Set priority high (traefik.http.routers.op.priority must be lower)
       - traefik.http.routers.ict-alpha.middlewares=ict-alpha@docker           # Include 'ict' middleware from Docker labels below 
       - >-                                                        # Remove .../userinfo/ict path from request
-        traefik.http.middlewares.ict-alpha.replacepathregex.regex=^/realms/alpha/protocol/openid-connect/userinfo/ict(.*)
+        traefik.http.middlewares.ict-alpha.replacepathregex.regex=^/realms/alpha/protocol/openid-connect/ict(.*)
       - >-                                                        # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
         traefik.http.middlewares.ict-alpha.replacepathregex.replacement=$$1
+    expose: 
+      - 8080
 
   ict-beta:
     build:
@@ -187,7 +188,7 @@ services:
       ISSUER: http://${OP_HOST}/realms/beta                        # Configure issuer of issued ID Certifcation Tokens
       DEFAULT_TOKEN_PERIOD: 3600                                  # Configure the default lifetime of issued ID Certifcation Tokens in seconds (3600s = 1h)
       MAX_TOKEN_PERIOD: 2592000                                   # Configure the maximum lifetime of issued ID Certifcation Tokens in seconds (2592000s = 30d)
-      PORT: 8080                                                  # Configure the internal port on which the ICT endpoint is listening
+      PORT: 8080                                               # Configure the internal port on which the ICT endpoint is listening
     env_file:
       - .secrets/keycloak/ict-beta.env                                        # Include secrets from generated environment variables
     secrets:
@@ -200,13 +201,15 @@ services:
       - traefik.http.routers.ict-beta.entrypoints=web       # Enable exposure via HTTP entrypoint 'web'
       - >-                                                        # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
         traefik.http.routers.ict-beta.rule=(Host(`${OP_HOST}`) &&
-        PathPrefix(`/realms/beta/protocol/openid-connect/userinfo/ict`))
+        PathPrefix(`/realms/beta/protocol/openid-connect/ict`))
       - traefik.http.routers.ict-beta.priority=2                       # Set priority high (traefik.http.routers.op.priority must be lower)
       - traefik.http.routers.ict-beta.middlewares=ict-beta@docker           # Include 'ict' middleware from Docker labels below 
       - >-                                                        # Remove .../userinfo/ict path from request
-        traefik.http.middlewares.ict-beta.replacepathregex.regex=^/realms/beta/protocol/openid-connect/userinfo/ict(.*)
+        traefik.http.middlewares.ict-beta.replacepathregex.regex=^/realms/beta/protocol/openid-connect/ict(.*)
       - >-                                                        # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
         traefik.http.middlewares.ict-beta.replacepathregex.replacement=$$1
+    expose: 
+      - 8080
  
   ict-gamma:
     build:
@@ -236,13 +239,15 @@ services:
       - traefik.http.routers.ict-gamma.entrypoints=web       # Enable exposure via HTTP entrypoint 'web'
       - >-                                                        # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
         traefik.http.routers.ict-gamma.rule=(Host(`${OP_HOST}`) &&
-        PathPrefix(`/realms/gamma/protocol/openid-connect/userinfo/ict`))
+        PathPrefix(`/realms/gamma/protocol/openid-connect/ict`))
       - traefik.http.routers.ict-gamma.priority=2                       # Set priority high (traefik.http.routers.op.priority must be lower)
       - traefik.http.routers.ict-gamma.middlewares=ict-gamma@docker           # Include 'ict' middleware from Docker labels below 
       - >-                                                        # Remove .../userinfo/ict path from request
-        traefik.http.middlewares.ict-gamma.replacepathregex.regex=^/realms/gamma/protocol/openid-connect/userinfo/ict(.*)
+        traefik.http.middlewares.ict-gamma.replacepathregex.regex=^/realms/gamma/protocol/openid-connect/ict(.*)
       - >-                                                        # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
         traefik.http.middlewares.ict-gamma.replacepathregex.replacement=$$1
+    expose: 
+      - 8080
  
  
   ict:
@@ -273,13 +278,15 @@ services:
         - traefik.http.routers.ict.entrypoints=web       # Enable exposure via HTTP entrypoint 'web'
         - >-                                                        # Specify routing via hostname provided in environment variable 'OP_HOST' and append it to userinfo endpoint
           traefik.http.routers.ict.rule=(Host(`${OP_HOST}`) &&
-          PathPrefix(`/realms/ict/protocol/openid-connect/userinfo/ict`))
+          PathPrefix(`/realms/ict/protocol/openid-connect/ict`))
         - traefik.http.routers.ict.priority=2                       # Set priority high (traefik.http.routers.op.priority must be lower)
         - traefik.http.routers.ict.middlewares=ict@docker           # Include 'ict' middleware from Docker labels below 
         - >-                                                        # Remove .../userinfo/ict path from request
-          traefik.http.middlewares.ict.replacepathregex.regex=^/realms/ict/protocol/openid-connect/userinfo/ict(.*)
+          traefik.http.middlewares.ict.replacepathregex.regex=^/realms/ict/protocol/openid-connect/ict(.*)
         - >-                                                        # Forward only path after .../userinfo/ict (marked with '(.*)') in request to ICT endpoint
           traefik.http.middlewares.ict.replacepathregex.replacement=$$1
+      expose: 
+        - 8080
 
 networks:
   client-side: {}

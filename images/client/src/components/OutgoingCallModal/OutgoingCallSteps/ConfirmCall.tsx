@@ -1,12 +1,12 @@
 import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
 
-import { UserInfo } from '../../../helpers/Signaling/User';
+import { UserId } from '../../../helpers/Signaling/User';
 
 interface ConfirmCallProps {
     onClickYes: () => void;
     onClickNo: () => void;
-    callee: UserInfo;
+    callee: UserId;
 }
 
 export default function ConfirmCall({

@@ -22,7 +22,6 @@ export default function ConfirmIncomingConference({
 }: ConfirmIncomingConferenceProps) {
     return (
         <div className="flex flex-col space-y-4 p-4">
-            {/* TODO Insert Call ID */}
             <MainTitle> Join Conference? </MainTitle>
             <Description>
                 You are invited to a conference by {username}. Continue with
@@ -34,12 +33,8 @@ export default function ConfirmIncomingConference({
                     Pick at least one trusted OIDC Provider:
                 </Description>
                 {ictProviders.map((ictProvider) => {
-                    console.log(
-                        `checkbox_${ictProvider.info.name}`,
-                        formData.get(`checkbox_${ictProvider.info.name}`)
-                    );
                     return (
-                        <div>
+                        <div id={ictProvider.info.name}>
                             <input
                                 type="checkbox"
                                 id={`checkbox_${ictProvider.info.name}`}
@@ -60,7 +55,7 @@ export default function ConfirmIncomingConference({
                                     className={`flex items-center justify-center w-full py-2 space-x-3 rounded shadow-sm hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 transition duration-1050 ${
                                         formData.get(
                                             `checkbox_${ictProvider.info.name}`
-                                        ) || false
+                                        ) ?? false
                                             ? 'bg-springblue border-springblue'
                                             : 'bg-zinc-100 dark:bg-zinc-600 border-zinc-500'
                                     }`}

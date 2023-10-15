@@ -5,7 +5,6 @@
  */
 
 import Button from '../../UI/Button';
-import classes from './ConferenceDisplay.module.css';
 
 export default function ConferenceDisplay() {
     return (

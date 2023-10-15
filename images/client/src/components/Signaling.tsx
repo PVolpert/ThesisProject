@@ -31,15 +31,15 @@ export default function Signaling() {
 
     //* Handle incoming websocket messages of type call offer
     useEffect(() => {
-        if (!idToken || !lastJsonMessage) {
+        if (!idToken || !lastJsonMessage || !idToken['preferred_username']) {
             return;
         }
 
         globalMessageHandler(
             lastJsonMessage,
-            setActiveUsers,
             activeUsers,
-            idToken,
+            { username: idToken['preferred_username'] as string },
+            setActiveUsers,
             setCaller,
             setType,
             showIncomingCallModal

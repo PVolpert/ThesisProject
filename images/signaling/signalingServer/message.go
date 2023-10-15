@@ -33,10 +33,10 @@ const userListMessageType string = "userList"
 // UserList Message
 
 type userListBody struct {
-	Users []userInfo `json:"users"`
+	Users []userId `json:"users"`
 }
 
-func createUserListMessage(users []userInfo) message {
+func createUserListMessage(users []userId) message {
 	msg := message{Type: userListMessageType, Body: userListBody{Users: users}}
 	return msg
 }
@@ -62,10 +62,10 @@ func createUserOfflineMessage(user userId) message {
 const userOnlineMessageType string = "userOnline"
 
 type userOnlineBody struct {
-	User userInfo `json:"user,omitempty"`
+	User userId `json:"user,omitempty"`
 }
 
-func createUserOnlineMessage(user userInfo) message {
+func createUserOnlineMessage(user userId) message {
 	msg := message{
 		Type: userOnlineMessageType,
 		Body: userOnlineBody{user},

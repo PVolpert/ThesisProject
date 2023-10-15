@@ -85,7 +85,6 @@ func (sig *signalingServer) subscribe(ctx context.Context, c *websocket.Conn) er
 		closeSlow: func() {
 			c.Close(websocket.StatusPolicyViolation, "connection too slow to keep up with messages")
 		},
-		username: usernameFromContext(ctx),
 	}
 	// Add and remove from subscriber list
 	sig.addSubscriber(id, sub)
