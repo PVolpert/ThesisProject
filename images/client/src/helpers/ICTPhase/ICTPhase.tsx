@@ -21,8 +21,15 @@ import { createKeyPair, getICT } from './ICT';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
 import { OpenIDProviderInfo } from './OpenIDProvider';
 import { MutexMap } from '../Mutex/MutexMap';
+import { ReactNode } from 'react';
 
 export type OPNMap = MutexMap<string, string>;
+export interface Identity {
+    name: string;
+    mail: string;
+    issName: string;
+    issImg: ReactNode;
+}
 
 class ICTPhaseSelf<ID> {
     // KeyPair used for signing messages
@@ -41,7 +48,7 @@ export class Candidate {
     // Saved verified Public Key of Call Partner
     receivedICTPubKey?: CryptoKey;
     // Saved identity of Call Partner
-    identity?: { name: string; email: string };
+    identity?: Identity;
     receivedOPNMap: OPNMap;
 
     constructor() {
@@ -92,7 +99,11 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newVerifyCallAnswersEvent);
     }
 
-    sendICTMessage(target: ID, ictMessage: string, type: ICTMessageType) {
+    protected sendICTMessage(
+        target: ID,
+        ictMessage: string,
+        type: ICTMessageType
+    ) {
         const newSendICTMessageEvent = new CustomEvent<
             sendICTMessageEventDetail<ID>
         >(EventID.sendICTMessage, {
@@ -106,7 +117,7 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendICTMessageEvent);
     }
 
-    sendNotifyMessage(target: ID, type: NotifyMessageType) {
+    protected sendNotifyMessage(target: ID, type: NotifyMessageType) {
         const newSendNotifyMessageEvent = new CustomEvent<
             sendNotifyMessageEventDetail<ID>
         >(EventID.notify, {
@@ -119,7 +130,11 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendNotifyMessageEvent);
     }
 
-    async sendOPNMessage(target: ID, OPNMap: OPNMap, type: OPNMessageType) {
+    protected async sendOPNMessage(
+        target: ID,
+        OPNMap: OPNMap,
+        type: OPNMessageType
+    ) {
         const newSendOPNMessageEvent = new CustomEvent<
             sendOPNMessageEventDetail<ID>
         >(EventID.sendOPNMessage, {
@@ -133,7 +148,7 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newSendOPNMessageEvent);
     }
 
-    sendCandidates(target: ID, candidateIDs: ID[]) {
+    protected sendCandidates(target: ID, candidateIDs: ID[]) {
         const newSendCandidatesEvent = new CustomEvent<
             sendCandidatesEventDetail<ID>
         >(EventID.sendCandidates, {
@@ -364,16 +379,15 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
         issuedOPNMap: OPNMap,
         trustedOIDCProviders: OpenIDProviderInfo[]
     ) {
-        const verifiedICTValues = await verifyICTAnswerJWT(
-            ictAnswer,
-            issuedOPNMap,
-            trustedOIDCProviders
-        );
-
-        const { identity, publicKey } = verifiedICTValues;
+        const { identity, publicKey: receivedICTPubKey } =
+            await verifyICTAnswerJWT(
+                ictAnswer,
+                issuedOPNMap,
+                trustedOIDCProviders
+            );
 
         // Save PubKey for Verifikation
-        candidate = { ...candidate, receivedICTPubKey: publicKey, identity };
+        candidate = { ...candidate, receivedICTPubKey, identity };
 
         if (await haveCandidatesIDandKey(this.candidatesMap)) {
             await this.issueVerification('Callees');
@@ -429,23 +443,19 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
         }
     }
 
-    async verifyICTOffer(
+    protected async verifyICTOffer(
         candidate: Candidate,
         ictOffer: string,
         issuedOPN: OPNMap,
         trustedOIDCProviders: OpenIDProviderInfo[]
     ) {
         try {
-            const verifiedICTOfferValues = await verifyICTOfferJWT(
-                ictOffer,
-                issuedOPN,
-                trustedOIDCProviders
-            );
-            if (!verifiedICTOfferValues)
-                throw new Error('Verification of JWT failed');
-
             const { identity, receivedOPNMap, receivedICTPubKey } =
-                verifiedICTOfferValues;
+                await verifyICTOfferJWT(
+                    ictOffer,
+                    issuedOPN,
+                    trustedOIDCProviders
+                );
 
             // Save PubKey for Verifikation
             candidate = {
@@ -469,7 +479,7 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
     ) {
         await this.getICTAnswer(oidcProvider, tokenSet, target);
     }
-    async getICTAnswer(
+    protected async getICTAnswer(
         selectedOIDCProvider: OpenIDProviderInfo,
         tokenSet: TokenSet,
         target: ID
@@ -660,7 +670,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
         }
     }
 
-    async getConfirmation() {
+    protected async getConfirmation() {
         try {
             const groupLeaderID = this.groupLeaderID;
 

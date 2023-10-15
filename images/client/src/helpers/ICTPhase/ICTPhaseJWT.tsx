@@ -1,5 +1,5 @@
 import * as jose from 'jose';
-import { OPNMap } from './ICTPhase';
+import { Identity, OPNMap } from './ICTPhase';
 import { verifyICT } from './ICT';
 
 import { OpenIDProviderInfo } from './OpenIDProvider';
@@ -43,7 +43,7 @@ async function verifyICTMessage(
 ) {
     try {
         // Extract ICT Values
-        const { OPID, identity, jwkICT } = extractUnverifiedICTValues(ict);
+        const { OPID, userIdentity, jwkICT } = extractUnverifiedICTValues(ict);
 
         // OP in OPs
         // Verify Nonce
@@ -79,7 +79,14 @@ async function verifyICTMessage(
             throw Error('JWT is invalid');
         }
 
-        return { publicKey, identity };
+        return {
+            publicKey,
+            identity: {
+                ...userIdentity,
+                issName: OIDCProvider.name,
+                issImg: OIDCProvider.img,
+            } as Identity,
+        };
     } catch (error) {
         console.log(error);
         throw error;
@@ -140,8 +147,6 @@ function extractUnverifiedICTOfferValues(callJWT: string) {
         throw Error('JWT does not contain needed claims');
     }
 
-    // TODO Move to a later point
-
     const jwtBody = {
         ict: claimsJWT[ictClaimID] as string,
         nonce: claimsJWT[nonceClaimID] as string,
@@ -156,8 +161,6 @@ function extractUnverifiedICTAnswerValues(callJWT: string) {
     if (!claimsJWT[ictClaimID] || !claimsJWT[nonceClaimID]) {
         throw Error('JWT does not contain needed claims');
     }
-
-    // TODO Move to a later point
 
     const jwtBody = {
         ict: claimsJWT['ict'] as string,
@@ -185,9 +188,9 @@ function extractUnverifiedICTValues(ict: string) {
             jose.JWK,
             'kty' | 'crv' | 'x' | 'y' | 'e' | 'n'
         >,
-        identity: {
+        userIdentity: {
             name: claimsICT['name'] as string,
-            email: claimsICT['email'] as string,
+            mail: claimsICT['email'] as string,
         },
     };
 
