@@ -2,7 +2,7 @@ import * as jose from 'jose';
 import { Identity, OPNMap } from './ICTPhase';
 import { verifyICT } from './ICT';
 
-import { OpenIDProviderInfo } from './OpenIDProvider';
+import { ICTProviderInfo } from './OpenIDProvider';
 import { generateJWT } from '../Crypto/JWT';
 
 const ictClaimID = 'ict';
@@ -39,7 +39,7 @@ async function verifyICTMessage(
     OPs: OPNMap,
     ict: string,
     nonce: string,
-    trustedOpenIDProviders: OpenIDProviderInfo[]
+    trustedOpenIDProviders: ICTProviderInfo[]
 ) {
     try {
         // Extract ICT Values
@@ -96,7 +96,7 @@ async function verifyICTMessage(
 export async function verifyICTOfferJWT(
     callJWT: string,
     selfOPs: OPNMap,
-    trustedOpenIDProviders: OpenIDProviderInfo[]
+    trustedOpenIDProviders: ICTProviderInfo[]
 ) {
     // Extract unverified JWT Values
     const { ict, nonce, candidateOPs } =
@@ -120,7 +120,7 @@ export async function verifyICTOfferJWT(
 export async function verifyICTAnswerJWT(
     ictAnswer: string,
     issuedOPNMap: OPNMap,
-    trustedOpenIDProviders: OpenIDProviderInfo[]
+    trustedOpenIDProviders: ICTProviderInfo[]
 ) {
     // Extract unverified JWT Values
     const { ict, nonce } = extractUnverifiedICTAnswerValues(ictAnswer);

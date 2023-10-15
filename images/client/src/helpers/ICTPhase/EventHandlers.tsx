@@ -1,7 +1,7 @@
 import OIDCProvider from '../Auth/OIDCProvider';
 import { ictProviders } from '../Auth/OIDCProviderInfo';
 import { Candidate } from './ICTPhase';
-import { OpenIDProviderInfo, convertOIDCProvider } from './OpenIDProvider';
+import { ICTProviderInfo, convertToICTProvider } from './OpenIDProvider';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
 
 function getProvidersFromOPN(OPN: Map<string, string>) {
@@ -32,7 +32,7 @@ export function createTokenSetList(
     const tokenSetList: {
         tokenSet: TokenSet;
         targets: string[];
-        openIDProviderInfo: OpenIDProviderInfo;
+        openIDProviderInfo: ICTProviderInfo;
     }[] = [];
 
     const targetsByProvider = new Map<string, string[]>();
@@ -52,7 +52,7 @@ export function createTokenSetList(
             const tokenSetInfo = {
                 tokenSet,
                 targets: targetsByProvider.get(providerIssuer) ?? [],
-                openIDProviderInfo: convertOIDCProvider(provider),
+                openIDProviderInfo: convertToICTProvider(provider),
             };
 
             tokenSetList.push(tokenSetInfo);

@@ -3,8 +3,8 @@ import { Description, MainTitle } from '../../UI/Headers';
 import { ictProviders } from '../../../helpers/Auth/OIDCProviderInfo';
 import { TokenSet } from '../../../store/slices/ICTAccessTokenSlice';
 import {
-    OpenIDProviderInfo,
-    convertOIDCProvider,
+    ICTProviderInfo,
+    convertToICTProvider,
 } from '../../../helpers/ICTPhase/OpenIDProvider';
 import { useState } from 'react';
 import { Candidate } from '../../../helpers/ICTPhase/ICTPhase';
@@ -16,9 +16,9 @@ import { createTokenSetList } from '../../../helpers/ICTPhase/EventHandlers';
 interface CallerICTSelectionProps {
     candidates: Map<string, Candidate>;
     onYesHandlerCallerICTSelection: (
-        trustedOIDCProviders: OpenIDProviderInfo[],
+        trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: string[];
         }[]
@@ -52,7 +52,7 @@ export default function CallerICTSelection({
                     isOPNCheckedMap.get(`checkbox_${ictProvider.info.name}`) ===
                     true
             )
-            .map(convertOIDCProvider);
+            .map(convertToICTProvider);
         onYesHandlerCallerICTSelection(
             trustedProviders,
             createTokenSetList(selectedProviders, matchedTokenSet)

@@ -9,8 +9,8 @@ import { UserId } from '../../helpers/Signaling/User';
 import { ReadyState } from 'react-use-websocket';
 import { SignalingSlice } from './SignalingSlice';
 import {
-    OpenIDProviderInfo,
-    convertOIDCProvider,
+    ICTProviderInfo,
+    convertToICTProvider,
 } from '../../helpers/ICTPhase/OpenIDProvider';
 import OIDCProvider from '../../helpers/Auth/OIDCProvider';
 
@@ -19,7 +19,7 @@ interface State {
     candidates: UserId[];
     type?: 'call' | 'conference';
     caller?: UserId;
-    trustedOpenIDProviders: OpenIDProviderInfo[];
+    trustedOpenIDProviders: ICTProviderInfo[];
 }
 
 interface Actions {
@@ -68,7 +68,7 @@ export const createICTPhaseSlice: StateCreator<
     },
     setTrustedOpenIDProviders(newOIDCProviders) {
         set({
-            trustedOpenIDProviders: newOIDCProviders.map(convertOIDCProvider),
+            trustedOpenIDProviders: newOIDCProviders.map(convertToICTProvider),
         });
     },
     resetICTPhaseSlice() {

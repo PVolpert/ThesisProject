@@ -1,7 +1,7 @@
 import { SignPoPToken, getIctEndpoint, requestIct } from 'oidc-squared';
 import * as jose from 'jose';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
-import { OpenIDProviderInfo } from './OpenIDProvider';
+import { ICTProviderInfo } from './OpenIDProvider';
 
 export function createKeyPair() {
     return window.crypto.subtle.generateKey(
@@ -17,7 +17,7 @@ export function createKeyPair() {
 export async function getICT(
     keyPair: CryptoKeyPair,
     { accessToken, idToken }: TokenSet,
-    oidcProvider: OpenIDProviderInfo
+    oidcProvider: ICTProviderInfo
 ) {
     try {
         const publicJwk = await crypto.subtle.exportKey(
@@ -53,7 +53,7 @@ export async function getICT(
     }
 }
 
-export async function verifyICT(ict: string, oidcProvier: OpenIDProviderInfo) {
+export async function verifyICT(ict: string, oidcProvier: ICTProviderInfo) {
     try {
         const jwksURI = oidcProvier.ictURI;
 

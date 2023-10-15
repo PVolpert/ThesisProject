@@ -3,7 +3,7 @@ import { ictDisplayPhases } from '../../pages/P2P';
 import Page from '../UI/Page';
 import CallerICTSelection from './verification/CallerICTSelection';
 import VerifyCaller from './verification/VerifyCaller';
-import { OpenIDProviderInfo } from '../../helpers/ICTPhase/OpenIDProvider';
+import { ICTProviderInfo } from '../../helpers/ICTPhase/OpenIDProvider';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
 import { Candidate } from '../../helpers/ICTPhase/ICTPhase';
 
@@ -15,15 +15,15 @@ interface P2PDisplayProps {
     remoteRef: React.RefObject<HTMLVideoElement>;
     ictDisplayPhase: ictDisplayPhases;
     onYesHandlerCallerICTSelection: (
-        trustedOIDCProviders: OpenIDProviderInfo[],
+        trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: string[];
         }[]
     ) => void;
     onYesHandlerVerifyCaller: (
-        oidcProvider: OpenIDProviderInfo,
+        oidcProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: string
     ) => void;

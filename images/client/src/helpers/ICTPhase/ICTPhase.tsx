@@ -19,7 +19,7 @@ import {
 } from './ICTPhaseJWT';
 import { createKeyPair, getICT } from './ICT';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
-import { OpenIDProviderInfo } from './OpenIDProvider';
+import { ICTProviderInfo } from './OpenIDProvider';
 import { MutexMap } from '../Mutex/MutexMap';
 import { ReactNode } from 'react';
 
@@ -36,7 +36,7 @@ class ICTPhaseSelf<ID> {
     issuedICTKeyPairsMap: MutexMap<ID, CryptoKeyPair>;
     //
     issuedOPNMap: MutexMap<ID, OPNMap>;
-    trustedOIDCProviders?: OpenIDProviderInfo[];
+    trustedOIDCProviders?: ICTProviderInfo[];
 
     constructor() {
         this.issuedICTKeyPairsMap = new MutexMap();
@@ -214,9 +214,9 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     // Called after Callee verification
     async setCallerParameters(
-        trustedOIDCProviders: OpenIDProviderInfo[],
+        trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -238,7 +238,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     protected async getICTOffers(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -255,7 +255,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
     protected async getICTs(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -305,7 +305,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
             targets: ID[];
             ict: string;
             keyPair: CryptoKeyPair;
-            oidcProvider: OpenIDProviderInfo;
+            oidcProvider: ICTProviderInfo;
         }[]
     ) {
         return (
@@ -377,7 +377,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
         candidate: Candidate,
         ictAnswer: string,
         issuedOPNMap: OPNMap,
-        trustedOIDCProviders: OpenIDProviderInfo[]
+        trustedOIDCProviders: ICTProviderInfo[]
     ) {
         const { identity, publicKey: receivedICTPubKey } =
             await verifyICTAnswerJWT(
@@ -400,7 +400,7 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
         super();
     }
 
-    async receiveCall(origin: ID, trustedOIDCProviders: OpenIDProviderInfo[]) {
+    async receiveCall(origin: ID, trustedOIDCProviders: ICTProviderInfo[]) {
         try {
             const newOPNMap = generateOPNMap(trustedOIDCProviders);
             this.self.issuedOPNMap.set(origin, newOPNMap);
@@ -447,7 +447,7 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
         candidate: Candidate,
         ictOffer: string,
         issuedOPN: OPNMap,
-        trustedOIDCProviders: OpenIDProviderInfo[]
+        trustedOIDCProviders: ICTProviderInfo[]
     ) {
         try {
             const { identity, receivedOPNMap, receivedICTPubKey } =
@@ -473,14 +473,14 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
 
     // Callee Post Verify Caller
     async setCalleeParameters(
-        oidcProvider: OpenIDProviderInfo,
+        oidcProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: ID
     ) {
         await this.getICTAnswer(oidcProvider, tokenSet, target);
     }
     protected async getICTAnswer(
-        selectedOIDCProvider: OpenIDProviderInfo,
+        selectedOIDCProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: ID
     ) {
@@ -611,7 +611,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
 
     async setPeersOpenIDProvider(
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: ID[];
         }[]
@@ -715,7 +715,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
     }
 }
 
-function generateOPNMap(oidcProviders: OpenIDProviderInfo[]) {
+function generateOPNMap(oidcProviders: ICTProviderInfo[]) {
     const OPNMap: OPNMap = new MutexMap();
     oidcProviders.forEach((oidcProvider) => {
         const nonce = generateNonce();

@@ -1,7 +1,7 @@
-import { SignPoPToken, getIctEndpoint, requestIct } from 'oidc-squared';
+import { SignPoPToken, requestIct } from 'oidc-squared';
 import * as jose from 'jose';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
-import { OpenIDProviderInfo } from '../ICTPhase/OpenIDProvider';
+import { ICTProviderInfo } from '../ICTPhase/OpenIDProvider';
 
 export function createKeyPair() {
     return window.crypto.subtle.generateKey(
@@ -17,13 +17,15 @@ export function createKeyPair() {
 export async function getICT(
     keyPair: CryptoKeyPair,
     { accessToken, idToken }: TokenSet,
-    oidcProvider: OpenIDProviderInfo
+    oidcProvider: ICTProviderInfo
 ) {
     try {
         const publicJwk = await crypto.subtle.exportKey(
             'jwk',
             keyPair.publicKey
         );
+        // Hello world
+        console.log(23);
 
         const popToken = await new SignPoPToken() // Also sets "iat" to now, "exp" to in 60 seconds, and "jti" to a new UUID.
             .setPublicKey('ES384', publicJwk) // Sets the public key and its algorithm.
@@ -35,11 +37,10 @@ export async function getICT(
             .sign(keyPair.privateKey);
 
         // If not yet known, you can request the ICT Endpoint from the Discovery Document:
-        const ictEndpoint = await getIctEndpoint(oidcProvider.issuer);
 
         // Request ICT from ICT Endpoint:
         const ictResponse = await requestIct({
-            ictEndpoint, // Provide ICT Endpoint here.
+            ictEndpoint: `${oidcProvider.issuer}/protocol/openid-connect/ict`, // Provide ICT Endpoint here.
             accessToken, // Insert Access Token for authorization here.
             popToken, // Insert previously generated PoP Token here.
         });
@@ -53,7 +54,7 @@ export async function getICT(
     }
 }
 
-export async function verifyICT(ict: string, oidcProvier: OpenIDProviderInfo) {
+export async function verifyICT(ict: string, oidcProvier: ICTProviderInfo) {
     try {
         const jwksURI = oidcProvier.ictURI;
 

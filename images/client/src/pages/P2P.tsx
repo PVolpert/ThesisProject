@@ -34,7 +34,7 @@ import { TokenSet } from '../store/slices/ICTAccessTokenSlice';
 import { signalingMessageHandler } from '../helpers/Signaling/MessageHandlers';
 
 import P2PDisplay from '../components/P2P/P2PDisplay';
-import { OpenIDProviderInfo } from '../helpers/ICTPhase/OpenIDProvider';
+import { ICTProviderInfo } from '../helpers/ICTPhase/OpenIDProvider';
 
 let ictPhase = new ICTPhaseGroup<string>();
 
@@ -292,9 +292,9 @@ export default function P2PPage() {
     const remoteRef = useRef<HTMLVideoElement>(null);
 
     function onYesHandlerCallerICTSelection(
-        trustedOIDCProviders: OpenIDProviderInfo[],
+        trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
-            openIDProviderInfo: OpenIDProviderInfo;
+            openIDProviderInfo: ICTProviderInfo;
             tokenSet: TokenSet;
             targets: string[];
         }[]
@@ -302,7 +302,7 @@ export default function P2PPage() {
         ictPhase.setCallerParameters(trustedOIDCProviders, getICTParameters);
     }
     function onYesHandlerVerifyCaller(
-        oidcProvider: OpenIDProviderInfo,
+        oidcProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: string
     ) {

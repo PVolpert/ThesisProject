@@ -3,7 +3,7 @@ import { Description, MainTitle } from '../../UI/Headers';
 import Button from '../../UI/Button';
 import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import { TokenSet } from '../../../store/slices/ICTAccessTokenSlice';
-import { OpenIDProviderInfo } from '../../../helpers/ICTPhase/OpenIDProvider';
+import { ICTProviderInfo } from '../../../helpers/ICTPhase/OpenIDProvider';
 import ProviderSelection from '../elems/ProviderSelection';
 import { Candidate } from '../../../helpers/ICTPhase/ICTPhase';
 import { createTokenSetList } from '../../../helpers/ICTPhase/EventHandlers';
@@ -12,7 +12,7 @@ import AuthenticationSelection from '../elems/AuthenticationSelection';
 interface verifyCallerProps {
     candidates: Map<string, Candidate>;
     onYesHandlerVerifyCaller: (
-        oidcProvider: OpenIDProviderInfo,
+        oidcProvider: ICTProviderInfo,
         tokenSet: TokenSet,
         target: string
     ) => void;
