@@ -55,7 +55,7 @@ export async function getICT(
 
 export async function verifyICT(ict: string, oidcProvier: OpenIDProviderInfo) {
     try {
-        const jwksURI = oidcProvier.jwksURI;
+        const jwksURI = oidcProvier.ictURI;
 
         const JWKS = jose.createRemoteJWKSet(new URL(jwksURI));
 

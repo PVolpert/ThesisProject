@@ -1,10 +1,12 @@
+import { ReactNode } from 'react';
 import OIDCProvider from '../Auth/OIDCProvider';
 
 export interface OpenIDProviderInfo {
     name: string;
     issuer: string;
-    jwksURI: string;
+    ictURI: string;
     clientID: string;
+    img: ReactNode;
 }
 
 export function convertOIDCProvider(oidcProvider: OIDCProvider) {
@@ -17,8 +19,9 @@ export function convertOIDCProvider(oidcProvider: OIDCProvider) {
     const newOpenIDProviderInfo: OpenIDProviderInfo = {
         name: oidcProvider.info.name,
         issuer: oidcProvider.info.issuer.href,
-        jwksURI: jwks_uri,
+        ictURI: jwks_uri,
         clientID: oidcProvider.info.clientId,
+        img: oidcProvider.info.img,
     };
 
     return newOpenIDProviderInfo;
