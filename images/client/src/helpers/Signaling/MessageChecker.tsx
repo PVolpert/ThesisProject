@@ -4,6 +4,7 @@ import {
     incomingMessage,
     incomingOPNMessage,
     incomingOriginMessage,
+    incomingSendSecretExchangeMessage,
     incomingUserListMessage,
     incomingUserStateMessage,
 } from './Messages';
@@ -49,4 +50,12 @@ export function isCandidatesMessage(
     message: incomingOriginMessage
 ): message is incomingCandidatesMessage {
     return 'candidateIDs' in message.body;
+}
+
+// Secret Exchange Phase Messages
+
+export function isSendSecretExchangeMessage(
+    message: incomingOriginMessage
+): message is incomingSendSecretExchangeMessage {
+    return 'jwt' in message.body;
 }

@@ -1,7 +1,8 @@
-import { SignPoPToken, getIctEndpoint, requestIct } from 'oidc-squared';
+import { SignPoPToken, requestIct } from 'oidc-squared';
 import * as jose from 'jose';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
 import { ICTProviderInfo } from './OpenIDProvider';
+import { generateRandomNonce } from 'oauth4webapi';
 
 export function createKeyPair() {
     return window.crypto.subtle.generateKey(
@@ -9,7 +10,7 @@ export function createKeyPair() {
             name: 'ECDSA',
             namedCurve: 'P-384',
         },
-        false,
+        true,
         ['sign', 'verify']
     );
 }
@@ -17,7 +18,7 @@ export function createKeyPair() {
 export async function getICT(
     keyPair: CryptoKeyPair,
     { accessToken, idToken }: TokenSet,
-    oidcProvider: ICTProviderInfo
+    ictProvider: ICTProviderInfo
 ) {
     try {
         const publicJwk = await crypto.subtle.exportKey(
@@ -25,21 +26,22 @@ export async function getICT(
             keyPair.publicKey
         );
 
-        const popToken = await new SignPoPToken() // Also sets "iat" to now, "exp" to in 60 seconds, and "jti" to a new UUID.
+        const popToken = await new SignPoPToken({
+            nonce: generateRandomNonce(),
+        }) // Also sets "iat" to now, "exp" to in 60 seconds, and "jti" to a new UUID.
             .setPublicKey('ES384', publicJwk) // Sets the public key and its algorithm.
-            .setIssuer(oidcProvider.clientID) // Sets Issuer (= Client ID).
+            .setIssuer(ictProvider.clientID) // Sets Issuer (= Client ID).
             .setSubject(idToken.sub) // Sets Subject (= End-User's Subject ID).
-            .setAudience(oidcProvider.issuer) // Sets Audience (= OpenID Provider's Issuer URL).
+            .setAudience(ictProvider.issuer) // Sets Audience (= OpenID Provider's Issuer URL).
             .setRequiredClaims(['name', 'email']) // (Optional) Sets the requested required claims for the ICT.
             .setWithAudience(true) // Sets whether the audience claim should be present in the ICT.
             .sign(keyPair.privateKey);
 
         // If not yet known, you can request the ICT Endpoint from the Discovery Document:
-        const ictEndpoint = await getIctEndpoint(oidcProvider.issuer);
 
         // Request ICT from ICT Endpoint:
         const ictResponse = await requestIct({
-            ictEndpoint, // Provide ICT Endpoint here.
+            ictEndpoint: `${ictProvider.issuer}/protocol/openid-connect/ict`, // Provide ICT Endpoint here.
             accessToken, // Insert Access Token for authorization here.
             popToken, // Insert previously generated PoP Token here.
         });
@@ -53,14 +55,15 @@ export async function getICT(
     }
 }
 
-export async function verifyICT(ict: string, oidcProvier: ICTProviderInfo) {
+export async function verifyICT(ict: string, ictProvider: ICTProviderInfo) {
     try {
-        const jwksURI = oidcProvier.ictURI;
+        const jwksURI = ictProvider.ictURI;
 
         const JWKS = jose.createRemoteJWKSet(new URL(jwksURI));
 
         return !!(await jose.jwtVerify(ict, JWKS));
     } catch (error) {
+        console.error(error);
         return false;
     }
 }

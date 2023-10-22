@@ -28,6 +28,7 @@ export interface sendEventDetail<ID> extends timedEventDetail {
 
 export interface sendICTMessageEventDetail<ID> extends sendEventDetail<ID> {
     type: ICTMessageType;
+    OPNMap?: Map<string, string>;
     jwt: string;
 }
 
@@ -59,7 +60,4 @@ export interface verifyEventDetail<ID> extends timedEventDetail {
 
 // Switch ICT Phase
 
-export interface startSecretEventDetail<ID> extends timedEventDetail {
-    callees: Map<ID, Candidate>;
-    keyPairs: Map<ID, CryptoKeyPair>;
-}
+export interface startSecretEventDetail extends timedEventDetail {}

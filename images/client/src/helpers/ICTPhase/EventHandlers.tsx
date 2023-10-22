@@ -34,30 +34,30 @@ export function createTokenSetList(
         targets: string[];
         openIDProviderInfo: ICTProviderInfo;
     }[] = [];
-
-    const targetsByProvider = new Map<string, string[]>();
-
     selectedProviders.forEach((provider, target) => {
         const providerIssuer = provider.info.issuer.href;
-        // Add to list if already in map or create a new map item
-        if (targetsByProvider.has(providerIssuer)) {
-            targetsByProvider.get(providerIssuer)?.push(target);
+        const existingEntryIndex = tokenSetList.findIndex(
+            (entry) => entry.tokenSet.idToken.iss === providerIssuer
+        );
+
+        if (existingEntryIndex !== -1) {
+            // Provider already exists in the tokenSetList, update the targets
+            tokenSetList[existingEntryIndex].targets.push(target);
         } else {
-            targetsByProvider.set(providerIssuer, [target]);
-        }
+            // Provider is not in the list, create a new entry
+            const tokenSet = matchedTokenSet.get(providerIssuer);
 
-        const tokenSet = matchedTokenSet.get(providerIssuer);
+            if (tokenSet) {
+                const tokenSetInfo = {
+                    tokenSet,
+                    targets: [target],
+                    openIDProviderInfo: convertToICTProvider(provider),
+                };
 
-        if (tokenSet) {
-            const tokenSetInfo = {
-                tokenSet,
-                targets: targetsByProvider.get(providerIssuer) ?? [],
-                openIDProviderInfo: convertToICTProvider(provider),
-            };
-
-            tokenSetList.push(tokenSetInfo);
-        } else {
-            throw new Error('Provider has no TokenSet');
+                tokenSetList.push(tokenSetInfo);
+            } else {
+                throw new Error('Provider has no TokenSet');
+            }
         }
     });
 

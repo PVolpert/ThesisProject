@@ -1,15 +1,15 @@
-import { sendEventDetail } from '../ICTPhase/Events';
+import { sendEventDetail, timedEventDetail } from '../ICTPhase/Events';
 
-export interface sendJWTEventDetail<ID> extends sendEventDetail<ID> {
+export const sendSecretExchangeEventID = 'sendSecretExchangeEvent';
+export const startSFUEventID = 'startSFUEvent';
+export interface sendSecretExchangeEventDetail<ID> extends sendEventDetail<ID> {
+    type: sendSecretExchangeMessageType;
     jwt: string;
 }
 
-export const sendGroupLeaderPubKeyDHEventID = 'sendGroupLeaderPubKeyDH';
-export interface sendGroupLeaderPubKeyDHEventDetail<ID>
-    extends sendJWTEventDetail<ID> {}
-export const sendMemberPubKeyDHEventID = 'sendMemberPubKeyDH';
-export interface sendMemberPubKeyDHEventDetail<ID>
-    extends sendJWTEventDetail<ID> {}
-export const sendSharedSecretEventID = 'sendSharedSecret';
-export interface sendSharedSecretEventDetail<ID>
-    extends sendJWTEventDetail<ID> {}
+export type sendSecretExchangeMessageType =
+    | 'sendGroupLeaderPubKeyDH'
+    | 'sendMemberPubKeyDH'
+    | 'sendSharedSecret';
+
+export interface startSFUEventDetail extends timedEventDetail {}

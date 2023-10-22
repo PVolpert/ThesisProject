@@ -10,14 +10,15 @@ export async function generateSharedSecret() {
 }
 
 export async function generateDHPair() {
-    return await window.crypto.subtle.generateKey(
+    const keyPair = await window.crypto.subtle.generateKey(
         {
             name: 'ECDH',
             namedCurve: 'P-384',
         },
-        false,
+        true,
         ['deriveKey']
     );
+    return keyPair;
 }
 
 export async function deriveDHSecret(

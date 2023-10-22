@@ -16,12 +16,12 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     const resetIctTokens = useStore((state) => {
         return state.resetIctTokens;
     });
-    const resetIctToken = useStore((state) => {
-        return state.resetIctToken;
-    });
-    const ictTokens = useStore((state) => {
-        return state.ictTokenSets;
-    });
+    // const resetIctToken = useStore((state) => {
+    //     return state.resetIctToken;
+    // });
+    // const ictTokens = useStore((state) => {
+    //     return state.ictTokenSets;
+    // });
 
     const signalingUrl = new URL(`${import.meta.env.VITE_SOCKET_URL}`);
     signalingUrl.searchParams.append('oidc', accessToken);
@@ -35,15 +35,16 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             // ? Comment for disabling token checking
             resetTokens();
         } else {
+            // TODO Fix the loop of this
             // find bad ICT Access Token
-            const badICTTokens = ictTokens.filter((ictToken) => {
-                return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
-            });
-            // Remove all bad ICT Access Token
-            badICTTokens.forEach((ictToken) => {
-                console.log('clearing tokens');
-                resetIctToken(ictToken.idToken.iss);
-            });
+            // const badICTTokens = ictTokens.filter((ictToken) => {
+            //     return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
+            // });
+            // // Remove all bad ICT Access Token
+            // badICTTokens.forEach((ictToken) => {
+            //     console.log('clearing tokens');
+            //     resetIctToken(ictToken.idToken.iss);
+            // });
         }
     }
 

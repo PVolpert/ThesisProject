@@ -8,8 +8,10 @@ import {
     isIncomingUserStateMessage,
     isOPNMessage,
     isOriginMessage,
+    isSendSecretExchangeMessage,
 } from './MessageChecker';
 import { ICTPhaseGroup } from '../ICTPhase/ICTPhase';
+import { SecretExchangePhase } from '../SecretExchangePhase/SecretExchangePhase';
 
 // user* Message Handlers
 
@@ -114,7 +116,8 @@ export async function globalMessageHandler(
 
 export async function signalingMessageHandler(
     lastJsonMessage: unknown,
-    ictPhase: ICTPhaseGroup<string>
+    ictPhase: ICTPhaseGroup<string>,
+    secretExchangePhase: SecretExchangePhase<string>
 ) {
     if (
         !lastJsonMessage ||
@@ -131,7 +134,11 @@ export async function signalingMessageHandler(
     switch (type) {
         case 'Call-Answer': {
             if (!isOPNMessage(lastJsonMessage)) return;
-            console.log(`Incoming call-answer message at ${Date.now()}`);
+            console.log(
+                `Incoming call-answer message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
                 body: { OPNMap: transportableOPNMap },
             } = lastJsonMessage;
@@ -144,7 +151,11 @@ export async function signalingMessageHandler(
         }
         case 'Peer-OPN': {
             if (!isOPNMessage(lastJsonMessage)) return;
-            console.log(`Incoming Peer-OPN message at ${Date.now()}`);
+            console.log(
+                `Incoming Peer-OPN message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
                 body: { OPNMap: transportableOPNMap },
             } = lastJsonMessage;
@@ -156,16 +167,32 @@ export async function signalingMessageHandler(
         }
         case 'ICT-Offer': {
             if (!isICTMessage(lastJsonMessage)) return;
-            console.log(`Incoming ICT-Offer message at ${Date.now()}`);
+            console.log(
+                `Incoming ICT-Offer message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
-                body: { jwt },
+                body: { jwt, OPNMap: transportableOPNMap },
             } = lastJsonMessage;
-            ictPhase.setICTOffer(userIdToString(origin), jwt);
+            if (!transportableOPNMap) {
+                console.error('Missing OPN Map');
+                return;
+            }
+            ictPhase.setICTOffer(
+                userIdToString(origin),
+                jwt,
+                new Map<string, string>(Object.entries(transportableOPNMap))
+            );
             break;
         }
         case 'ICT-Answer': {
             if (!isICTMessage(lastJsonMessage)) return;
-            console.log(`Incoming ICT-Answer message at ${Date.now()}`);
+            console.log(
+                `Incoming ICT-Answer message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
                 body: { jwt },
             } = lastJsonMessage;
@@ -174,7 +201,11 @@ export async function signalingMessageHandler(
         }
         case 'ICT-Transfer': {
             if (!isICTMessage(lastJsonMessage)) return;
-            console.log(`Incoming ICT-Transfer message at ${Date.now()}`);
+            console.log(
+                `Incoming ICT-Transfer message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
                 body: { jwt },
             } = lastJsonMessage;
@@ -183,7 +214,11 @@ export async function signalingMessageHandler(
         }
         case 'Candidates': {
             if (!isCandidatesMessage(lastJsonMessage)) return;
-            console.log(`Incoming Candidates message at ${Date.now()}`);
+            console.log(
+                `Incoming Candidates message at ${Date.now()} from ${
+                    origin.username
+                }`
+            );
             const {
                 body: { candidateIDs },
             } = lastJsonMessage;
@@ -195,8 +230,61 @@ export async function signalingMessageHandler(
         }
 
         case 'Confirmation':
-            console.log(`Incoming Confirmation message at ${Date.now()}`);
+            console.log(
+                `Incoming Confirmation message at ${Date.now()}  from ${
+                    origin.username
+                }`
+            );
             ictPhase.setConfirmation(userIdToString(origin));
+            break;
+
+        // Secret Exchange Type Message Handlers
+        case 'GroupLeaderPubKeyDH': {
+            if (!isSendSecretExchangeMessage(lastJsonMessage)) return;
+            console.log(
+                `Incoming Group Leader PubKey message at ${Date.now()}  from ${
+                    origin.username
+                }`
+            );
+
+            const {
+                body: { jwt },
+            } = lastJsonMessage;
+            secretExchangePhase.setGroupLeaderDHParameter(
+                userIdToString(origin),
+                jwt
+            );
+            break;
+        }
+
+        case 'MemberPubKeyDH': {
+            if (!isSendSecretExchangeMessage(lastJsonMessage)) return;
+            console.log(
+                `Incoming Member PubKey message at ${Date.now()}  from ${
+                    origin.username
+                }`
+            );
+            const {
+                body: { jwt },
+            } = lastJsonMessage;
+            secretExchangePhase.setMemberDHParameters(
+                userIdToString(origin),
+                jwt
+            );
+            break;
+        }
+
+        case 'SharedSecret':
+            if (!isSendSecretExchangeMessage(lastJsonMessage)) return;
+            console.log(
+                `Incoming Shared Secret message at ${Date.now()}  from ${
+                    origin.username
+                }`
+            );
+            const {
+                body: { jwt },
+            } = lastJsonMessage;
+            secretExchangePhase.setSharedSecret(userIdToString(origin), jwt);
             break;
     }
 }

@@ -7,31 +7,39 @@ import { generateJWT } from '../Crypto/JWT';
 
 const ictClaimID = 'ict';
 const nonceClaimID = 'nce';
-const OPsClaimID = 'ops';
 
-export async function generateICTOfferJWT(
-    keyPair: CryptoKeyPair,
-    ict: string,
-    nonce: string,
-    partnerOPs: OPNMap
-) {
-    const ictOfferBody = {
-        [ictClaimID]: ict,
-        [nonceClaimID]: nonce,
-        [OPsClaimID]: partnerOPs,
-    };
-    return generateJWT(keyPair, ictOfferBody);
-}
-export async function generateICTAnswerMessage(
+export async function generateICTMessageJWT(
     keyPair: CryptoKeyPair,
     ict: string,
     nonce: string
 ) {
-    const ictAnswerBody = {
+    const ictMsgBody = {
         [ictClaimID]: ict,
         [nonceClaimID]: nonce,
     };
-    return generateJWT(keyPair, ictAnswerBody);
+    return generateJWT(keyPair, ictMsgBody);
+}
+
+export async function verifyICTMessageJWT(
+    callJWT: string,
+    issuedOPNMap: OPNMap,
+    trustedOpenIDProviders: ICTProviderInfo[]
+) {
+    // Extract unverified JWT Values
+    const { ict, nonce } = extractUnverifiedICTMessageValues(callJWT);
+
+    const { publicKey, identity } = await verifyICTMessage(
+        callJWT,
+        issuedOPNMap,
+        ict,
+        nonce,
+        trustedOpenIDProviders
+    );
+
+    return {
+        receivedICTPubKey: publicKey,
+        identity,
+    };
 }
 
 async function verifyICTMessage(
@@ -43,16 +51,17 @@ async function verifyICTMessage(
 ) {
     try {
         // Extract ICT Values
-        const { OPID, userIdentity, jwkICT } = extractUnverifiedICTValues(ict);
+        const { issuer, userIdentity, jwkICT } =
+            extractUnverifiedICTValues(ict);
 
         // OP in OPs
         // Verify Nonce
-        if (nonce !== (await OPs.get(OPID))) {
+        if (nonce !== (await OPs.get(issuer))) {
             throw Error('Given nonce and supplied nonce do not match');
         }
 
         const OIDCProvider = trustedOpenIDProviders.find((oidcProvider) => {
-            return oidcProvider.name === OPID;
+            return oidcProvider.issuer === issuer;
         });
 
         if (!OIDCProvider) {
@@ -66,13 +75,19 @@ async function verifyICTMessage(
 
         const publicKey = await window.crypto.subtle.importKey(
             'jwk',
-            jwkICT,
+            {
+                kty: jwkICT.jwk.kty,
+                crv: jwkICT.jwk.crv,
+                x: jwkICT.jwk.x,
+                y: jwkICT.jwk.y,
+                use: 'sig',
+            },
             {
                 name: 'ECDSA',
                 namedCurve: 'P-384',
             },
-            false,
-            ['sign']
+            true,
+            ['verify']
         );
 
         if (!(await jose.jwtVerify(callJWT, publicKey))) {
@@ -88,74 +103,11 @@ async function verifyICTMessage(
             } as Identity,
         };
     } catch (error) {
-        console.log(error);
         throw error;
     }
 }
 
-export async function verifyICTOfferJWT(
-    callJWT: string,
-    selfOPs: OPNMap,
-    trustedOpenIDProviders: ICTProviderInfo[]
-) {
-    // Extract unverified JWT Values
-    const { ict, nonce, candidateOPs } =
-        extractUnverifiedICTOfferValues(callJWT);
-
-    const { publicKey, identity } = await verifyICTMessage(
-        callJWT,
-        selfOPs,
-        ict,
-        nonce,
-        trustedOpenIDProviders
-    );
-
-    return {
-        receivedICTPubKey: publicKey,
-        identity,
-        receivedOPNMap: candidateOPs,
-    };
-}
-
-export async function verifyICTAnswerJWT(
-    ictAnswer: string,
-    issuedOPNMap: OPNMap,
-    trustedOpenIDProviders: ICTProviderInfo[]
-) {
-    // Extract unverified JWT Values
-    const { ict, nonce } = extractUnverifiedICTAnswerValues(ictAnswer);
-
-    const { publicKey, identity } = await verifyICTMessage(
-        ictAnswer,
-        issuedOPNMap,
-        ict,
-        nonce,
-        trustedOpenIDProviders
-    );
-
-    return { publicKey, identity };
-}
-
-function extractUnverifiedICTOfferValues(callJWT: string) {
-    const claimsJWT = jose.decodeJwt(callJWT);
-
-    if (
-        !claimsJWT[ictClaimID] ||
-        !claimsJWT[nonceClaimID] ||
-        !claimsJWT[OPsClaimID]
-    ) {
-        throw Error('JWT does not contain needed claims');
-    }
-
-    const jwtBody = {
-        ict: claimsJWT[ictClaimID] as string,
-        nonce: claimsJWT[nonceClaimID] as string,
-        candidateOPs: claimsJWT[OPsClaimID] as OPNMap,
-    };
-
-    return jwtBody;
-}
-function extractUnverifiedICTAnswerValues(callJWT: string) {
+function extractUnverifiedICTMessageValues(callJWT: string) {
     const claimsJWT = jose.decodeJwt(callJWT);
 
     if (!claimsJWT[ictClaimID] || !claimsJWT[nonceClaimID]) {
@@ -163,8 +115,8 @@ function extractUnverifiedICTAnswerValues(callJWT: string) {
     }
 
     const jwtBody = {
-        ict: claimsJWT['ict'] as string,
-        nonce: claimsJWT['nonce'] as string,
+        ict: claimsJWT[ictClaimID] as string,
+        nonce: claimsJWT[nonceClaimID] as string,
     };
 
     return jwtBody;
@@ -183,11 +135,10 @@ function extractUnverifiedICTValues(ict: string) {
     }
 
     const ICTBody = {
-        OPID: claimsICT.iss as string,
-        jwkICT: claimsICT['cnf'] as Pick<
-            jose.JWK,
-            'kty' | 'crv' | 'x' | 'y' | 'e' | 'n'
-        >,
+        issuer: claimsICT.iss as string,
+        jwkICT: claimsICT['cnf'] as {
+            jwk: { crv: string; kty: string; x: string; y: string };
+        },
         userIdentity: {
             name: claimsICT['name'] as string,
             mail: claimsICT['email'] as string,

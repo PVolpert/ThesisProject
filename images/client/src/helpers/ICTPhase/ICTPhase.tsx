@@ -11,12 +11,7 @@ import {
     verifyEventDetail,
     VerifyEventType,
 } from './Events';
-import {
-    generateICTAnswerMessage,
-    generateICTOfferJWT,
-    verifyICTAnswerJWT,
-    verifyICTOfferJWT,
-} from './ICTPhaseJWT';
+import { generateICTMessageJWT, verifyICTMessageJWT } from './ICTPhaseJWT';
 import { createKeyPair, getICT } from './ICT';
 import { TokenSet } from '../../store/slices/ICTAccessTokenSlice';
 import { ICTProviderInfo } from './OpenIDProvider';
@@ -50,9 +45,11 @@ export class Candidate {
     // Saved identity of Call Partner
     identity?: Identity;
     receivedOPNMap: OPNMap;
+    authenticated: boolean;
 
     constructor() {
         this.receivedOPNMap = new MutexMap();
+        this.authenticated = false;
     }
 }
 
@@ -68,8 +65,8 @@ class ICTPhaseValues<ID> extends EventTarget {
 
     async getICTPhaseValues() {
         // Check if all candidates have ID and Key
-        if (!(await haveCandidatesIDandKey(this.candidatesMap))) {
-            throw new Error('not all candidates have an assigned ');
+        if (!(await areCandidatesAuthenticated(this.candidatesMap))) {
+            throw new Error('not all candidates are authenticated');
         }
         return {
             keyPairs: this.self.issuedICTKeyPairsMap,
@@ -84,8 +81,9 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
     }
 
     protected async issueVerification(type: VerifyEventType) {
-        // Test if this is the last needed Call Answer via comparing received answers with original
-        const candidateMap = await this.candidatesMap.exportToMap();
+        const candidateMap = await filterCandidatesByAuthenticated(
+            this.candidatesMap
+        );
         // Trigger an verifyCallAnswer event
         const newVerifyCallAnswersEvent = new CustomEvent<
             verifyEventDetail<ID>
@@ -99,10 +97,11 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
         this.dispatchEvent(newVerifyCallAnswersEvent);
     }
 
-    protected sendICTMessage(
+    protected async sendICTMessage(
         target: ID,
         ictMessage: string,
-        type: ICTMessageType
+        type: ICTMessageType,
+        OPNMap?: OPNMap
     ) {
         const newSendICTMessageEvent = new CustomEvent<
             sendICTMessageEventDetail<ID>
@@ -111,6 +110,7 @@ class ICTPhaseEvents<ID> extends ICTPhaseValues<ID> {
                 time: Date.now(),
                 target,
                 jwt: ictMessage,
+                OPNMap: await OPNMap?.exportToMap(),
                 type,
             },
         });
@@ -183,7 +183,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
     async startCall(target: ID) {
         try {
             // Fill the candidate Map
-            this.candidatesMap.set(target, new Candidate());
+            await this.candidatesMap.set(target, new Candidate());
             this.sendNotifyMessage(target, 'Call-Offer');
         } catch (error) {
             console.error(`Starting Call Failed because ${error}`);
@@ -212,7 +212,7 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
         }
     }
 
-    // Called after Callee verification
+    // Called after OPN verification
     async setCallerParameters(
         trustedOIDCProviders: ICTProviderInfo[],
         getICTParameters: {
@@ -224,11 +224,16 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
         try {
             // Save the trusted OIDCProviders for later
             this.self.trustedOIDCProviders = trustedOIDCProviders;
+
             // Generate OPN
-            this.candidatesMap.forEach((_, target) => {
-                const newOPNMap = generateOPNMap(trustedOIDCProviders);
-                this.self.issuedOPNMap.set(target, newOPNMap);
-            });
+            const promises = Array.from(await this.candidatesMap.keys()).map(
+                async (target) => {
+                    const newOPNMap = generateOPNMap(trustedOIDCProviders);
+                    await this.self.issuedOPNMap.set(target, newOPNMap);
+                }
+            );
+
+            await Promise.all(promises);
 
             await this.getICTOffers(getICTParameters);
         } catch (error) {
@@ -248,8 +253,13 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
 
         const ictOffers = await this.getJWTPairs(icts);
         // Trigger sendICT Event
-        ictOffers.forEach(({ target, ictOffer }) => {
-            this.sendICTMessage(target, ictOffer, 'ICT-Offer');
+        ictOffers.forEach(async ({ target, ictOffer }) => {
+            this.sendICTMessage(
+                target,
+                ictOffer,
+                'ICT-Offer',
+                await this.self.issuedOPNMap.get(target)
+            );
         });
     }
 
@@ -321,25 +331,17 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
                             const receivedOPN = candidate.receivedOPNMap;
 
                             const nonce = await receivedOPN.get(
-                                oidcProvider.name
-                            );
-                            const issuedOPN = await this.self.issuedOPNMap.get(
-                                target
+                                oidcProvider.issuer
                             );
                             if (!nonce)
                                 throw new Error(
                                     `missing nonce for target ${target}`
                                 );
-
-                            if (!issuedOPN)
-                                throw new Error('issuedOPN is not assigned');
-
                             // Generate JWT
-                            const jwtOffer = await generateICTOfferJWT(
+                            const jwtOffer = await generateICTMessageJWT(
                                 keyPair,
-                                nonce,
                                 ict,
-                                issuedOPN
+                                nonce
                             );
 
                             return { target, ictOffer: jwtOffer };
@@ -359,11 +361,12 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
             }
             const issuedOPNMap = await this.self.issuedOPNMap.get(origin);
             const trustedOIDCProviders = this.self.trustedOIDCProviders;
-            if (!issuedOPNMap) throw new Error('');
-            if (!trustedOIDCProviders) throw new Error('');
+            if (!issuedOPNMap) throw new Error('could not get issued OPNMap');
+            if (!trustedOIDCProviders)
+                throw new Error('could not get trusted OIDC Providers');
 
             await this.verifyICTAnswer(
-                candidate,
+                origin,
                 ictAnswer,
                 issuedOPNMap,
                 trustedOIDCProviders
@@ -374,23 +377,43 @@ class ICTPhaseCaller<ID> extends ICTPhaseEvents<ID> {
     }
 
     protected async verifyICTAnswer(
-        candidate: Candidate,
+        origin: ID,
         ictAnswer: string,
         issuedOPNMap: OPNMap,
         trustedOIDCProviders: ICTProviderInfo[]
     ) {
-        const { identity, publicKey: receivedICTPubKey } =
-            await verifyICTAnswerJWT(
-                ictAnswer,
-                issuedOPNMap,
-                trustedOIDCProviders
-            );
-
-        // Save PubKey for Verifikation
-        candidate = { ...candidate, receivedICTPubKey, identity };
+        const candidate = await this.candidatesMap.get(origin);
+        if (!candidate) {
+            console.log(`Unknown candidate ${origin}`);
+            return;
+        }
+        const { identity, receivedICTPubKey } = await verifyICTMessageJWT(
+            ictAnswer,
+            issuedOPNMap,
+            trustedOIDCProviders
+        );
+        await this.candidatesMap.set(origin, {
+            ...candidate,
+            receivedICTPubKey,
+            identity,
+        });
 
         if (await haveCandidatesIDandKey(this.candidatesMap)) {
             await this.issueVerification('Callees');
+        }
+    }
+
+    // TODO Set authenticated for ICT Phase
+
+    async setAuthenticated(ids: ID[]) {
+        for (const id of ids) {
+            const candidate = await this.candidatesMap.get(id);
+            if (!candidate)
+                throw new Error('Can not authenticate unknown candidate');
+            await this.candidatesMap.set(id, {
+                ...candidate,
+                authenticated: true,
+            });
         }
     }
 }
@@ -403,11 +426,11 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
     async receiveCall(origin: ID, trustedOIDCProviders: ICTProviderInfo[]) {
         try {
             const newOPNMap = generateOPNMap(trustedOIDCProviders);
-            this.self.issuedOPNMap.set(origin, newOPNMap);
+            await this.self.issuedOPNMap.set(origin, newOPNMap);
 
             this.self.trustedOIDCProviders = trustedOIDCProviders;
 
-            this.candidatesMap.set(origin, new Candidate());
+            await this.candidatesMap.set(origin, new Candidate());
 
             // Trigger an sendCallAnswer event
             this.sendOPNMessage(origin, newOPNMap, 'Call-Answer');
@@ -417,7 +440,11 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
     }
 
     // Callee Funktion to verify ICT Offer
-    async setICTOffer(origin: ID, ictOffer: string) {
+    async setICTOffer(
+        origin: ID,
+        ictOffer: string,
+        offerOPNMap: Map<string, string>
+    ) {
         try {
             const candidate = await this.candidatesMap.get(origin);
             if (!candidate) {
@@ -432,8 +459,13 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
             const issuedOPN = await this.self.issuedOPNMap.get(origin);
             if (!issuedOPN) throw new Error('');
 
+            await this.candidatesMap.set(origin, {
+                ...candidate,
+                receivedOPNMap: new MutexMap(offerOPNMap),
+            });
+
             this.verifyICTOffer(
-                candidate,
+                origin,
                 ictOffer,
                 issuedOPN,
                 trustedOIDCProviders
@@ -444,26 +476,28 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
     }
 
     protected async verifyICTOffer(
-        candidate: Candidate,
+        origin: ID,
         ictOffer: string,
         issuedOPN: OPNMap,
         trustedOIDCProviders: ICTProviderInfo[]
     ) {
         try {
-            const { identity, receivedOPNMap, receivedICTPubKey } =
-                await verifyICTOfferJWT(
-                    ictOffer,
-                    issuedOPN,
-                    trustedOIDCProviders
-                );
+            const candidate = await this.candidatesMap.get(origin);
+            if (!candidate) {
+                console.log(`Unkown candidate ${origin}`);
+                return;
+            }
+            const { identity, receivedICTPubKey } = await verifyICTMessageJWT(
+                ictOffer,
+                issuedOPN,
+                trustedOIDCProviders
+            );
 
-            // Save PubKey for Verifikation
-            candidate = {
+            await this.candidatesMap.set(origin, {
                 ...candidate,
                 receivedICTPubKey: receivedICTPubKey,
                 identity: identity,
-                receivedOPNMap: receivedOPNMap,
-            };
+            });
 
             this.issueVerification('Caller');
         } catch (error) {
@@ -498,15 +532,11 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
                 throw new Error(`missing canidat for target ${target}`);
 
             const nonce = await candidate.receivedOPNMap.get(
-                selectedOIDCProvider.name
+                selectedOIDCProvider.issuer
             );
             if (!nonce) throw new Error(`missing nonce for target ${target}`);
 
-            const ictAnswer = await generateICTAnswerMessage(
-                keyPair,
-                ict,
-                nonce
-            );
+            const ictAnswer = await generateICTMessageJWT(keyPair, ict, nonce);
 
             this.sendICTMessage(target, ictAnswer, 'ICT-Answer');
         } catch (error) {
@@ -516,9 +546,15 @@ export class ICTPhaseCallee<ID> extends ICTPhaseCaller<ID> {
 }
 
 export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
-    isGroupLeader: boolean;
-    groupLeaderID?: ID;
-    confirmationMap: MutexMap<ID, boolean>;
+    protected isGroupLeader: boolean;
+    private _groupLeaderID?: ID | undefined;
+    get groupLeaderID(): ID | undefined {
+        return this._groupLeaderID;
+    }
+    protected set groupLeaderID(value: ID | undefined) {
+        this._groupLeaderID = value;
+    }
+    protected confirmationMap: MutexMap<ID, boolean>;
 
     constructor() {
         super();
@@ -598,7 +634,10 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
             }
 
             // Set the OPsMap from origin
-            candidate.receivedOPNMap = new MutexMap(peerOPNMap);
+            await this.candidatesMap.set(origin, {
+                ...candidate,
+                receivedOPNMap: new MutexMap(peerOPNMap),
+            });
 
             // Test if this is the last needed Call Answer via comparing received answers with original
             if (await haveCandidatesFilledOPNMap(this.candidatesMap)) {
@@ -628,7 +667,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
                 this.sendICTMessage(target, ictTransfer, 'ICT-Transfer');
             });
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     }
     async setICTTransfer(origin: ID, ictTransfer: string) {
@@ -646,7 +685,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
             if (!trustedOIDCProviders)
                 throw new Error('No trusted OIDCProviders set');
 
-            const verifiedICTValues = await verifyICTAnswerJWT(
+            const verifiedICTValues = await verifyICTMessageJWT(
                 ictTransfer,
                 issuedOPNMap,
                 trustedOIDCProviders
@@ -654,12 +693,14 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
             if (!verifiedICTValues)
                 throw new Error('Verification of JWT failed');
 
-            const { identity, publicKey } = verifiedICTValues;
+            const { identity, receivedICTPubKey } = verifiedICTValues;
 
             // Save PubKey for Verifikation
-            candidate.receivedICTPubKey = publicKey;
+            candidate.receivedICTPubKey = receivedICTPubKey;
             // Save Identity for Display
             candidate.identity = identity;
+
+            await this.candidatesMap.set(origin, candidate);
 
             // Trigger Event if all Targets have send their ICT Answer
             if (await haveCandidatesIDandKey(this.candidatesMap)) {
@@ -670,7 +711,7 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
         }
     }
 
-    protected async getConfirmation() {
+    async sendConfirmation() {
         try {
             const groupLeaderID = this.groupLeaderID;
 
@@ -694,19 +735,18 @@ export class ICTPhaseGroup<ID> extends ICTPhaseCallee<ID> {
                 return;
             }
 
+            this.confirmationMap.set(origin, true);
+
             if (await haveCandidatesConfirmed(this.confirmationMap)) {
-                const callees = await this.candidatesMap.exportToMap();
-                const keyPairs =
-                    await this.self.issuedICTKeyPairsMap.exportToMap();
-                const newStartSecretPhase = new CustomEvent<
-                    startSecretEventDetail<ID>
-                >(EventID.startSecret, {
-                    detail: {
-                        time: Date.now(),
-                        callees,
-                        keyPairs,
-                    },
-                });
+                const newStartSecretPhase =
+                    new CustomEvent<startSecretEventDetail>(
+                        EventID.startSecret,
+                        {
+                            detail: {
+                                time: Date.now(),
+                            },
+                        }
+                    );
                 this.dispatchEvent(newStartSecretPhase);
             }
         } catch (error) {
@@ -751,13 +791,34 @@ async function createCandidateCheckerFunction<ID, Value>(
     return true;
 }
 
+async function hasCandidateFilledOPNMap(candidate: Candidate) {
+    return (await candidate.receivedOPNMap.size()) > 0;
+}
+
+async function hasCandidateIDandKey(candidate: Candidate) {
+    return !!(candidate.receivedICTPubKey && candidate.identity);
+}
+async function isCandidateAuthenticated(candidate: Candidate) {
+    return candidate.authenticated;
+}
+
 async function haveCandidatesFilledOPNMap<ID>(
     candidateMap: MutexMap<ID, Candidate>
 ) {
-    return createCandidateCheckerFunction(candidateMap, async (candidate) => {
-        return (await candidate.receivedOPNMap.size()) > 0;
-    });
+    return createCandidateCheckerFunction(
+        candidateMap,
+        hasCandidateFilledOPNMap
+    );
 }
+async function areCandidatesAuthenticated<ID>(
+    candidateMap: MutexMap<ID, Candidate>
+) {
+    return createCandidateCheckerFunction(
+        candidateMap,
+        isCandidateAuthenticated
+    );
+}
+
 async function haveCandidatesConfirmed<ID>(
     confirmationMap: MutexMap<ID, boolean>
 ) {
@@ -772,7 +833,26 @@ async function haveCandidatesConfirmed<ID>(
 async function haveCandidatesIDandKey<ID>(
     candidateMap: MutexMap<ID, Candidate>
 ) {
-    return createCandidateCheckerFunction(candidateMap, async (candidate) => {
-        return !!candidate.receivedICTPubKey && !!candidate.identity;
+    return createCandidateCheckerFunction(candidateMap, hasCandidateIDandKey);
+}
+
+async function filterCandidates<ID>(
+    candidateMap: MutexMap<ID, Candidate>,
+    filterFunction: (candidate: Candidate) => Promise<boolean>
+) {
+    const filteredMap = new Map<ID, Candidate>();
+    for (const [id, candidate] of await candidateMap.exportToMap()) {
+        if (await filterFunction(candidate)) {
+            filteredMap.set(id, candidate);
+        }
+    }
+    return filteredMap;
+}
+
+async function filterCandidatesByAuthenticated<ID>(
+    candidateMap: MutexMap<ID, Candidate>
+) {
+    return filterCandidates(candidateMap, async (candidate) => {
+        return !(await isCandidateAuthenticated(candidate));
     });
 }

@@ -1,11 +1,11 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { useStore } from '../../store/Store';
 import Modal from '../UI/Modal';
-import ConfirmCaller from './IncomingCallSteps/ConfirmCaller';
+import ConfirmIncoming from './ConfirmIncoming';
 import { useNavigate } from 'react-router-dom';
-import ConfirmIncomingConference from './IncomingCallSteps/ConfirmIncomingConference';
+
 import { ictProviders } from '../../helpers/Auth/OIDCProviderInfo';
-import OIDCProvider from '../../helpers/Auth/OIDCProvider';
+import { Description, MainTitle } from '../UI/Headers';
 
 interface IncomingCallModalProps {
     children?: ReactNode;
@@ -28,96 +28,58 @@ export default function IncomingCallModal({}: IncomingCallModalProps) {
         return caller.username;
     }, [caller]);
 
-    const [checkedCount, setCheckedCount] = useState(0);
+    const [checkedOPNCount, setCheckedOPNCount] = useState(0);
 
-    const [formData, setFormData] = useState<Map<string, boolean>>(new Map());
+    const [isOPNCheckedMap, setIsOPNCheckedMap] = useState<
+        Map<string, boolean>
+    >(new Map());
 
-    useEffect(() => {
-        const formDataMap = new Map(
-            ictProviders.map((ictProvider) => [
-                `checkbox_${ictProvider.info.name}`,
-                false,
-            ])
+    function onYesHandler() {
+        const trustedProviders = ictProviders.filter(
+            (ictProvider) => isOPNCheckedMap.get(ictProvider.info.name) === true
         );
+        setTrustedOpenIDProviders(trustedProviders);
+        hideModal();
+        navigate('/call/p2p');
+    }
 
-        setFormData(formDataMap);
-    }, []);
-
-    // Checkbox Changed function
-    const onCheckBoxChangeHandlerBuilder = (ictProvider: OIDCProvider) => {
-        const onCheckBoxChangeHandler = () => {
-            if (!formData.get(`checkbox_${ictProvider.info.name}`)) {
-                const newMap = new Map(formData);
-                newMap.set(`checkbox_${ictProvider.info.name}`, true);
-                setFormData(newMap);
-                setCheckedCount((prior) => {
-                    return prior + 1;
-                });
-                return;
-            }
-            const newMap = new Map(formData);
-            newMap.set(`checkbox_${ictProvider.info.name}`, false);
-            setFormData(newMap);
-            setCheckedCount((prior) => {
-                return prior - 1;
-            });
-            return;
-        };
-        return onCheckBoxChangeHandler;
-    };
+    function onNoHandler() {
+        hideModal();
+    }
 
     return (
         <Modal onHideModal={hideModal}>
-            {!caller && <p>Something went wrong</p>}
-
-            {caller && type === 'call' && (
-                <ConfirmCaller
-                    onClickYes={() => {
-                        const trustedProviders = ictProviders.filter(
-                            (ictProvider) =>
-                                formData.get(
-                                    `checkbox_${ictProvider.info.name}`
-                                ) === true
-                        );
-                        setTrustedOpenIDProviders(trustedProviders);
-                        hideModal();
-                        navigate('/call/p2p');
-                    }}
-                    onClickNo={() => {
-                        hideModal();
-                    }}
-                    onCheckBoxChangeHandlerBuilder={
-                        onCheckBoxChangeHandlerBuilder
-                    }
-                    checkedCount={checkedCount}
-                    formData={formData}
-                    username={callerUserName || 'unknown'}
-                />
-            )}
-            {caller && type === 'conference' && (
-                <ConfirmIncomingConference
-                    onClickYes={() => {
-                        const trustedProviders = ictProviders.filter(
-                            (ictProvider) =>
-                                formData.get(
-                                    `checkbox_${ictProvider.info.name}`
-                                ) === true
-                        );
-                        setTrustedOpenIDProviders(trustedProviders);
-                        hideModal();
-                        navigate('/call/conference');
-                    }}
-                    onClickNo={() => {
-                        hideModal();
-                    }}
-                    onCheckBoxChangeHandlerBuilder={
-                        onCheckBoxChangeHandlerBuilder
-                    }
-                    checkedCount={checkedCount}
-                    formData={formData}
-                    username={callerUserName || 'unkown'}
-                />
-            )}
+            <ConfirmIncoming
+                username={callerUserName || 'unknown'}
+                checkedOPNCount={checkedOPNCount}
+                isOPNCheckedMap={isOPNCheckedMap}
+                setCheckedCount={setCheckedOPNCount}
+                setIsCheckedMap={setIsOPNCheckedMap}
+                onYesHandler={onYesHandler}
+                onNoHandler={onNoHandler}
+            >
+                {caller && type === 'call' && (
+                    <>
+                        <MainTitle> Accept Call? </MainTitle>
+                        <Description>
+                            You are getting called by{' '}
+                            {callerUserName || 'unknown'}. Do you want to accept
+                            the call? The caller has the following
+                            identifications.
+                        </Description>
+                    </>
+                )}
+                {caller && type === 'conference' && (
+                    <>
+                        <MainTitle> Join Conference? </MainTitle>
+                        <Description>
+                            You are invited to a conference by{' '}
+                            {callerUserName || 'unknown'}. Continue with
+                            conference establishment?
+                        </Description>
+                    </>
+                )}
+            </ConfirmIncoming>
         </Modal>
     );
 }

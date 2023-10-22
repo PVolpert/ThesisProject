@@ -14,7 +14,11 @@ export type MessageType =
     | 'ICT-Offer'
     | 'ICT-Answer'
     | 'ICT-Transfer'
-    | 'Candidates';
+    | 'Candidates'
+    // Key Exchange Type Events
+    | 'GroupLeaderPubKeyDH'
+    | 'MemberPubKeyDH'
+    | 'SharedSecret';
 
 // TODO Add other Messages
 
@@ -104,6 +108,9 @@ export function createPeerOPNMessage(
     return msg;
 }
 export interface ictMessageBody {
+    OPNMap?: {
+        [k: string]: string;
+    };
     jwt: string;
 }
 
@@ -115,8 +122,18 @@ export interface incomingICTMessage extends incomingOriginMessage {
     body: ictMessageBody;
 }
 
-export function createICTOfferMessage(target: UserId, jwt: string) {
-    const msg: ictMessage = { type: 'ICT-Offer', target, body: { jwt } };
+export function createICTOfferMessage(
+    target: UserId,
+    jwt: string,
+    OPNMap: {
+        [k: string]: string;
+    }
+) {
+    const msg: ictMessage = {
+        type: 'ICT-Offer',
+        target,
+        body: { jwt, OPNMap },
+    };
     return msg;
 }
 export function createICTAnswerMessage(target: UserId, jwt: string) {
@@ -148,6 +165,42 @@ export function createCandidatesMessage(
         type: 'Candidates',
         target,
         body: { candidateIDs },
+    };
+    return msg;
+}
+
+export interface sendSecretExchangeMessageBody {
+    jwt: string;
+}
+export interface sendSecretExchangeMessage extends Message {
+    body: sendSecretExchangeMessageBody;
+}
+export interface incomingSendSecretExchangeMessage
+    extends incomingOriginMessage {
+    body: sendSecretExchangeMessageBody;
+}
+
+export function createGroupLeaderPubKeyMessage(target: UserId, jwt: string) {
+    const msg: sendSecretExchangeMessage = {
+        type: 'GroupLeaderPubKeyDH',
+        target,
+        body: { jwt },
+    };
+    return msg;
+}
+export function createMemberPubKeyMessage(target: UserId, jwt: string) {
+    const msg: sendSecretExchangeMessage = {
+        type: 'MemberPubKeyDH',
+        target,
+        body: { jwt },
+    };
+    return msg;
+}
+export function createSharedSecretMessage(target: UserId, jwt: string) {
+    const msg: sendSecretExchangeMessage = {
+        type: 'SharedSecret',
+        target,
+        body: { jwt },
     };
     return msg;
 }

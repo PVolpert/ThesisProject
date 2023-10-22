@@ -4,26 +4,26 @@ import {
     generateDHPair,
     generateSharedSecret,
 } from './Secrets';
-import {
-    sendGroupLeaderPubKeyDHEventDetail,
-    sendGroupLeaderPubKeyDHEventID,
-    sendMemberPubKeyDHEventDetail,
-    sendMemberPubKeyDHEventID,
-    sendSharedSecretEventDetail,
-    sendSharedSecretEventID,
-} from './Events';
+
 import {
     generateDHJWT,
     generateSharedSecretJWT,
     verifyDHJWT,
     verifySharedSecretJWT,
-} from './JWT';
+} from './SecretExchangePhaseJWT';
 import { MutexMap } from '../Mutex/MutexMap';
+import {
+    sendSecretExchangeMessageType,
+    sendSecretExchangeEventDetail,
+    sendSecretExchangeEventID,
+    startSFUEventDetail,
+    startSFUEventID,
+} from './Events';
 
 class SecretExchangePhaseGroupMember {
     identity: Identity;
-    ICTPubKey: CryptoKey;
-    dhSecret?: CryptoKey;
+    receivedICTPubKey: CryptoKey;
+    negotiatedDHSecret?: CryptoKey;
     constructor(candidate: Candidate) {
         const identity = candidate.identity;
         if (!identity) {
@@ -35,20 +35,20 @@ class SecretExchangePhaseGroupMember {
         if (!ICTPubkey) {
             throw new Error('');
         }
-        this.ICTPubKey = ICTPubkey;
+        this.receivedICTPubKey = ICTPubkey;
     }
 }
 
 class SecretExchangePhaseSelf<ID> {
     ICTPhaseKeyPairs: MutexMap<ID, CryptoKeyPair>;
-    DHKeyPairs: MutexMap<ID, CryptoKeyPair>;
+    issuedDHKeyPairs: MutexMap<ID, CryptoKeyPair>;
 
     isGroupLeader: boolean;
     groupLeaderID?: ID;
 
     constructor() {
         this.ICTPhaseKeyPairs = new MutexMap();
-        this.DHKeyPairs = new MutexMap();
+        this.issuedDHKeyPairs = new MutexMap();
         this.isGroupLeader = false;
     }
 }
@@ -66,16 +66,48 @@ function convertCallCandidateMaptoMemberMutexMap<ID>(
     );
 }
 
-export class SecretExchangePhase<ID> extends EventTarget {
-    self: SecretExchangePhaseSelf<ID>;
-    groupMemberMap?: MutexMap<ID, SecretExchangePhaseGroupMember>;
-    sharedSecret?: CryptoKey;
+class SecretExchangePhaseValues<ID> extends EventTarget {
+    protected self: SecretExchangePhaseSelf<ID>;
+    protected groupMemberMap?: MutexMap<ID, SecretExchangePhaseGroupMember>;
+    protected sharedSecret?: CryptoKey;
 
     constructor() {
         super();
         this.self = new SecretExchangePhaseSelf();
     }
 
+    async getSecretExchangePhaseValues() {
+        if (!this.sharedSecret || !this.groupMemberMap) {
+            throw new Error('Not all values prepared');
+        }
+        return {
+            sharedSecret: this.sharedSecret,
+            groupMemberMap: this.groupMemberMap,
+        };
+    }
+}
+
+class SecretExchangePhaseEvents<ID> extends SecretExchangePhaseValues<ID> {
+    protected sendSecretExchangeMessage(
+        target: ID,
+        jwt: string,
+        type: sendSecretExchangeMessageType
+    ) {
+        const newSendSecretExchangeMessageEvent = new CustomEvent<
+            sendSecretExchangeEventDetail<ID>
+        >(sendSecretExchangeEventID, {
+            detail: {
+                time: Date.now(),
+                target,
+                jwt,
+                type,
+            },
+        });
+        this.dispatchEvent(newSendSecretExchangeMessageEvent);
+    }
+}
+
+export class SecretExchangePhase<ID> extends SecretExchangePhaseEvents<ID> {
     async setupGroupLeader(
         candidateMap: Map<ID, Candidate>,
         ICTKeyPairs: Map<ID, CryptoKeyPair>
@@ -84,74 +116,71 @@ export class SecretExchangePhase<ID> extends EventTarget {
             convertCallCandidateMaptoMemberMutexMap<ID>(candidateMap);
         this.self.ICTPhaseKeyPairs = new MutexMap(ICTKeyPairs);
         this.self.isGroupLeader = true;
-        this.sharedSecret = await generateSharedSecret();
 
-        this.getDHParametersGroupLeader();
+        this.createDHParametersGroupLeader();
     }
 
-    setupGroupMember(
+    async setupGroupMember(
         candidateMap: Map<ID, Candidate>,
         ICTKeyPairs: Map<ID, CryptoKeyPair>,
-        groupLeaderId: ID,
-        GroupLeaderDHJWT: string
+        groupLeaderId: ID
     ) {
         this.groupMemberMap =
             convertCallCandidateMaptoMemberMutexMap<ID>(candidateMap);
         this.self.ICTPhaseKeyPairs = new MutexMap(ICTKeyPairs);
         this.self.groupLeaderID = groupLeaderId;
-
-        this.setGroupLeaderDHParameter(GroupLeaderDHJWT);
+        const DHKeyPair = await generateDHPair();
+        await this.self.issuedDHKeyPairs.set(groupLeaderId, DHKeyPair);
     }
 
-    async getDHParametersGroupLeader() {
+    protected async createDHParametersGroupLeader() {
         if (!this.groupMemberMap) {
             throw Error('ICT Phase results not passed');
         }
         // generate the Keys
-        for (const [calleeID] of await this.groupMemberMap.exportToMap()) {
+        for (const [memberId] of await this.groupMemberMap.exportToMap()) {
             try {
                 const DHKeyPair = await generateDHPair();
-                this.self.DHKeyPairs.set(calleeID, DHKeyPair);
+                this.self.issuedDHKeyPairs.set(memberId, DHKeyPair);
             } catch (error) {
                 throw new Error('Could not generate DH Keys');
             }
         }
         this.sendDHParametersGroupLeader();
     }
-    async sendDHParametersGroupLeader() {
+    protected async sendDHParametersGroupLeader() {
         if (!this.groupMemberMap) {
             throw Error('ICT Phase results not passed');
         }
 
         // send the Public Key
-
-        for (const [calleeID] of await this.groupMemberMap.exportToMap()) {
-            const ICTKeyPair = await this.self.ICTPhaseKeyPairs.get(calleeID);
+        // ? For Renegotiation you can simplify that
+        for (const [memberId] of await this.groupMemberMap.exportToMap()) {
+            const ICTKeyPair = await this.self.ICTPhaseKeyPairs.get(memberId);
 
             if (!ICTKeyPair) {
-                throw new Error(`No ICT Keypair for ${calleeID}`);
+                throw new Error(`No ICT Keypair for ${memberId}`);
             }
 
-            const DHKeyPair = await this.self.DHKeyPairs.get(calleeID);
-            if (!DHKeyPair) {
-                throw new Error(`No DH Keypair for ${calleeID}`);
+            const issuedDHKeyPair = await this.self.issuedDHKeyPairs.get(
+                memberId
+            );
+            if (!issuedDHKeyPair) {
+                throw new Error(`No DH Keypair for ${memberId}`);
             }
 
-            const DHJWT = await generateDHJWT(ICTKeyPair, DHKeyPair.publicKey);
+            const DHJWT = await generateDHJWT(
+                ICTKeyPair,
+                issuedDHKeyPair.publicKey
+            );
 
-            const newSendGroupLeaderPubKeyDHEvent = new CustomEvent<
-                sendGroupLeaderPubKeyDHEventDetail<ID>
-            >(sendGroupLeaderPubKeyDHEventID, {
-                detail: {
-                    time: Date.now(),
-                    target: calleeID,
-                    jwt: DHJWT,
-                },
-            });
-            dispatchEvent(newSendGroupLeaderPubKeyDHEvent);
+            this.sendSecretExchangeMessage(
+                memberId,
+                DHJWT,
+                'sendGroupLeaderPubKeyDH'
+            );
         }
     }
-
     async setMemberDHParameters(origin: ID, DHJWT: string) {
         if (!this.groupMemberMap) {
             throw new Error('ICT Phase results not passed');
@@ -162,32 +191,41 @@ export class SecretExchangePhase<ID> extends EventTarget {
             console.log(`Ignore DHJWT from unknown origin ${origin}`);
             return;
         }
-        const selfDHKeyPair = await this.self.DHKeyPairs.get(origin);
+        const selfDHKeyPair = await this.self.issuedDHKeyPairs.get(origin);
         if (!selfDHKeyPair) {
             throw new Error('');
         }
 
-        const memberDHPubKey = await verifyDHJWT(member.ICTPubKey, DHJWT);
+        const memberDHPubKey = await verifyDHJWT(
+            member.receivedICTPubKey,
+            DHJWT
+        );
 
         const DHSecret = await deriveDHSecret(selfDHKeyPair, memberDHPubKey);
 
-        member.dhSecret = DHSecret;
+        member.negotiatedDHSecret = DHSecret;
+
+        await this.groupMemberMap.set(origin, member);
 
         if (await hasEveryMemberDHSecret(this.groupMemberMap)) {
+            console.log('Exchanged DH Secret with every Group Member');
             this.sendSharedSecret();
         }
     }
 
-    async setGroupLeaderDHParameter(DHJWT: string) {
+    async setGroupLeaderDHParameter(origin: ID, DHJWT: string) {
         if (!this.groupMemberMap) {
             throw new Error('ICT Phase results not passed');
         }
         const groupLeaderID = this.self.groupLeaderID;
-        if (!groupLeaderID) {
+        if (!groupLeaderID || groupLeaderID !== origin) {
             throw new Error('');
         }
-        const selfDHKeyPair = await this.self.DHKeyPairs.get(groupLeaderID);
-        if (!selfDHKeyPair) {
+        // Retrieve own DH KeyPair
+        const issuedDHKeyPair = await this.self.issuedDHKeyPairs.get(
+            groupLeaderID
+        );
+        if (!issuedDHKeyPair) {
             throw new Error('');
         }
 
@@ -197,29 +235,24 @@ export class SecretExchangePhase<ID> extends EventTarget {
             throw new Error('');
         }
 
-        const memberDHPubKey = await verifyDHJWT(groupLeader.ICTPubKey, DHJWT);
+        // Extract opposite site PubKey
+        const receivedDHPubKey = await verifyDHJWT(
+            groupLeader.receivedICTPubKey,
+            DHJWT
+        );
 
-        const DHSecret = await deriveDHSecret(selfDHKeyPair, memberDHPubKey);
-
-        groupLeader.dhSecret = DHSecret;
-
-        this.getDHParametersMember();
-    }
-
-    async getDHParametersMember() {
-        const groupLeaderID = this.self.groupLeaderID;
-        if (!groupLeaderID) {
-            throw Error('ICT Phase results not passed');
-        }
-        // generate the Keys
-
-        const DHKeyPair = await generateDHPair();
-        this.self.DHKeyPairs.set(groupLeaderID, DHKeyPair);
+        await this.groupMemberMap.set(groupLeaderID, {
+            ...groupLeader,
+            negotiatedDHSecret: await deriveDHSecret(
+                issuedDHKeyPair,
+                receivedDHPubKey
+            ),
+        });
 
         this.sendMemberDHParameters();
     }
 
-    async sendMemberDHParameters() {
+    protected async sendMemberDHParameters() {
         const groupLeaderID = this.self.groupLeaderID;
         if (!groupLeaderID) {
             throw Error('ICT Phase results not passed');
@@ -231,34 +264,33 @@ export class SecretExchangePhase<ID> extends EventTarget {
             throw new Error(`No ICT Keypair for ${groupLeaderID}`);
         }
 
-        const DHKeypair = await this.self.DHKeyPairs.get(groupLeaderID);
+        const DHKeypair = await this.self.issuedDHKeyPairs.get(groupLeaderID);
         if (!DHKeypair) {
             throw new Error(`No DH Keypair for ${groupLeaderID}`);
         }
 
         const DHJWT = await generateDHJWT(ICTKeyPair, DHKeypair.publicKey);
 
-        const newSendMemberPubKeyDHEvent = new CustomEvent<
-            sendMemberPubKeyDHEventDetail<ID>
-        >(sendMemberPubKeyDHEventID, {
-            detail: {
-                time: Date.now(),
-                target: groupLeaderID,
-                jwt: DHJWT,
-            },
-        });
-        dispatchEvent(newSendMemberPubKeyDHEvent);
+        this.sendSecretExchangeMessage(
+            groupLeaderID,
+            DHJWT,
+            'sendMemberPubKeyDH'
+        );
     }
 
     async sendSharedSecret() {
         if (!this.groupMemberMap) {
             throw new Error('');
         }
+
+        // Generate a new shared secret every time
+        this.sharedSecret = await generateSharedSecret();
+
         for (const [
             memberID,
             member,
         ] of await this.groupMemberMap.exportToMap()) {
-            const dhSecret = member.dhSecret;
+            const dhSecret = member.negotiatedDHSecret;
             if (!dhSecret) {
                 throw new Error('');
             }
@@ -272,20 +304,24 @@ export class SecretExchangePhase<ID> extends EventTarget {
                 sharedSecret
             );
 
-            const newSendSharedSecretEvent = new CustomEvent<
-                sendSharedSecretEventDetail<ID>
-            >(sendSharedSecretEventID, {
+            this.sendSecretExchangeMessage(
+                memberID,
+                encSharedSecretJWT,
+                'sendSharedSecret'
+            );
+        }
+        const newStartSecretPhase = new CustomEvent<startSFUEventDetail>(
+            startSFUEventID,
+            {
                 detail: {
                     time: Date.now(),
-                    target: memberID,
-                    jwt: encSharedSecretJWT,
                 },
-            });
-            dispatchEvent(newSendSharedSecretEvent);
-        }
+            }
+        );
+        this.dispatchEvent(newStartSecretPhase);
     }
 
-    async getSharedSecret(origin: ID, sharedSecretJWT: string) {
+    async setSharedSecret(origin: ID, sharedSecretJWT: string) {
         const groupLeaderID = this.self.groupLeaderID;
         if (!groupLeaderID) {
             throw Error('ICT Phase results not passed');
@@ -297,17 +333,19 @@ export class SecretExchangePhase<ID> extends EventTarget {
         }
 
         if (!this.groupMemberMap) {
-            throw new Error('');
+            throw new Error('GroupMemberMap undefined. Initialize first');
         }
 
         const groupLeader = await this.groupMemberMap.get(groupLeaderID);
 
         if (!groupLeader) {
-            throw new Error('');
+            throw new Error('Missing Group Leader');
         }
-        const DHSecret = groupLeader.dhSecret;
+        const DHSecret = groupLeader.negotiatedDHSecret;
         if (!DHSecret) {
-            throw new Error('');
+            throw new Error(
+                `Missing DH Secret for groupleader ${groupLeaderID}`
+            );
         }
 
         const sharedSecret = await verifySharedSecretJWT(
@@ -323,7 +361,7 @@ async function hasEveryMemberDHSecret<ID>(
     groupMemberMap: MutexMap<ID, SecretExchangePhaseGroupMember>
 ) {
     for (const [, member] of await groupMemberMap.exportToMap()) {
-        if (!member.dhSecret) {
+        if (!member.negotiatedDHSecret) {
             return false;
         }
     }
