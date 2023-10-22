@@ -100,3 +100,32 @@ export function WaitForPeerICTTransfer() {
         </Wait>
     );
 }
+export function WaitForConfirmations() {
+    return (
+        <Wait waitTitle="Confirmations">
+            <Description>
+                The candidates have to provider confirmations for completion the
+                End-to-End Authentication.
+            </Description>
+        </Wait>
+    );
+}
+export function WaitForKeyExchange() {
+    return (
+        <Wait waitTitle="KeyExchange Phase">
+            <Description>
+                The Key Exchange Phase is currently running in the background.
+                See the console for more information.
+            </Description>
+        </Wait>
+    );
+}
+export function WaitForOtherPeers() {
+    return (
+        <Wait waitTitle="other Peers">
+            <Description>
+                Not all other peers have confirmed their Authentication yet.
+            </Description>
+        </Wait>
+    );
+}

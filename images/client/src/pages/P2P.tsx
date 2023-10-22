@@ -55,6 +55,7 @@ export type ictDisplayPhases =
     | 'waitForPeerOPN'
     | 'waitForPeerICTTransfer'
     | 'waitForConfirmations'
+    | 'waitForOtherPeers'
     | 'waitForKeyExchange'
     | 'waitForConnectionStart'
     | 'verifyCallerIdentityAndCreateICTAnswer'

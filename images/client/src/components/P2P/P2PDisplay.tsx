@@ -12,9 +12,12 @@ import VerifyPeer from './verification/VerifyPeer';
 import {
     WaitForCallAnswer,
     WaitForCandidates,
+    WaitForConfirmations,
     WaitForConnectionStart,
     WaitForICTAnswer,
     WaitForICTOffer,
+    WaitForKeyExchange,
+    WaitForOtherPeers,
     WaitForPeerICTTransfer,
     WaitForPeerOPN,
 } from './Wait';
@@ -90,6 +93,12 @@ export default function P2PDisplay({
                 return <WaitForPeerOPN />;
             case 'waitForPeerICTTransfer':
                 return <WaitForPeerICTTransfer />;
+            case 'waitForConfirmations':
+                return <WaitForConfirmations />;
+            case 'waitForOtherPeers':
+                return <WaitForOtherPeers />;
+            case 'waitForKeyExchange':
+                return <WaitForKeyExchange />;
             case 'verifyOPNAndCreateICTOffer':
                 return (
                     <CallerICTSelection
