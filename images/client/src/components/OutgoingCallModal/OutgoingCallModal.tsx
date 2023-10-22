@@ -1,8 +1,8 @@
-import ConfirmCall from './OutgoingCallSteps/ConfirmCall';
+import ConfirmCall from './ConfirmCall';
 import Modal from '../UI/Modal';
 import { useStore } from '../../store/Store';
 import { useNavigate } from 'react-router-dom';
-import ConfirmConference from './OutgoingCallSteps/ConfirmConference';
+import ConfirmConference from './ConfirmConference';
 
 interface OutgoingCallModalProps {}
 
@@ -41,7 +41,7 @@ export default function OutgoingCallModal({}: OutgoingCallModalProps) {
                         hideModal();
                     }}
                     onClickYes={() => {
-                        navigate('/call/conference');
+                        navigate('/call/p2p');
                         hideModal();
                     }}
                     candidates={candidates}

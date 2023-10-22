@@ -66,7 +66,7 @@ export default function RadioItem({
                 </label>
             )}
             <input
-                className="h-8 w-8  cursor-pointer accent-springblue "
+                className="h-8 w-8 disabled:cursor-not-allowed cursor-pointer accent-springblue "
                 type="radio"
                 name={radioName}
                 id={`radio_${ictProvider.info.name}`}

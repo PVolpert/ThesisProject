@@ -42,7 +42,6 @@ export default function UseMenu({ activeUsers }: UseMenuProps) {
         const filteredUsers = activeUsers.filter(
             (user) => formData.get(`checkbox_${user.username}`) === true
         );
-        console.log(activeUsers, filteredUsers);
         setCandidates(filteredUsers);
         setType('conference');
         showOutgoingCallModal();

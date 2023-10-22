@@ -62,21 +62,20 @@ export default function AuthenticationSelection({
     }, [candidates]);
 
     return (
-        <div className="">
+        <div className="flex flex-col gap-y-2" key={'AuthenticationSelection'}>
             {children}
-            <div>
-                {[...userMap.entries()].map(([id, user]) => {
-                    return (
-                        <AuthenticationItem
-                            {...user}
-                            checked={isCheckedMap.get(id) ?? false}
-                            onCheckBoxChangeHandler={onCheckBoxChangeHandlerBuilder(
-                                id
-                            )}
-                        />
-                    );
-                })}
-            </div>
+
+            {[...userMap.entries()].map(([id, user]) => {
+                return (
+                    <AuthenticationItem
+                        {...user}
+                        checked={isCheckedMap.get(id) ?? false}
+                        onCheckBoxChangeHandler={onCheckBoxChangeHandlerBuilder(
+                            id
+                        )}
+                    />
+                );
+            })}
         </div>
     );
 }

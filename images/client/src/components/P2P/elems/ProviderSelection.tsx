@@ -69,12 +69,12 @@ export default function ProviderSelection({
     }, [tokenSets]);
 
     return (
-        <div>
+        <div className="flex flex-col space-y-2" key={'providerSelection'}>
             {children}
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col md:flex-row md:space-y-0 space-y-2 md:justify-evenly">
                 {calleesOPN.map(({ id, providers }) => {
                     return (
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2" key={id}>
                             <Description>
                                 Please pick a OIDC-Provider for{' '}
                                 {stringToUserId(id).username}:

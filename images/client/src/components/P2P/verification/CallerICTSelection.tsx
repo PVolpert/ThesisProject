@@ -1,4 +1,3 @@
-import Button from '../../UI/Button';
 import { Description, MainTitle } from '../../UI/Headers';
 import { ictProviders } from '../../../helpers/Auth/OIDCProviderInfo';
 import { TokenSet } from '../../../store/slices/ICTAccessTokenSlice';
@@ -12,6 +11,7 @@ import OIDCProvider from '../../../helpers/Auth/OIDCProvider';
 import ProviderSelection from '../elems/ProviderSelection';
 import OPNSelection from '../elems/OPNSelection';
 import { createTokenSetList } from '../../../helpers/ICTPhase/EventHandlers';
+import NoAndYesButtons from '../../UI/NoAndYesButtons';
 
 interface CallerICTSelectionProps {
     candidates: Map<string, Candidate>;
@@ -49,8 +49,7 @@ export default function CallerICTSelection({
         const trustedProviders = ictProviders
             .filter(
                 (ictProvider) =>
-                    isOPNCheckedMap.get(`checkbox_${ictProvider.info.name}`) ===
-                    true
+                    isOPNCheckedMap.get(ictProvider.info.name) === true
             )
             .map(convertToICTProvider);
         onYesHandlerCallerICTSelection(
@@ -80,24 +79,17 @@ export default function CallerICTSelection({
                 setIsCheckedMap={setIsOPNCheckedMap}
             />
 
-            <div className="flex flex-col md:flex-row md:space-x-4 md:space-y-0 space-y-4 justify-center md:self-center">
-                <Button
-                    onClick={onNoHandler}
-                    className="justify-center flex flex-1  bg-springred  hover:bg-inherit border-springred hover:text-springred text-white transition duration-1050"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={onYesHandler}
-                    disabled={
-                        checkedOPNCount <= 0 ||
-                        selectedProviders.size !== candidates.size
-                    }
-                    className="bg-springblue hover:bg-inherit disabled:bg-inherit disabled:text-inherit disabled:cursor-not-allowed border-springblue hover:text-springblue text-white transition duration-1050"
-                >
-                    Continue
-                </Button>
-            </div>
+            <NoAndYesButtons
+                onNoHandler={onNoHandler}
+                onYesHandler={onYesHandler}
+                NoTitle="Cancel"
+                YesTitle="Continue"
+                disabledYes={
+                    checkedOPNCount <= 0 ||
+                    selectedProviders.size !== candidates.size ||
+                    selectedProviders.size === 0
+                }
+            />
         </div>
     );
 }

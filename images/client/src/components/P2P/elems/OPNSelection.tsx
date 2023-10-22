@@ -47,9 +47,9 @@ export default function OPNSelection({
     };
 
     return (
-        <div>
+        <div className="flex flex-col space-y-2" key={'OPNSelection'}>
             <Description>Please pick OIDC-Providers you trust:</Description>
-            <div className="flex flex-col md:flex-row md:space-y-0 space-y-1 md:space-x-2">
+            <div className="flex flex-col md:flex-row md:space-y-0 space-y-2 md:space-x-2">
                 {ictProviders.map((ictProvider) => {
                     return (
                         <OPNItem

@@ -7,7 +7,6 @@ import RootLayout from './pages/Root.tsx';
 import ErrorPage from './pages/Error.tsx';
 import P2PPage from './pages/P2P.tsx';
 import HomePage from './pages/Home.tsx';
-import ConferencePage from './pages/Conference.tsx';
 
 const router = createBrowserRouter([
     {
@@ -21,11 +20,6 @@ const router = createBrowserRouter([
             },
 
             { path: 'login', element: <LoginPage /> },
-            {
-                path: 'redirect/:redirectId',
-                loader: redirectLoader,
-                element: <RedirectPage />,
-            },
 
             {
                 path: 'call',
@@ -39,13 +33,14 @@ const router = createBrowserRouter([
                         path: 'p2p',
                         element: <P2PPage />,
                     },
-                    {
-                        path: 'conference/:conferenceId',
-                        element: <ConferencePage />,
-                    },
                 ],
             },
         ],
+    },
+    {
+        path: 'redirect/:redirectId',
+        loader: redirectLoader,
+        element: <RedirectPage />,
     },
 ]);
 

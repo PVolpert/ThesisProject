@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { useRouteError } from 'react-router-dom';
 
-import PageContent from '../components/PageContent';
-
 export default function ErrorPage() {
     const error = useRouteError();
 
@@ -11,5 +9,10 @@ export default function ErrorPage() {
     let title = 'An error occured';
     let message = <p>Something went wrong</p>;
 
-    return <PageContent title={title}>{message}</PageContent>;
+    return (
+        <div className="text-center">
+            <h1>{title}</h1>
+            {message}
+        </div>
+    );
 }
