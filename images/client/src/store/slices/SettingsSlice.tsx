@@ -5,8 +5,6 @@ import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { CallSettings } from '../../components/Settings/CallSettings';
 import { ModalSlice } from './ModalSlice';
-import { OutgoingCallSlice } from './OutgoingCallSlice';
-import { IncomingCallSlice } from './IncomingCallSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
 import { SignalingSlice } from './SignalingSlice';
 
@@ -33,8 +31,6 @@ export const createSettingsSlice: StateCreator<
         ICTAccessTokenSlice &
         WebRTCPhaseSlice &
         ModalSlice &
-        OutgoingCallSlice &
-        IncomingCallSlice &
         ICTPhaseSlice &
         SignalingSlice,
     [],

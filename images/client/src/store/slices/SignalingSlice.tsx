@@ -4,8 +4,6 @@ import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { WebRTCPhaseSlice } from './WebRTCPhaseSlice';
 import { ModalSlice } from './ModalSlice';
-import { OutgoingCallSlice } from './OutgoingCallSlice';
-import { IncomingCallSlice } from './IncomingCallSlice';
 import { ICTPhaseSlice } from './ICTPhaseSlice';
 import { SettingsSlice } from './SettingsSlice';
 import { UserId } from '../../helpers/Signaling/User';
@@ -30,8 +28,6 @@ export const createSignalingSlice: StateCreator<
         ICTAccessTokenSlice &
         WebRTCPhaseSlice &
         ModalSlice &
-        OutgoingCallSlice &
-        IncomingCallSlice &
         ICTPhaseSlice &
         SettingsSlice,
     [],

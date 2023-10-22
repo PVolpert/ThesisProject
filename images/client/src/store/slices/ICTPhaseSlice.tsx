@@ -3,7 +3,6 @@ import { StateCreator } from 'zustand';
 import { AccessTokenSlice } from './AccessTokenSlice';
 import { ICTAccessTokenSlice } from './ICTAccessTokenSlice';
 import { ModalSlice } from './ModalSlice';
-import { OutgoingCallSlice } from './OutgoingCallSlice';
 import { SettingsSlice } from './SettingsSlice';
 import { UserId } from '../../helpers/Signaling/User';
 import { ReadyState } from 'react-use-websocket';
@@ -47,7 +46,6 @@ export const createICTPhaseSlice: StateCreator<
         AccessTokenSlice &
         ICTAccessTokenSlice &
         ModalSlice &
-        OutgoingCallSlice &
         ICTPhaseSlice &
         SignalingSlice,
     [],

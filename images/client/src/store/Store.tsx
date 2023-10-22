@@ -14,14 +14,7 @@ import {
     createWebRTCPhaseSlice,
 } from './slices/WebRTCPhaseSlice';
 import { ModalSlice, createModalSlice } from './slices/ModalSlice';
-import {
-    OutgoingCallSlice,
-    createOutgoingCallSlice,
-} from './slices/OutgoingCallSlice';
-import {
-    IncomingCallSlice,
-    createIncomingCallSlice,
-} from './slices/IncomingCallSlice';
+
 import { ICTPhaseSlice, createICTPhaseSlice } from './slices/ICTPhaseSlice';
 import { SignalingSlice, createSignalingSlice } from './slices/SignalingSlice';
 
@@ -31,8 +24,6 @@ export const useStore = create<
         ICTAccessTokenSlice &
         WebRTCPhaseSlice &
         ModalSlice &
-        OutgoingCallSlice &
-        IncomingCallSlice &
         ICTPhaseSlice &
         SignalingSlice
 >()(
@@ -43,8 +34,6 @@ export const useStore = create<
             ...createICTAccessTokenSlice(...a),
             ...createWebRTCPhaseSlice(...a),
             ...createModalSlice(...a),
-            ...createOutgoingCallSlice(...a),
-            ...createIncomingCallSlice(...a),
             ...createICTPhaseSlice(...a),
             ...createSignalingSlice(...a),
         }),
