@@ -73,10 +73,11 @@ services:
     volumes:
       - ./images/backend:/usr/src/app
       - /usr/src/app/node_modules
-    environment:
-      PORT: 80
+    env_file: configs/backend/config.env
     expose:
       - 80
+    ports: 
+      - 10000-10500:10000-10500
     labels:
       - traefik.enable=true
       - traefik.http.routers.backend.entrypoints=web
