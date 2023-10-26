@@ -1,11 +1,12 @@
 import express, { Express} from 'express';
 import { getCreateTransportHandlerBuilder, getRouterCapabilitiesHandlerBuilder, postConnectHandlerBuilder, postConsumeHandlerBuilder, postProduceHandlerBuilder } from './RequestHandlers';
 import { AppData, Router } from 'mediasoup/node/lib/types';
-import { producerMap, transportMap } from '../MediaSoup/Worker';
+import {  transportMap } from '../MediaSoup/Worker';
 import { auth } from 'express-openid-connect';
+import cors from 'cors'
 
 
-export  function createServer (router: Router<AppData>, transports: transportMap, producers: producerMap) {
+export  function createServer ({ router, transports }: { router: Router<AppData>; transports: transportMap; }) {
     const app: Express = express();
 // TODO Reenable this after initial testing
 //     app.use(
@@ -17,9 +18,12 @@ export  function createServer (router: Router<AppData>, transports: transportMap
 //   })
 // );
 
+app.use(cors())
+app.use(express.json())
+
 app.post('/connect', postConnectHandlerBuilder({ transports }));
-app.post('/consume',postConsumeHandlerBuilder({transports}))
-app.post('/produce', postProduceHandlerBuilder({ transports, producers }));
+app.post('/consume',postConsumeHandlerBuilder({router,transports}))
+app.post('/produce', postProduceHandlerBuilder({ transports }));
 app.get('/createTransport', getCreateTransportHandlerBuilder({ router, transports }));
 app.get('/routerCapabilities', getRouterCapabilitiesHandlerBuilder({ router }))
 

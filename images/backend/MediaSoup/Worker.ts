@@ -5,7 +5,7 @@ import { AppData, Producer } from "mediasoup/node/lib/types";
 type transportID = string
 type producerID = string
 export type transportMap = Map<transportID,Transport<AppData>>
-export type producerMap = Map<producerID,Producer<AppData>>
+
 
 export async function createNewWorker(){
 
@@ -20,7 +20,6 @@ export async function createNewWorker(){
 
 			setTimeout(() => process.exit(1), 2000);
 		});
-      // TODO IP Addresses are not correct
         const webRTCServer = await worker.createWebRtcServer({
             listenInfos :
             [

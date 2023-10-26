@@ -1,4 +1,4 @@
-import { AppData, DtlsParameters, MediaKind, RtpCapabilities, RtpParameters } from "mediasoup/node/lib/types";
+import { DtlsParameters, MediaKind, RtpCapabilities, RtpParameters } from "mediasoup/node/lib/types";
 
 
 export interface CreateTransportBody {
@@ -15,14 +15,12 @@ export interface ConnectBody extends TransportIDBody {
 export interface ProduceBody extends TransportIDBody {
     kind: MediaKind
     rtpParameters: RtpParameters
-    appData: AppData
 }
 
 export interface ConsumeBody extends TransportIDBody {
     producerId: string,
     kind: MediaKind,
     rtpCapabilities: RtpCapabilities,
-    appData: AppData
 }
 
 export function isTransportIDBody(body: any): body is TransportIDBody {
@@ -43,17 +41,14 @@ export function isConnectBody(body: any): body is ConnectBody {
     return (
       isTransportIDBody(body) &&
       'kind' in body &&
-      'rtpParameters' in body &&
-      'appData' in body 
+      'rtpParameters' in body 
     );
   }
   export function isConsumeBody(body: any): body is ConsumeBody {
     return (
       isTransportIDBody(body) &&
       'rtpCapabilities' in body &&
-      'appData' in body &&
       'producerId' in body
-
     );
   }
 
