@@ -1,0 +1,21 @@
+In: Shared Secret, Candidates, Selected MediaOptions
+
+1. Send WS Message for rtpCapabilities 
+2. Create a new Device()
+3. For every Selected MediaOption:
+    a. WS: Request WebRTC Transport
+    b. Get Transport Params
+    c. Use Device to create Send Transport and Receive parameters
+    d. Call Produce --> connect and produce 
+    e. Send Paramters of connect and produce
+    f. Receive ProducerID
+    g. Send the ProducerID to every other Candidate in encrypted form (Shared Secret) using Signaling Service
+
+4. For every incoming ProducerID:
+    a. Request WebRTC Transport
+    b. Get Transport Params
+    c. Use Device to create RECV Transport
+    4. Send Device rtpCapabilities + ProducerID
+    5. Receive a consumerid with parameters
+    6. Call Consume --> Connect Event
+    7. Send Paramters of Connect event 

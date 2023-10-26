@@ -23,6 +23,7 @@ import {
     createICTTransferMessage,
     createMemberPubKeyMessage,
     createPeerOPNMessage,
+    createProducerIDMessage,
     createSharedSecretMessage,
 } from '../helpers/Signaling/Messages';
 import { Candidate, ICTPhaseGroup } from '../helpers/ICTPhase/ICTPhase';
@@ -40,11 +41,28 @@ import { signalingMessageHandler } from '../helpers/Signaling/MessageHandlers';
 import P2PDisplay from '../components/P2P/P2PDisplay';
 import { ICTProviderInfo } from '../helpers/ICTPhase/OpenIDProvider';
 import { SecretExchangePhase } from '../helpers/SecretExchangePhase/SecretExchangePhase';
-import { sendSecretExchangeEventID } from '../helpers/SecretExchangePhase/Events';
+import {
+    sendSecretExchangeEventID,
+    startSFUEventID,
+} from '../helpers/SecretExchangePhase/Events';
 import { isSendSecretExchangeEvent } from '../helpers/SecretExchangePhase/EventCheckers';
+import {
+    SFUPhaseGroupMember,
+    SFUPhaseReceive,
+} from '../helpers/SFUPhase/SFUPhase';
+import {
+    sendGetRequestWithAuthorization,
+    sendPostRequestWithAuthorization,
+} from '../helpers/SFUPhase/HTTP';
+import {
+    newMediaStreamEventID,
+    sendProductIdEventId,
+} from '../helpers/SFUPhase/Events';
+import { isSendProductIdEvent } from '../helpers/SFUPhase/EventCheckers';
 
 let ictPhase = new ICTPhaseGroup<string>();
 let secretExchangePhase = new SecretExchangePhase<string>();
+let sfuPhase = new SFUPhaseReceive<string>();
 
 export type ictDisplayPhases =
     | 'start'
@@ -62,17 +80,18 @@ export type ictDisplayPhases =
     | 'verifyCalleeIdentity'
     | 'verifyOPNAndCreateICTOffer'
     | 'verifyPeerOPN'
-    | 'verifyPeerIdentity';
+    | 'verifyPeerIdentity'
+    | 'showStreams';
 
 export default function P2PPage() {
     const [ictDisplayPhase, setIctDisplayPhase] =
         useState<ictDisplayPhases>('start');
 
-    // useEffect(() => {
-    //     console.log(`Switching Display to ${ictDisplayPhase}`);
-    // }, [ictDisplayPhase]);
+    useEffect(() => {
+        console.log(`Switching Display to ${ictDisplayPhase}`);
+    }, [ictDisplayPhase]);
 
-    const { signalingUrl } = useToken({ needsToken: true });
+    const { signalingUrl, accessToken } = useToken({ needsToken: true });
     const {
         socket: { sendJsonMessage, lastJsonMessage },
     } = useSignaling({ socketUrl: signalingUrl });
@@ -83,6 +102,7 @@ export default function P2PPage() {
         (state) => state.trustedOpenIDProviders
     );
     const candidates = useStore((state) => state.candidates);
+    const callSettings = useStore((state) => state.callSettings);
     const navigate = useNavigate();
 
     const [verifyOPNCandidates, setVerifyOPNCandidates] = useState<
@@ -98,6 +118,15 @@ export default function P2PPage() {
     const [verifyPeerOPNCandidates, setVerifyPeerOPNCandidates] = useState<
         Map<string, Candidate>
     >(new Map());
+
+    const [sfuPhaseMembers, setSetsfuPhaseMembers] = useState<
+        Map<string, SFUPhaseGroupMember>
+    >(new Map());
+    const [localStream, setLocalStream] = useState<MediaStream | undefined>();
+    const [encryptedLocalStream, setEncryptedLocalStream] = useState<
+        MediaStream | undefined
+    >();
+
     const [verifyPeerIdentityCandidates, setVerifyPeerIdentityCandidates] =
         useState<Map<string, Candidate>>(new Map());
 
@@ -115,12 +144,15 @@ export default function P2PPage() {
 
     useEffect(() => {
         if (!mode) {
+            resetObjects();
             navigate('/call');
+
             return;
         }
 
         attachICTPhaseEventListeners();
         attachSecretExchangePhaseEventListeners();
+        attachSFUPhaseEventListeners();
 
         if (mode === 'active') {
             console.log('Starting active Call');
@@ -139,9 +171,7 @@ export default function P2PPage() {
             );
         }
         return () => {
-            console.log('Resetting ICT-Phase');
-            ictPhase = new ICTPhaseGroup<string>();
-            secretExchangePhase = new SecretExchangePhase<string>();
+            resetObjects();
         };
     }, []);
 
@@ -380,6 +410,7 @@ export default function P2PPage() {
                         console.log(
                             `Sending Shared Secret at ${time} to ${target}`
                         );
+                        setIctDisplayPhase('waitForConnectionStart');
                         sendJsonMessage(
                             createSharedSecretMessage(
                                 stringToUserId(target),
@@ -390,7 +421,51 @@ export default function P2PPage() {
                 }
             }
         );
+        secretExchangePhase.addEventListener(startSFUEventID, async () => {
+            console.log('Negotiated shared secret. Starting SFU phase');
+            setIctDisplayPhase('waitForConnectionStart');
+            const { groupMemberMap, sharedSecret } =
+                await secretExchangePhase.getSecretExchangePhaseValues();
+            sfuPhase.setupSFUPhase(
+                await groupMemberMap.exportToMap(),
+                sharedSecret,
+                callSettings,
+                sendPostRequestWithAuthorization(accessToken),
+                sendGetRequestWithAuthorization(accessToken)
+            );
+        });
     }
+
+    function attachSFUPhaseEventListeners() {
+        console.log('Attaching SFU Phase Listeners');
+        sfuPhase.addEventListener(sendProductIdEventId, (e: Event) => {
+            if (!isSendProductIdEvent<string>(e)) return;
+
+            const {
+                detail: { target, time, producerId },
+            } = e;
+            console.log(
+                `Sending new Producer Id ${producerId} at ${time} to ${target}`
+            );
+            sendJsonMessage(
+                createProducerIDMessage(stringToUserId(target), producerId)
+            );
+        });
+
+        sfuPhase.addEventListener(newMediaStreamEventID, async (e: Event) => {
+            if (!isTimedEvent(e)) return;
+
+            const { localStream, members, encryptedLocalStream } =
+                await sfuPhase.getSFUPhaseValues();
+            setLocalStream(localStream);
+            setEncryptedLocalStream(encryptedLocalStream);
+            members && setSetsfuPhaseMembers(members);
+        });
+    }
+
+    useEffect(() => {
+        console.log('I updated because of sfuPhaseMembers', sfuPhaseMembers);
+    }, [sfuPhaseMembers]);
 
     // useEffects for Display Switches
     useEffect(() => {
@@ -444,9 +519,24 @@ export default function P2PPage() {
         setIctDisplayPhase('verifyPeerIdentity');
     }, [verifyPeerIdentityCandidates, ictDisplayPhase]);
 
+    useEffect(() => {
+        if (
+            ictDisplayPhase != 'waitForConnectionStart' ||
+            sfuPhaseMembers.size === 0
+        ) {
+            return;
+        }
+        setIctDisplayPhase('showStreams');
+    });
+
     // Local Signaling Handler
     useEffect(() => {
-        signalingMessageHandler(lastJsonMessage, ictPhase, secretExchangePhase);
+        signalingMessageHandler(
+            lastJsonMessage,
+            ictPhase,
+            secretExchangePhase,
+            sfuPhase
+        );
     }, [lastJsonMessage]);
 
     const localRef = useRef<HTMLVideoElement>(null);
@@ -543,7 +633,16 @@ export default function P2PPage() {
                 verifyPeerIdentityCandidates,
                 onYesHandlerVerifyPeerIdentity,
                 onYesHandlerVerifyPeerOPN,
+                sfuPhaseMembers,
+                localStream,
+                encryptedLocalStream,
             }}
         />
     );
+}
+function resetObjects() {
+    console.log('Resetting Phase Objects');
+    ictPhase = new ICTPhaseGroup<string>();
+    secretExchangePhase = new SecretExchangePhase<string>();
+    sfuPhase = new SFUPhaseReceive<string>();
 }

@@ -8,10 +8,12 @@ import {
     isIncomingUserStateMessage,
     isOPNMessage,
     isOriginMessage,
+    isSendProducerIdMessage as isSendProducerIdMessage,
     isSendSecretExchangeMessage,
 } from './MessageChecker';
 import { ICTPhaseGroup } from '../ICTPhase/ICTPhase';
 import { SecretExchangePhase } from '../SecretExchangePhase/SecretExchangePhase';
+import { SFUPhaseReceive } from '../SFUPhase/SFUPhase';
 
 // user* Message Handlers
 
@@ -117,7 +119,8 @@ export async function globalMessageHandler(
 export async function signalingMessageHandler(
     lastJsonMessage: unknown,
     ictPhase: ICTPhaseGroup<string>,
-    secretExchangePhase: SecretExchangePhase<string>
+    secretExchangePhase: SecretExchangePhase<string>,
+    sfuPhase: SFUPhaseReceive<string>
 ) {
     if (
         !lastJsonMessage ||
@@ -286,5 +289,19 @@ export async function signalingMessageHandler(
             } = lastJsonMessage;
             secretExchangePhase.setSharedSecret(userIdToString(origin), jwt);
             break;
+
+        case 'ProducerId':
+            if (!isSendProducerIdMessage(lastJsonMessage)) return;
+
+            console.log(
+                `Incoming Producer Id message at ${Date.now()} frin ${
+                    origin.username
+                }`
+            );
+            const {
+                body: { producerId },
+            } = lastJsonMessage;
+
+            sfuPhase.setNewConsumer(userIdToString(origin), producerId);
     }
 }

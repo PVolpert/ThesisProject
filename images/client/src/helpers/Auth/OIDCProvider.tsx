@@ -40,7 +40,12 @@ export default class OIDCProvider {
     // Create AuthServer
     async createAuthServer() {
         try {
-            const as = await discoveryRequest(this.info.issuer).then(
+            const headers = new Headers();
+            // Set the 'Origin' header to the origin of your request (replace with your actual origin)
+            headers.set('Origin', 'http://client.localhost');
+            headers.set('Access-Control-Allow-Origin', '*');
+
+            const as = await discoveryRequest(this.info.issuer, {}).then(
                 (response) =>
                     processDiscoveryResponse(this.info.issuer, response)
             );

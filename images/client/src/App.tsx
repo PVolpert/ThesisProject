@@ -7,6 +7,7 @@ import RootLayout from './pages/Root.tsx';
 import ErrorPage from './pages/Error.tsx';
 import P2PPage from './pages/P2P.tsx';
 import HomePage from './pages/Home.tsx';
+import TestPage from './pages/Test.tsx';
 
 const router = createBrowserRouter([
     {
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
             },
 
             { path: 'login', element: <LoginPage /> },
+            { path: 'test', element: <TestPage /> },
 
             {
                 path: 'call',

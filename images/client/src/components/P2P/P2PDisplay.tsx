@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { ictDisplayPhases } from '../../pages/P2P';
 import Page from '../UI/Page';
 import CallerICTSelection from './verification/CallerICTSelection';
@@ -21,6 +20,8 @@ import {
     WaitForPeerICTTransfer,
     WaitForPeerOPN,
 } from './Wait';
+import { SFUPhaseGroupMember } from '../../helpers/SFUPhase/SFUPhase';
+import ShowStreams from './ShowStreams';
 
 export interface handlerProps {
     onYesHandler: () => void;
@@ -61,6 +62,9 @@ interface P2PDisplayProps {
     verifyCallerIdentityAndCreateICTAnswerCandidates: Map<string, Candidate>;
     verifyPeerOPNCandidates: Map<string, Candidate>;
     verifyPeerIdentityCandidates: Map<string, Candidate>;
+    sfuPhaseMembers: Map<string, SFUPhaseGroupMember>;
+    localStream: MediaStream | undefined;
+    encryptedLocalStream: MediaStream | undefined;
 }
 
 export default function P2PDisplay({
@@ -76,8 +80,11 @@ export default function P2PDisplay({
     verifyCalleeIdentityCandidates,
     verifyPeerOPNCandidates,
     verifyPeerIdentityCandidates,
+    sfuPhaseMembers,
+    localStream,
+    encryptedLocalStream,
 }: P2PDisplayProps) {
-    const display = useMemo(() => {
+    const display = (() => {
         switch (ictDisplayPhase) {
             case 'waitForICTOffer':
                 return <WaitForICTOffer />;
@@ -146,8 +153,16 @@ export default function P2PDisplay({
                         candidates={verifyPeerIdentityCandidates}
                     />
                 );
+            case 'showStreams':
+                return (
+                    <ShowStreams
+                        encryptedLocalStream={encryptedLocalStream}
+                        localStream={localStream}
+                        sfuPhaseMembers={sfuPhaseMembers}
+                    />
+                );
         }
-    }, [ictDisplayPhase]);
+    })();
 
     return <Page className="mx-2">{display}</Page>;
 }

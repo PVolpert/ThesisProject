@@ -20,7 +20,7 @@ import {
     startSFUEventID,
 } from './Events';
 
-class SecretExchangePhaseGroupMember {
+export class SecretExchangePhaseGroupMember {
     identity: Identity;
     receivedICTPubKey: CryptoKey;
     negotiatedDHSecret?: CryptoKey;
@@ -103,6 +103,15 @@ class SecretExchangePhaseEvents<ID> extends SecretExchangePhaseValues<ID> {
                 type,
             },
         });
+        this.dispatchEvent(newSendSecretExchangeMessageEvent);
+    }
+    protected startSFUMessage() {
+        const newSendSecretExchangeMessageEvent =
+            new CustomEvent<startSFUEventDetail>(startSFUEventID, {
+                detail: {
+                    time: Date.now(),
+                },
+            });
         this.dispatchEvent(newSendSecretExchangeMessageEvent);
     }
 }
@@ -310,15 +319,7 @@ export class SecretExchangePhase<ID> extends SecretExchangePhaseEvents<ID> {
                 'sendSharedSecret'
             );
         }
-        const newStartSecretPhase = new CustomEvent<startSFUEventDetail>(
-            startSFUEventID,
-            {
-                detail: {
-                    time: Date.now(),
-                },
-            }
-        );
-        this.dispatchEvent(newStartSecretPhase);
+        this.startSFUMessage();
     }
 
     async setSharedSecret(origin: ID, sharedSecretJWT: string) {
@@ -344,7 +345,7 @@ export class SecretExchangePhase<ID> extends SecretExchangePhaseEvents<ID> {
         const DHSecret = groupLeader.negotiatedDHSecret;
         if (!DHSecret) {
             throw new Error(
-                `Missing DH Secret for groupleader ${groupLeaderID}`
+                `Missing DH Secret for groupLeader ${groupLeaderID}`
             );
         }
 
@@ -354,6 +355,7 @@ export class SecretExchangePhase<ID> extends SecretExchangePhaseEvents<ID> {
         );
 
         this.sharedSecret = sharedSecret;
+        this.startSFUMessage();
     }
 }
 

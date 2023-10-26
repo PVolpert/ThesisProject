@@ -18,7 +18,9 @@ export type MessageType =
     // Key Exchange Type Events
     | 'GroupLeaderPubKeyDH'
     | 'MemberPubKeyDH'
-    | 'SharedSecret';
+    | 'SharedSecret'
+    // SFU Phase
+    | 'ProducerId';
 
 // TODO Add other Messages
 
@@ -201,6 +203,28 @@ export function createSharedSecretMessage(target: UserId, jwt: string) {
         type: 'SharedSecret',
         target,
         body: { jwt },
+    };
+    return msg;
+}
+
+// SFU Phase
+
+interface sendProducerIdMessageBody {
+    producerId: string;
+}
+
+export interface sendProducerIdMessage extends Message {
+    body: sendProducerIdMessageBody;
+}
+export interface incomingSendProducerIdMessage extends incomingOriginMessage {
+    body: sendProducerIdMessageBody;
+}
+
+export function createProducerIDMessage(target: UserId, producerId: string) {
+    const msg: sendProducerIdMessage = {
+        type: 'ProducerId',
+        target,
+        body: { producerId },
     };
     return msg;
 }

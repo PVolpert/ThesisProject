@@ -4,6 +4,7 @@ import {
     incomingMessage,
     incomingOPNMessage,
     incomingOriginMessage,
+    incomingSendProducerIdMessage,
     incomingSendSecretExchangeMessage,
     incomingUserListMessage,
     incomingUserStateMessage,
@@ -58,4 +59,11 @@ export function isSendSecretExchangeMessage(
     message: incomingOriginMessage
 ): message is incomingSendSecretExchangeMessage {
     return 'jwt' in message.body;
+}
+
+// SFU Phase Messages
+export function isSendProducerIdMessage(
+    message: incomingOriginMessage
+): message is incomingSendProducerIdMessage {
+    return 'producerId' in message.body;
 }

@@ -7,8 +7,8 @@ FROM node:alpine AS builder
 WORKDIR /usr/src/app
 
 # Copy dependency definitions
-COPY package.json /usr/src/app
 COPY package-lock.json /usr/src/app
+COPY package.json /usr/src/app
 
 # Install dependecies
 #RUN npm set progress=false \
