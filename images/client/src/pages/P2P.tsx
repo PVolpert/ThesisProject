@@ -87,10 +87,6 @@ export default function P2PPage() {
     const [ictDisplayPhase, setIctDisplayPhase] =
         useState<ictDisplayPhases>('start');
 
-    useEffect(() => {
-        console.log(`Switching Display to ${ictDisplayPhase}`);
-    }, [ictDisplayPhase]);
-
     const { signalingUrl, accessToken } = useToken({ needsToken: true });
     const {
         socket: { sendJsonMessage, lastJsonMessage },
@@ -139,7 +135,6 @@ export default function P2PPage() {
             setIctDisplayPhase('waitForCallAnswer');
             return 'active';
         }
-        console.log('no candidates were found', candidates);
     }, []);
 
     useEffect(() => {
@@ -462,10 +457,6 @@ export default function P2PPage() {
             members && setSetsfuPhaseMembers(members);
         });
     }
-
-    useEffect(() => {
-        console.log('I updated because of sfuPhaseMembers', sfuPhaseMembers);
-    }, [sfuPhaseMembers]);
 
     // useEffects for Display Switches
     useEffect(() => {

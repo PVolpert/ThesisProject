@@ -27,10 +27,6 @@ export default function RemoteVideo({
 
     useEffect(() => {
         if (remoteStream && videoRef.current) {
-            console.log(
-                `Remote stream tracks of ${identity.name}:`,
-                remoteStream.getTracks()
-            );
             videoRef.current.srcObject = remoteStream;
         }
     }, [remoteStream, videoRef]);

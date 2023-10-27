@@ -137,7 +137,6 @@ class SFUPhaseValues<ID> extends EventTarget {
     }
 
     async getSFUPhaseValues() {
-        console.log(this.self.localStream?.getTracks(), this.groupMemberMap);
         return {
             localStream: this.self.localStream,
             encryptedLocalStream: this.self.encryptedLocalStream,
@@ -425,7 +424,6 @@ class SFUPhaseSend<ID> extends SFUPhaseHTTP<ID> {
             newMediaStreamEventID,
             { detail: { time: Date.now() } }
         );
-        console.log('Issuing stream');
         this.dispatchEvent(newMediaStreamEvent);
         this.produceTransportContent();
     }
