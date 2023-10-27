@@ -77,14 +77,15 @@ services:
     expose:
       - 80
     ports: 
-      - 10000-10500:10000-10500
+      - 10000-10500:10000-10500/tcp
+      - 10000-10500:10000-10500/udp
     labels:
       - traefik.enable=true
       - traefik.http.routers.backend.entrypoints=web
       - traefik.http.routers.backend.rule=HOST(`${SFU_HOST}`)
 
   db:
-    image: postgres
+    image: postgres:15
     restart: on-failure
     networks:
       - server-side
@@ -314,4 +315,3 @@ secrets:
     file: .secrets/keycloak/beta.pem
   gamma_private_key:
     file: .secrets/keycloak/gamma.pem
-
