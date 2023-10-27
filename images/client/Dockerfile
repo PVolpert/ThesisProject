@@ -7,8 +7,8 @@ FROM node:alpine AS builder
 WORKDIR /usr/src/app
 
 # Copy dependency definitions
-COPY package-lock.json /usr/src/app
 COPY package.json /usr/src/app
+COPY package-lock.json /usr/src/app
 
 # Install dependecies
 #RUN npm set progress=false \
@@ -19,6 +19,7 @@ RUN npm ci
 # Get all the code needed to run the app
 COPY . /usr/src/app
 
+RUN mkdir /usr/src/build
 # Build the app
 RUN npm run build
 
@@ -51,7 +52,7 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 
 # Copy static assets from builder stage
-COPY --from=builder /usr/src/app/build .
+COPY --from=builder /usr/src/build .
 
 # Containers run nginx with global directives and daemon off
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

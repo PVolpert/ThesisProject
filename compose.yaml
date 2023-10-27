@@ -17,20 +17,17 @@ services:
         restart: unless-stopped
         networks:
             - client-side
-        volumes:
-            - ./images/client:/usr/src/app
-            - /usr/src/app/node_modules
         env_file: configs/client/config.env
         depends_on:
             - traefik
-              - signaling
+            - signaling
             - op
         labels:
             - traefik.enable=true
             - traefik.http.routers.client.entrypoints=web
             - traefik.http.routers.client.rule=HOST(`${CLIENT_HOST}`)
         expose:
-            - 5173
+            - 80
 
     signaling:
         build:
@@ -65,17 +62,19 @@ services:
         volumes:
             - ./images/backend:/usr/src/app
             - /usr/src/app/node_modules
-        environment:
-            PORT: 80
+        env_file: configs/backend/config.env
         expose:
             - 80
+        ports:
+            - 10000-10500:10000-10500/tcp
+            - 10000-10500:10000-10500/udp
         labels:
             - traefik.enable=true
             - traefik.http.routers.backend.entrypoints=web
             - traefik.http.routers.backend.rule=HOST(`${SFU_HOST}`)
 
     db:
-        image: postgres
+        image: postgres:15
         restart: unless-stopped
         networks:
             - server-side
