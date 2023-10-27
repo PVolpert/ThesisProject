@@ -31,12 +31,12 @@ const serviceProviderInfos: OIDCProviderInfo[] = [
         clientId: 'thesisProject-Service',
         issuer: new URL(
             `${
-                import.meta.env.VITE_OP_HOST_URL || 'http://unkown'
+                import.meta.env.VITE_OP_HOST_URL || 'http://op.localhost'
             }/realms/service`
         ),
         redirectId: new URL(
             `${
-                import.meta.env.VITE_CLIENT_URL || 'http://unkown'
+                import.meta.env.VITE_CLIENT_URL || 'http://client.localhost'
             }/redirect/dream`
         ),
     },
@@ -68,9 +68,15 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Alpha',
-        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/alpha`),
+        issuer: new URL(
+            `${
+                import.meta.env.VITE_OP_HOST_URL || 'http://op.localhost'
+            }/realms/alpha`
+        ),
         redirectId: new URL(
-            `${import.meta.env.VITE_CLIENT_URL}/redirect/destiny`
+            `${
+                import.meta.env.VITE_CLIENT_URL || 'http://client.localhost'
+            }/redirect/destiny`
         ),
     },
     {
@@ -92,9 +98,15 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Beta',
-        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/beta`),
+        issuer: new URL(
+            `${
+                import.meta.env.VITE_OP_HOST_URL || 'http://op.localhost'
+            }/realms/beta`
+        ),
         redirectId: new URL(
-            `${import.meta.env.VITE_CLIENT_URL}/redirect/desire`
+            `${
+                import.meta.env.VITE_CLIENT_URL || 'http://client.localhost'
+            }/redirect/desire`
         ),
     },
     {
@@ -116,9 +128,15 @@ const ictProviderInfos: OIDCProviderInfo[] = [
             </svg>
         ),
         clientId: 'thesisProject-ICT-Gamma',
-        issuer: new URL(`${import.meta.env.VITE_OP_HOST_URL}/realms/gamma`),
+        issuer: new URL(
+            `${
+                import.meta.env.VITE_OP_HOST_URL || 'http://op.localhost'
+            }/realms/gamma`
+        ),
         redirectId: new URL(
-            `${import.meta.env.VITE_CLIENT_URL}/redirect/delirium`
+            `${
+                import.meta.env.VITE_CLIENT_URL || 'http://client.localhost'
+            }/redirect/delirium`
         ),
     },
 ];

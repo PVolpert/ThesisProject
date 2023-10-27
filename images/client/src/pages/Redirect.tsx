@@ -42,7 +42,9 @@ export default function RedirectPage() {
                     type: 'OIDCtokens',
                     data: newTokenPair,
                 }),
-                `${import.meta.env.VITE_CLIENT_URL}`
+                `${
+                    import.meta.env.VITE_CLIENT_URL || 'http://client.localhost'
+                }`
             );
             window.close();
         }

@@ -23,7 +23,9 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
     //     return state.ictTokenSets;
     // });
 
-    const signalingUrl = new URL(`${import.meta.env.VITE_SOCKET_URL}`);
+    const signalingUrl = new URL(
+        `${import.meta.env.VITE_SOCKET_URL || 'http://op.localhost'}`
+    );
     signalingUrl.searchParams.append('oidc', accessToken);
 
     // Verifies that neither auth token nor any ict token is expired
@@ -35,8 +37,8 @@ export function useToken({ needsToken = undefined }: useTokenProps = {}) {
             // ? Comment for disabling token checking
             resetTokens();
         } else {
-            // TODO Fix the loop of this
-            // find bad ICT Access Token
+            // TODO Fix endless loop
+            // // find bad ICT Access Token
             // const badICTTokens = ictTokens.filter((ictToken) => {
             //     return ictToken.idToken.exp < Math.floor(Date.now()) / 1000;
             // });
