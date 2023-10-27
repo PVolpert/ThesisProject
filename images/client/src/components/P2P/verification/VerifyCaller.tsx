@@ -79,7 +79,7 @@ export default function VerifyCaller({
                 YesTitle="Continue"
                 disabledYes={
                     !areUserAuthenticated &&
-                    selectedProviders.size === candidates.size
+                    selectedProviders.size !== candidates.size
                 }
             />
         </div>

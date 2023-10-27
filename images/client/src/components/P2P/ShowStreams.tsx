@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { SFUPhaseGroupMember } from '../../helpers/SFUPhase/SFUPhase';
-import Button from '../UI/Button';
+// import Button from '../UI/Button';
 import { Description } from '../UI/Headers';
 import RemoteVideo from './RemoteVideo';
 
@@ -49,7 +49,7 @@ export default function ShowStreams({
                     );
                 })}
             </div>
-            <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 flex space-x-2 mb-3">
+            {/* <div className="absolute left-1/2 bottom-0 transform -translate-x-1/2 flex space-x-2 mb-3">
                 <Button
                     // onClick={() => {
                     //     setViewEncrypted((prior) => !prior);
@@ -58,7 +58,7 @@ export default function ShowStreams({
                 >
                     Change Mode
                 </Button>
-            </div>
+            </div> */}
             <div className="absolute right-0 bottom-0 m-3">
                 <video autoPlay width={300} ref={localVideoRef}></video>
                 <Description>Yourself</Description>

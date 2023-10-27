@@ -42,6 +42,7 @@ export async function generateSharedSecretJWT(
         'jwk',
         SharedSecret
     );
+    console.log('Sending shared secret', SharedSecretJWK);
 
     return generateEncJWT(DHSecret, { [sharedSecretClaimID]: SharedSecretJWK });
 }
@@ -55,6 +56,8 @@ export async function verifySharedSecretJWT(
     if (!payload[sharedSecretClaimID]) {
         throw new Error(`DHJWT does not contain ${sharedSecretClaimID} claim`);
     }
+
+    console.log('Received shared secret', payload[sharedSecretClaimID]);
 
     const SharedSecret = crypto.subtle.importKey(
         'jwk',
